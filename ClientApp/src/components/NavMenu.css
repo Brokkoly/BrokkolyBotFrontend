@@ -1,0 +1,43 @@
+﻿:root {
+    --discord-blurple: #7289DA;
+    --discord-fullwhite: #FFFFFF;
+    --discord-greyple: #99AAB5;
+    --discord-dark: #2C2F33;
+    --discord-notquiteblack: #23272A;
+    --discord-black: #000000;
+}
+
+a.navbar-brand {
+  white-space: normal;
+  text-align: center;
+  word-break: break-all;
+}
+
+html {
+  font-size: 14px;
+}
+@media (min-width: 768px) {
+  html {
+    font-size: 16px;
+  }
+}
+
+.box-shadow {
+  box-shadow: 0 .25rem .75rem rgba(0, 0, 0, .05);
+}
+
+.headerImg {
+    height: 64px;
+    width: 64px;
+    object-fit: cover;
+    border-radius: 50%;
+    margin-right: 5px;
+}
+
+.header {
+    background-color: var(--discord-dark);
+    height: 128px;
+    padding: 5px;
+    width: 100%;
+    justify-content: left;
+}

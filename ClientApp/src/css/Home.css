@@ -1,0 +1,179 @@
+﻿:root {
+    --discord-blurple: #7289DA;
+    --discord-fullwhite: #FFFFFF;
+    --discord-greyple: #99AAB5;
+    --discord-dark: #2C2F33;
+    --discord-notquiteblack: #23272A;
+    --discord-black: #000000;
+}
+
+.discord-blurple-text{
+    color: var(--discord-blurple);
+}
+
+.discord-fullwhite-text {
+    color: var(--discord-fullwhite);
+}
+.discord-greyple-text {
+    color: var(--discord-greyple);
+}
+.discord-dark-text {
+    color: var(--discord-dark);
+}
+.discord-notquiteblack-text {
+    color: var(--discord-notquiteblack);
+}
+.discord-black-text {
+    color: var(--discord-black);
+}
+
+.container-custom{
+    padding-left: 0px;
+    margin-left: 0px;
+}
+
+.bot-link{
+    align-self: center;
+}
+
+.command-table-header{
+    font-size: medium;
+    color: var(--discord-fullwhite);
+}
+.command-table-row {
+    font-size: small;
+    color: var(--discord-fullwhite);
+}
+
+.serverDiv {
+    display: flex;
+    flex-direction: row;
+    max-width: 400px;
+    align-items: center;
+    justify-content: left;
+    padding: 5px;
+}
+
+    .serverDiv:hover {
+        cursor: pointer;
+        background-color: var(--discord-greyple);
+    }
+
+.allBackground{
+    background-color: var(--discord-dark);
+}
+
+.serverList {
+    list-style: none;
+}
+
+.serverDivSelected {
+    background-color: var(--discord-greyple);
+    color: var(--discord-dark);
+}
+
+.serverDivUnselected {
+    background-color: var(--discord-notquiteblack);
+}
+
+.selectedIconDiv {
+    width: 50px;
+    font-size: calc(5px + 2vmin);
+    margin-left: auto;
+}
+
+.flexRow {
+    display: flex;
+    flex-direction: row;
+    margin-block-start: 0px;
+}
+
+.flexColumn {
+    display: flex;
+    flex-direction: column;
+}
+
+.nodisp {
+    visibility: hidden;
+}
+
+.serverImg {
+    height: 64px;
+    width: 64px;
+    object-fit: cover;
+    border-radius: 50%;
+    padding-right: 5px;
+}
+
+.serverName {
+    word-wrap: normal;
+    width: auto;
+    height: auto;
+    color: var(--discord-greyple);
+}
+
+.serverDiv:hover .serverName{
+    color: var(--discord-dark);
+}
+
+.serverNameSelected {
+    color: var(--discord-dark);
+}
+
+.App {
+    text-align: center;
+}
+
+.App-logo {
+    height: 40vmin;
+    pointer-events: none;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+    .App-logo {
+        animation: App-logo-spin infinite 20s linear;
+    }
+}
+
+.App-header {
+    background-color: var(--discord-dark);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: left;
+    font-size: calc(10px + 2vmin);
+    color: white;
+}
+
+.header {
+    height: 128px;
+    padding: 5px;
+    width: 100%;
+    justify-content: left;
+}
+
+.headerText {
+    padding-left: 50px;
+    align-self: center;
+}
+
+.headerImg {
+    height: 64px;
+    width: 64px;
+    object-fit: cover;
+    border-radius: 50%;
+}
+
+.App-link {
+    color: #61dafb;
+}
+
+@keyframes App-logo-spin {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
