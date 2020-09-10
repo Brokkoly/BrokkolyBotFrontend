@@ -233,7 +233,7 @@ class CommandList extends React.Component<CommandListProps, CommandListState>
         const result = await fetch(fetchUrl);
         const text = await result.text();
         var commands = await JSON.parse(text.replace(/("[^"]*"\s*:\s*)(\d{16,})/g, '$1"$2"'));
-        commands.push({ id: -1, serverId: this.props.serverId, commandString: "DefaultCommand", entryValue: "Enter Text Here!" });
+        commands.push({ id: -1, serverId: this.props.serverId, commandString: "", entryValue: "" });
         this.setState({ commandList: commands, loading: false });
     }
 
@@ -256,34 +256,22 @@ class CommandList extends React.Component<CommandListProps, CommandListState>
     {
         return (
             <div>
-                <table className="table">
-                    <thead className="command-table-header">
-                        <tr>
-                            <th />
-                            <th> Command </th>
-                            <th> Response </th>
-                            <th> </th>
-                            <th> </th>
-                            <th> </th>
-                        </tr>
-                    </thead>
-                    <tbody >
-                        {
-                            commandList.map((cmd, index) => (
-                                <CommandRow key={cmd.id}
-                                    index={index}
-                                    id={cmd.id}
-                                    command={cmd.commandString}
-                                    serverId={cmd.serverId}
-                                    value={cmd.entryValue}
-                                    deleteFromListCallback={this.deleteFromList}
-                                    acceptEditCallback={this.saveEdit}
-                                    acceptNewCallback={this.postCommand}
-                                />
-                            ))
-                        }
-                    </tbody>
-                </table>
+                <ul className="commandList">
+                    {
+                        commandList.map((cmd, index) => (
+                            <CommandRow key={cmd.id}
+                                index={index}
+                                id={cmd.id}
+                                command={cmd.commandString}
+                                serverId={cmd.serverId}
+                                value={cmd.entryValue}
+                                deleteFromListCallback={this.deleteFromList}
+                                acceptEditCallback={this.saveEdit}
+                                acceptNewCallback={this.postCommand}
+                            />
+                        ))
+                    }
+                </ul>
             </div>
         );
     }

@@ -32,9 +32,10 @@ namespace BrokkolyBotFrontend.Controllers
             {
                 Code = code,
             };
-            string clientId = _configuration.GetValue<string>("Secrets:ClientID");
-            string clientSecret = _configuration.GetValue<string>("Secrets:ClientSecret");
-            string redirect_url =  "https://localhost:44320/api/discord/callback";
+            string clientId = Environment.GetEnvironmentVariable("CLIENT_ID");
+            string clientSecret = Environment.GetEnvironmentVariable("CLIENT_SECRET");
+            string baseURL = Environment.GetEnvironmentVariable("BASE_URL");
+            string redirect_url = baseURL+"/api/discord/callback";
 
             HttpWebRequest webRequest = (HttpWebRequest)WebRequest.Create("https://discordapp.com/api/oauth2/token");
             webRequest.Method = "POST";
@@ -53,7 +54,7 @@ namespace BrokkolyBotFrontend.Controllers
 
             string tokenInfo = responseFromServer.Split(',')[0].Split(':')[1];
             string access_token = tokenInfo.Trim().Substring(1, tokenInfo.Length - 3);
-            return Redirect("https://localhost:44320/servers/"+access_token);
+            return Redirect(baseURL+"/servers/"+access_token);
         }
     }
 }
