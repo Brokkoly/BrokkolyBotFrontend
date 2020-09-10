@@ -50,7 +50,9 @@ export class NavMenu extends Component<{}, { collapsed: boolean }>{
                                 </NavItem>
 
                                 <NavItem>
-                                    <Button variant="outline-light" href="https://discord.com/api/oauth2/authorize?client_id=225369871393882113&permissions=268823664&redirect_uri=https%3A%2F%2Flocalhost%3A44320%2F&scope=bot">Add To Your Server</Button>
+                                    <Button variant="outline-light"
+                                        href={`https://discord.com/api/oauth2/authorize?client_id=225369871393882113&permissions=268823664&redirect_uri=${baseUrl}&scope=bot`}
+                                    >Add To Your Server</Button>
                                 </NavItem>
 
                             </ul>

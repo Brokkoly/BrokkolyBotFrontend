@@ -9,6 +9,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using React.AspNet;
+using System.Configuration;
 
 namespace BrokkolyBotFrontend
 {
@@ -36,8 +37,14 @@ namespace BrokkolyBotFrontend
                 configuration.RootPath = "ClientApp/build";
             });
 
+            string connectionString = ConfigurationManager.ConnectionStrings["BrokkolyBotDatabase"]?.ConnectionString;
+            if (string.IsNullOrEmpty(connectionString))
+            {
+                connectionString = Configuration.GetConnectionString("BrokkolyBotDatabase");
+            }
+
             services.AddDbContext<DatabaseContext>(options =>
-            options.UseNpgsql(Configuration.GetConnectionString("BrokkolyBotDatabase"))); ;
+            options.UseNpgsql(connectionString));
 
             services.AddCors(options =>
                 options.AddPolicy(name: MyAllowSpecificOrigins, builder =>
