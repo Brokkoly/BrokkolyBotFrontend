@@ -14,6 +14,7 @@
 		<PackageReference Include="JavaScriptEngineSwitcher.Extensions.MsDependencyInjection" Version="3.3.0" />
 		<PackageReference Include="JavaScriptEngineSwitcher.V8" Version="3.5.5" />
 		<PackageReference Include="JavaScriptEngineSwitcher.V8.Native.win-x64" Version="3.5.5" />
+		<PackageReference Include="Microsoft.AspNet.WebApi.Cors" Version="5.2.7" />
 		<PackageReference Include="Microsoft.AspNetCore.SpaServices.Extensions" Version="3.1.7" />
 		<PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="3.1.7" />
 		<PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="3.1.7" />
@@ -44,6 +45,7 @@
 		<None Remove="ClientApp\src\components\ServerCard.tsx" />
 		<None Remove="ClientApp\src\components\ServerList.tsx" />
 		<None Remove="ClientApp\src\components\ServerSettings.tsx" />
+		<None Remove="ClientApp\src\Secrets.ts" />
 		<None Remove="tsconfig.jsonsdfasdfasdf" />
 	</ItemGroup>
 
@@ -52,10 +54,6 @@
 		<TypeScriptCompile Remove="ClientApp\src\components\Home.tsx" />
 		<TypeScriptCompile Remove="ClientApp\src\components\Layout.tsx" />
 		<TypeScriptCompile Remove="ClientApp\src\components\NavMenu.tsx" />
-	</ItemGroup>
-
-	<ItemGroup>
-		<Content Include="tsconfig.jsonsdfasdfasdf" />
 	</ItemGroup>
 
 	<ItemGroup>

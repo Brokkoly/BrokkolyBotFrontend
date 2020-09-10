@@ -23,6 +23,7 @@ interface Command
 interface ServerSettingsProps
 {
     selectedId: string;
+    token: string;
 }
 
 interface ServerSettingsState
@@ -33,9 +34,27 @@ interface ServerSettingsState
 
 
 export class ServerSettings extends React.Component<ServerSettingsProps, ServerSettingsState>{
+
+    public async componentWillMount()
+    {
+        await fetch("https://discord.com/api/users/@me/guilds/",
+            {
+                method: "GET",
+                headers: {
+                    'Content-Type': 'application/json',
+                    "Authorization": `Bearer [${this.props.token}]`,
+                }
+
+            }
+        ).then(
+            response => console.log(response.text())
+        );
+    }
     public render()
     {
-        return (<div><CommandList serverId={this.props.selectedId} /></div>);
+        return (<div>
+            <CommandList serverId={this.props.selectedId} />
+        </div>);
     }
 }
 
@@ -158,7 +177,7 @@ class CommandList extends React.Component<CommandListProps, CommandListState>
 
     }
 
-    
+
 
     public async deleteFromList(id: string)
     {

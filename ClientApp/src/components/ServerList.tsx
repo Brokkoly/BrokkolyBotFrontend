@@ -1,4 +1,5 @@
 ﻿import * as React from "react";
+import { RouteComponentProps, RouteProps } from "react-router-dom";
 import { ServerCard } from "./ServerCard";
 import { ServerSettings } from "./ServerSettings";
 //import { Link, NavLink } from 'react-router-dom';
@@ -31,13 +32,21 @@ interface ServerListDataState
     loading: boolean;
 }
 
+interface WrapperProps extends RouteComponentProps<WrapperParams>
+{
+}
+interface WrapperParams
+{
+    token: string;
+
+}
 
 interface WrapperState
 {
     selectedId: string;
 }
 
-export class ServerListAndSettingsWrapper extends React.Component<{}, WrapperState>
+export class ServerListAndSettingsWrapper extends React.Component<WrapperProps, WrapperState>
 {
     constructor(props: any)
     {
@@ -57,10 +66,18 @@ export class ServerListAndSettingsWrapper extends React.Component<{}, WrapperSta
     public render()
     {
         return (
-            <div className="flexRow">
-                <ServerList selectedId={this.state.selectedId} selectIdFunction={this.serverClicked} />
-                {this.state.selectedId !== "0" ?
-                    <ServerSettings selectedId={this.state.selectedId} /> : undefined}
+            <div className='App'>
+                <header className='App-header'>
+                    <div className='flexColumn'>
+                        <div>
+                            <div className="flexRow">
+                                <ServerList selectedId={this.state.selectedId} selectIdFunction={this.serverClicked} />
+                                {this.state.selectedId !== "0" ?
+                                    <ServerSettings selectedId={this.state.selectedId} token={this.props.match.params.token} /> : undefined}
+                            </div>
+                        </div>
+                    </div>
+                </header>
             </div>);
     }
 }
@@ -126,32 +143,35 @@ export class ServerList extends React.Component<ServerListProperties, ServerList
     public renderServerTable(serverList: Server[])
     {
         return (
-            <table className="table">
-                <thead>
-                    <tr>
-                        <th />
-                        <th>Server Id</th>
-                        <th>Timeout Seconds</th>
-                        <th>Timeout Role Id</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {serverList.map(srv => (
-                        <tr key={srv.serverId}>
-                            <td />
-                            <td>{srv.serverId}</td>
-                            <td>{srv.timeoutSeconds}</td>
-                            <td>{srv.timeoutRoleId}</td>
+            <>
 
-                            {/*<td>
+                <table className="table">
+                    <thead>
+                        <tr>
+                            <th />
+                            <th>Server Id</th>
+                            <th>Timeout Seconds</th>
+                            <th>Timeout Role Id</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {serverList.map(srv => (
+                            <tr key={srv.serverId}>
+                                <td />
+                                <td>{srv.serverId}</td>
+                                <td>{srv.timeoutSeconds}</td>
+                                <td>{srv.timeoutRoleId}</td>
+
+                                {/*<td>
                             <a className="action" onClick={(id) => this.handleEdit(emp.employeeId)}>Edit</a>  |
                             <a className="action" onClick={(id) => this.handleDelete(emp.employeeId)}>Delete</a>
                         </td>
                         */}
-                        </tr>
-                    ))}
-                </tbody>
-            </table>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </>
         );
     }
 

@@ -1,10 +1,17 @@
 import * as React from 'react';
 import { ServerListAndSettingsWrapper } from './ServerList';
 import '../css/Home.css';
+import { RouteComponentProps, RouteProps, useParams } from 'react-router-dom';
 
-export class Home extends React.Component
+interface HomeProps extends RouteProps
+{
+    token: string;
+}
+
+export class Home extends React.Component<HomeProps, {}>
 {
     static displayName = Home.name;
+
 
     public render()
     {
@@ -12,7 +19,9 @@ export class Home extends React.Component
             <div className='App'>
                 <header className='App-header'>
                     <div className='flexColumn'>
-                        <ServerListAndSettingsWrapper />
+                        <div>
+                            <h3>You're not logged in. Please do so</h3>
+                        </div>
                     </div>
                 </header>
             </div>

@@ -1,22 +1,20 @@
-using Microsoft.AspNetCore.Http;
-using JavaScriptEngineSwitcher.V8;
-using JavaScriptEngineSwitcher.Extensions.MsDependencyInjection;
-using React.AspNet;
+using BrokkolyBotFrontend.GeneratedModels;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.HttpsPolicy;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.SpaServices.ReactDevelopmentServer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using BrokkolyBotFrontend.GeneratedModels;
-using System.Configuration;
+using React.AspNet;
 
 namespace BrokkolyBotFrontend
 {
     public class Startup
     {
+        readonly string MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
         public Startup(IConfiguration configuration)
         {
             Configuration = configuration;
@@ -38,10 +36,16 @@ namespace BrokkolyBotFrontend
                 configuration.RootPath = "ClientApp/build";
             });
 
-
-
             services.AddDbContext<DatabaseContext>(options =>
             options.UseNpgsql(Configuration.GetConnectionString("BrokkolyBotDatabase"))); ;
+
+            services.AddCors(options =>
+                options.AddPolicy(name: MyAllowSpecificOrigins, builder =>
+                    {
+                        builder.WithOrigins("http://discord.com", "https://discord.com");
+                    }
+            ));
+
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -57,6 +61,8 @@ namespace BrokkolyBotFrontend
                 // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
                 app.UseHsts();
             }
+
+
 
             app.UseHttpsRedirection();
 
@@ -85,11 +91,15 @@ namespace BrokkolyBotFrontend
 
             app.UseRouting();
 
+            app.UseCors(MyAllowSpecificOrigins);
+
+            app.UseAuthorization();
+
             app.UseEndpoints(endpoints =>
             {
-                endpoints.MapControllerRoute(
-                    name: "default",
-                    pattern: "{controller}/{action=Index}/{id?}");
+                //endpoints.MapControllerRoute(
+                //    name: "default",
+                //    pattern: "{controller}/{action=Index}/{id?}");
                 endpoints.MapControllerRoute(
                   name: "api",
                   pattern: "api/{controller}/{action}/{id?}");
@@ -98,37 +108,12 @@ namespace BrokkolyBotFrontend
             app.UseSpa(spa =>
             {
                 spa.Options.SourcePath = "ClientApp";
-
                 if (env.IsDevelopment())
                 {
                     spa.UseReactDevelopmentServer(npmScript: "start");
                 }
             });
 
-        }
-        // Retrieve a connection string by specifying the providerName.
-        // Assumes one connection string per provider in the config file.
-        static string GetConnectionStringByProvider(string providerName)
-        {
-            // Return null on failure.
-            string returnValue = null;
-
-            // Get the collection of connection strings.
-            ConnectionStringSettingsCollection settings =
-                ConfigurationManager.ConnectionStrings;
-
-            // Walk through the collection and return the first
-            // connection string matching the providerName.
-            if (settings != null)
-            {
-                foreach (ConnectionStringSettings cs in settings)
-                {
-                    if (cs.ProviderName == providerName)
-                        returnValue = cs.ConnectionString;
-                    break;
-                }
-            }
-            return returnValue;
         }
     }
 }
