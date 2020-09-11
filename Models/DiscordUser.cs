@@ -9,5 +9,8 @@ namespace BrokkolyBotFrontend.Models
     {
         public string State { get; set; }
         public string Code { get; set; }
+
+        public string AccessToken { get; set; }
+        public Dictionary<string,string> UserInfoPerServer { get; set; }
     }
 }

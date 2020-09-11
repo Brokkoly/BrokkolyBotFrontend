@@ -29,7 +29,7 @@ namespace BrokkolyBotFrontend.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Command>>> GetCommandsForServer(string serverId)
         {
-            return await _context.CommandList.Where(c=>c.ServerId==serverId).ToListAsync();
+            return await _context.CommandList.Where(c => c.ServerId == serverId).ToListAsync();
         }
 
 
@@ -53,6 +53,11 @@ namespace BrokkolyBotFrontend.Controllers
         [HttpPut("{id}")]
         public async Task<IActionResult> PutCommand(int id, Command command)
         {
+            if (!UserCanEditCommand(id, ""))
+            {
+                //TODO: get permissions
+                return BadRequest();
+            }
             if (id != command.Id || !CheckValidity(command))
             {
                 return BadRequest();
@@ -85,6 +90,11 @@ namespace BrokkolyBotFrontend.Controllers
         [HttpPost]
         public async Task<ActionResult<Command>> PostCommand(Command command)
         {
+            if (!UserCanEditCommand(command, ""))
+            {
+                //TODO: get permissions
+                return BadRequest();
+            }
             if (!CheckValidity(command))
             {
                 return BadRequest();
@@ -99,6 +109,11 @@ namespace BrokkolyBotFrontend.Controllers
         [HttpDelete]
         public async Task<ActionResult<Command>> DeleteCommand(int id)
         {
+            if (!UserCanEditCommand(id, ""))
+            {
+                //TODO: get permissions
+                return BadRequest();
+            }
             var command = await _context.CommandList.FindAsync(id);
             if (command == null)
             {
@@ -131,7 +146,25 @@ namespace BrokkolyBotFrontend.Controllers
                 //Todo: more verbose response types so that I can differentiate
                 return false;
             }
+            //TODO check that server is correct.
             return true;
+        }
+
+        private bool UserCanEditCommand(int commandId, string accessToken)
+        {
+            Command command = _context.CommandList.Find(commandId);
+            if (command == null)
+            {
+                return false;
+            }
+            else
+            {
+                return UserCanEditCommand(command, accessToken);
+            }
+        }
+        private bool UserCanEditCommand(Command command, string accessToken)
+        {
+            return DiscordController.UserHasServerPermissions(command.ServerId, accessToken);
         }
     }
 }

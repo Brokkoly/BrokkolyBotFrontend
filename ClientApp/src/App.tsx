@@ -16,7 +16,7 @@ export default class App extends Component
             <Layout>
                 <Switch>
                     <Route exact path='/' component={Home} />
-                    <Route path='/servers/:token' component={ServerListAndSettingsWrapper} />
+                    <Route path='/servers/:token?' component={ServerListAndSettingsWrapper} />
                 </Switch>
             </Layout>
         );

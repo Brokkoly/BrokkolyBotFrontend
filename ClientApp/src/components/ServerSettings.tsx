@@ -34,15 +34,14 @@ interface ServerSettingsState
 
 
 export class ServerSettings extends React.Component<ServerSettingsProps, ServerSettingsState>{
-
     public async componentWillMount()
     {
-        await fetch("https://discord.com/api/users/@me/guilds/",
+        await fetch("https://discord.com/api/users/@me/guilds/"+this.props.selectedId,
             {
                 method: "GET",
                 headers: {
                     'Content-Type': 'application/json',
-                    "Authorization": `Bearer [${this.props.token}]`,
+                    "Authorization": `Bearer ${this.props.token}`,
                 }
 
             }
@@ -236,6 +235,7 @@ class CommandList extends React.Component<CommandListProps, CommandListState>
         commands.push({ id: -1, serverId: this.props.serverId, commandString: "", entryValue: "" });
         this.setState({ commandList: commands, loading: false });
     }
+
 
     public render()
     {

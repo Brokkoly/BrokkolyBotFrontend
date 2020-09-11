@@ -9,6 +9,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using React.AspNet;
+using System;
 using System.Configuration;
 
 namespace BrokkolyBotFrontend
@@ -36,8 +37,15 @@ namespace BrokkolyBotFrontend
             {
                 configuration.RootPath = "ClientApp/build";
             });
-
-            string connectionString = ConfigurationManager.ConnectionStrings["BrokkolyBotDatabase"]?.ConnectionString;
+            string connectionString = "";
+            try
+            {
+                connectionString = ConfigurationManager.ConnectionStrings["BrokkolyBotDatabase"].ConnectionString;
+            }
+            catch (Exception e)
+            {
+                connectionString = Configuration.GetConnectionString("BrokkolyBotDatabase");
+            }
             if (string.IsNullOrEmpty(connectionString))
             {
                 connectionString = Configuration.GetConnectionString("BrokkolyBotDatabase");
@@ -64,7 +72,7 @@ namespace BrokkolyBotFrontend
             }
             else
             {
-                app.UseExceptionHandler("/Error");
+                //app.UseExceptionHandler("/Error");
                 // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
                 app.UseHsts();
             }
@@ -104,12 +112,13 @@ namespace BrokkolyBotFrontend
 
             app.UseEndpoints(endpoints =>
             {
-                //endpoints.MapControllerRoute(
-                //    name: "default",
-                //    pattern: "{controller}/{action=Index}/{id?}");
                 endpoints.MapControllerRoute(
-                  name: "api",
-                  pattern: "api/{controller}/{action}/{id?}");
+                      name: "api",
+                      pattern: "api/{controller}/{action}/{id?}");
+                endpoints.MapControllerRoute(
+                        name: "default",
+                        pattern: "{controller}/{action=Index}/{id?}");
+                endpoints.MapControllers();
             });
 
             app.UseSpa(spa =>

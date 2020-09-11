@@ -34,7 +34,7 @@ export class NavMenu extends Component<{}, { collapsed: boolean }>{
         else {
             baseUrl = "https://localhost:44320"
         }
-        const discordAuthLink = `https://discord.com/api/oauth2/authorize?client_id=730258515515408415&redirect_uri=${baseUrl}%2Fapi%2Fdiscord%2Fcallback&response_type=code&scope=guilds%20identify`;
+        const discordAuthLink = `https://discord.com/api/oauth2/authorize?client_id=730258515515408415&redirect_uri=${baseUrl}%2Fapi%2FDiscord%2FCallback&response_type=code&scope=guilds%20identify`;
         return (
             <header className="header" >
                 <Navbar className="navbar-expand-sm navbar-toggleable-sm ng-white border-bottom box-shadow mb-3" light >

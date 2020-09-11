@@ -63,6 +63,11 @@ namespace BrokkolyBotFrontend.Controllers
         [HttpPut("{id}")]
         public async Task<IActionResult> PutServer(string id, Server server)
         {
+            if (!DiscordController.UserHasServerPermissions(id, ""))
+            {
+                //TODO: get permissions
+                return BadRequest();
+            }
             if (id != server.ServerId)
             {
                 return BadRequest();
@@ -95,6 +100,11 @@ namespace BrokkolyBotFrontend.Controllers
         [HttpPost]
         public async Task<ActionResult<Server>> PostServer(Server server)
         {
+            if (!DiscordController.UserHasServerPermissions(server.ServerId, ""))
+            {
+                //TODO: get permissions
+                return BadRequest();
+            }
             _context.ServerList.Add(server);
             try
             {
@@ -119,6 +129,11 @@ namespace BrokkolyBotFrontend.Controllers
         [HttpDelete("{id}")]
         public async Task<ActionResult<Server>> DeleteServer(string id)
         {
+            if(!DiscordController.UserHasServerPermissions(id, ""))
+            {
+                //TODO: get permissions
+                return BadRequest();
+            }
             var server = await _context.ServerList.FindAsync(long.Parse(id));
             if (server == null)
             {

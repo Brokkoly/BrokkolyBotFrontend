@@ -13,7 +13,7 @@ using Microsoft.Extensions.Configuration;
 
 namespace BrokkolyBotFrontend.Controllers
 {
-    [Route("api/Discord/[action]")]
+    [Route("api/[controller]/[action]")]
     [ApiController]
     public class DiscordController : ControllerBase
     {
@@ -25,21 +25,18 @@ namespace BrokkolyBotFrontend.Controllers
         }
         // GET: api/Discord
         [HttpGet]
-        //public async Task<ActionResult<IEnumerable<DiscordUser>>> DiscordCallback(string state, string code)
         public ActionResult Callback(string code)
         {
-            DiscordUser user = new DiscordUser()
-            {
-                Code = code,
-            };
             string clientId = Environment.GetEnvironmentVariable("CLIENT_ID");
             string clientSecret = Environment.GetEnvironmentVariable("CLIENT_SECRET");
             string baseURL = Environment.GetEnvironmentVariable("BASE_URL");
-            string redirect_url = baseURL+"/api/discord/callback";
+            string redirect_url = baseURL + "/api/Discord/Callback";
 
-            HttpWebRequest webRequest = (HttpWebRequest)WebRequest.Create("https://discordapp.com/api/oauth2/token");
+            HttpWebRequest webRequest = (HttpWebRequest)WebRequest.Create(@"https://discord.com/api/oauth2/token");
             webRequest.Method = "POST";
-            string parameters = "client_id=" + clientId + "&client_secret=" + clientSecret + "&grant_type=authorization_code&code=" + code + "&redirect_uri=" + redirect_url + "";
+            webRequest.UserAgent = "Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1; SV1; .NET CLR 1.1.4322; .NET CLR 2.0.50727)";
+            webRequest.Referer = baseURL;
+            string parameters = "client_id=" + clientId + "&client_secret=" + clientSecret + "&grant_type=authorization_code&code=" + code + "&redirect_uri=" + redirect_url + "&scope=identify guilds";
             byte[] byteArray = Encoding.UTF8.GetBytes(parameters);
             webRequest.ContentType = "application/x-www-form-urlencoded";
             webRequest.ContentLength = byteArray.Length;
@@ -54,7 +51,17 @@ namespace BrokkolyBotFrontend.Controllers
 
             string tokenInfo = responseFromServer.Split(',')[0].Split(':')[1];
             string access_token = tokenInfo.Trim().Substring(1, tokenInfo.Length - 3);
-            return Redirect(baseURL+"/servers/"+access_token);
+            if (string.IsNullOrEmpty(access_token))
+            {
+                access_token = "0";
+            }
+            return Redirect(baseURL + "/servers/" + access_token);
+        }
+
+        public static bool UserHasServerPermissions(string serverId, string accessToken)
+        {
+            //TODO: 
+            return false;
         }
     }
 }
