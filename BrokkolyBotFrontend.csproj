@@ -58,7 +58,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<None Include="tsconfig.json" />
+	  <None Include="tsconfig.json" />
 	</ItemGroup>
 
 	<Target Name="DebugEnsureNodeEnv" BeforeTargets="Build" Condition=" '$(Configuration)' == 'Debug' And !Exists('$(SpaRoot)node_modules') ">
