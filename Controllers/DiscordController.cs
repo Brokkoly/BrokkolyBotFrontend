@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using BrokkolyBotFrontend.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json;
 using Microsoft.Extensions.Configuration;
 
 namespace BrokkolyBotFrontend.Controllers
@@ -34,9 +35,6 @@ namespace BrokkolyBotFrontend.Controllers
 
             //HttpWebRequest webRequest = (HttpWebRequest)WebRequest.Create(@"https://discord.com/api/oauth2/token");
             //webRequest.Method = "POST";
-            //webRequest.UserAgent = "Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1; SV1; .NET CLR 1.1.4322; .NET CLR 2.0.50727)";
-            //webRequest.Referer = baseURL;
-            //webRequest.AllowAutoRedirect = true;
             //string parameters = "client_id=" + clientId + "&client_secret=" + clientSecret + "&grant_type=authorization_code&code=" + code + "&redirect_uri=" + redirect_url + "";
             //byte[] byteArray = Encoding.UTF8.GetBytes(parameters);
             //webRequest.ContentType = "application/x-www-form-urlencoded";
@@ -67,10 +65,37 @@ namespace BrokkolyBotFrontend.Controllers
             //}
         }
 
+        public static List<Guild> GetServersForUser(string access_token)
+        {
+            HttpWebRequest webRequest = (HttpWebRequest)WebRequest.Create(@"https://discord.com/api/users/@me/guilds");
+            webRequest.Method = "Get";
+            webRequest.ContentType = "application/json";
+            webRequest.Headers.Add("Authorization", "Bearer " + access_token);
+
+            var webResponse = webRequest.GetResponse();
+            var responseStream = webResponse.GetResponseStream();
+            if (responseStream == null) return null;
+
+            var streamReader = new StreamReader(responseStream, Encoding.Default);
+            var json = streamReader.ReadToEnd();
+            List<Guild> guilds = JsonConvert.DeserializeObject<List<Guild>>(json);
+            return guilds;
+        }
+
         public static bool UserHasServerPermissions(string serverId, string accessToken)
         {
             //TODO: 
             return false;
         }
+    }
+
+    public class Guild
+    {
+        public string id { get; set; }
+        public string name { get; set; }
+        public string icon { get; set; }
+        public bool owner { get; set; }
+        public int permissions { get; set; }
+        public string permissions_new { get; set; }
     }
 }

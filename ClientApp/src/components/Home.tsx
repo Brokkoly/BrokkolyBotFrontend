@@ -1,11 +1,11 @@
 import * as React from 'react';
 import { ServerListAndSettingsWrapper } from './ServerList';
 import '../css/Home.css';
-import { RouteComponentProps, RouteProps, useParams } from 'react-router-dom';
+import { User } from '../backend/User';
 
-interface HomeProps extends RouteProps
+interface HomeProps
 {
-    token: string;
+    user: User | undefined;
 }
 
 export class Home extends React.Component<HomeProps, {}>
@@ -20,7 +20,11 @@ export class Home extends React.Component<HomeProps, {}>
                 <header className='App-header'>
                     <div className='flexColumn'>
                         <div>
-                            <h3>You're not logged in. Please do so</h3>
+                            {this.props.user !== undefined ?
+                                <ServerListAndSettingsWrapper user={this.props.user} /> :
+                                <h3>You're not logged in. Please do so</h3>
+
+                            }
                         </div>
                     </div>
                 </header>

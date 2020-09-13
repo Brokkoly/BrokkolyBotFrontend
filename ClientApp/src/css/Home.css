@@ -7,39 +7,44 @@
     --discord-black: #000000;
 }
 
-.discord-blurple-text{
+.discord-blurple-text {
     color: var(--discord-blurple);
 }
 
 .discord-fullwhite-text {
     color: var(--discord-fullwhite);
 }
+
 .discord-greyple-text {
     color: var(--discord-greyple);
 }
+
 .discord-dark-text {
     color: var(--discord-dark);
 }
+
 .discord-notquiteblack-text {
     color: var(--discord-notquiteblack);
 }
+
 .discord-black-text {
     color: var(--discord-black);
 }
 
-.container-custom{
+.container-custom {
     padding-left: 0px;
     margin-left: 0px;
 }
 
-.bot-link{
+.bot-link {
     align-self: center;
 }
 
-.command-table-header{
+.command-table-header {
     font-size: medium;
     color: var(--discord-fullwhite);
 }
+
 .command-table-row {
     font-size: small;
     color: var(--discord-fullwhite);
@@ -59,7 +64,7 @@
         background-color: var(--discord-greyple);
     }
 
-.allBackground{
+.allBackground {
     background-color: var(--discord-dark);
 }
 
@@ -112,7 +117,7 @@
     color: var(--discord-greyple);
 }
 
-.serverDiv:hover .serverName{
+.serverDiv:hover .serverName {
     color: var(--discord-dark);
 }
 
@@ -160,6 +165,13 @@
 .headerImg {
     height: 64px;
     width: 64px;
+    object-fit: cover;
+    border-radius: 50%;
+}
+
+.userImg {
+    height: 32px;
+    width: 32px;
     object-fit: cover;
     border-radius: 50%;
 }

@@ -2,6 +2,8 @@
 import { RouteComponentProps, RouteProps } from "react-router-dom";
 import { ServerCard } from "./ServerCard";
 import { ServerSettings } from "./ServerSettings";
+import { Servers } from "../backend/Servers";
+import { User } from "../backend/User";
 //import { Link, NavLink } from 'react-router-dom';
 
 export class Server
@@ -23,6 +25,7 @@ interface ServerListProperties
 {
     selectIdFunction: Function;
     selectedId: string;
+    user: User;
 }
 
 interface ServerListDataState
@@ -32,12 +35,9 @@ interface ServerListDataState
     loading: boolean;
 }
 
-interface WrapperProps extends RouteComponentProps<WrapperParams>
+interface WrapperProps
 {
-}
-interface WrapperParams
-{
-    token: string;
+    user: User;
 
 }
 
@@ -71,9 +71,9 @@ export class ServerListAndSettingsWrapper extends React.Component<WrapperProps, 
                     <div className='flexColumn'>
                         <div>
                             <div className="flexRow">
-                                <ServerList selectedId={this.state.selectedId} selectIdFunction={this.serverClicked} />
+                                <ServerList selectedId={this.state.selectedId} selectIdFunction={this.serverClicked} user={this.props.user} />
                                 {this.state.selectedId !== "0" ?
-                                    <ServerSettings selectedId={this.state.selectedId} token={this.props.match.params.token} /> : undefined}
+                                    <ServerSettings selectedId={this.state.selectedId} token={this.props.user.accessToken} /> : undefined}
                             </div>
                         </div>
                     </div>
@@ -109,8 +109,8 @@ export class ServerList extends React.Component<ServerListProperties, ServerList
     {
         await this.getRestrictedCommands();
         const result = await fetch(
-            //"https://localhost:44320/api/Servers/GetServerList"
-            "/api/Servers/GetServerList"
+            //"https://localhost:44320/api/Servers/GetServerList?id=${}"
+            `/api/Servers/GetServerListForUser?token=${this.props.user.accessToken}`
         );
         const text = await result.text();
         const servers = await JSON.parse(text.replace(/("[^"]*"\s*:\s*)(\d{16,})/g, '$1"$2"'));
@@ -119,10 +119,8 @@ export class ServerList extends React.Component<ServerListProperties, ServerList
 
     public async getRestrictedCommands()
     {
-        let fetchUrl = '/api/RestrictedCommands/GetRestrictedCommands';
-        await fetch(fetchUrl).then(
-            response => response.json()
-        ).then(data => this.setState(
+        //let fetchUrl = '/api/RestrictedCommands/GetRestrictedCommands';
+        await Servers.getRestrictedCommands().then(data => this.setState(
             { restrictedCommands: data.map((restrictedCommand: RestrictedCommand) => (restrictedCommand.command)) }));
     }
 

@@ -2,8 +2,9 @@ import React, { Component } from 'react';
 import { Container } from 'reactstrap';
 import { NavMenu } from './NavMenu';
 import "../css/Home.css";
+import { User } from '../backend/User';
 
-export class Layout extends Component
+export class Layout extends Component<{ user: User | undefined }, {}>
 {
     static displayName = Layout.name;
 
@@ -11,7 +12,7 @@ export class Layout extends Component
     {
         return (
             <div className="allBackground">
-                <NavMenu />
+                <NavMenu user={this.props.user} />
                 <Container className="container-custom">
                     {this.props.children}
                 </Container>

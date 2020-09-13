@@ -115,6 +115,9 @@ namespace BrokkolyBotFrontend
                 endpoints.MapControllerRoute(
                       name: "discord",
                       pattern: "api/Discord/Callback/{code?}");
+                //endpoints.MapControllerRoute(
+                //    name: "getServersForUser",
+                //    pattern: "api/Servers/GetServerListForUser/{token?}");
                 endpoints.MapControllerRoute(
                       name: "api",
                       pattern: "api/{controller}/{action}/{id?}");

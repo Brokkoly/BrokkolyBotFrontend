@@ -21,6 +21,7 @@ interface CommandRowState
 
 export class CommandRow extends React.Component<CommandRowProps, CommandRowState>
 {
+    //TODO: Use hooks instead of state stuff.
     constructor(props: any)
     {
         super(props);

@@ -28,6 +28,15 @@ namespace BrokkolyBotFrontend.Controllers
             return await _context.ServerList.ToListAsync();
         }
 
+        //[HttpGet("{token}")]
+        [HttpGet]
+        public async Task<ActionResult<IEnumerable<Server>>> GetServerListForUser(string token)
+        {
+            List<Guild> guilds = DiscordController.GetServersForUser(token);
+            List<string> guildIds = guilds.Select(g => g.id).ToList();
+            return await _context.ServerList.Where(srv => guildIds.Contains(srv.ServerId)).ToListAsync();
+        }
+
         [HttpGet]
         //[Route("api/Servers/Index")]
         public ActionResult<IEnumerable<Server>> Index()
@@ -129,7 +138,7 @@ namespace BrokkolyBotFrontend.Controllers
         [HttpDelete("{id}")]
         public async Task<ActionResult<Server>> DeleteServer(string id)
         {
-            if(!DiscordController.UserHasServerPermissions(id, ""))
+            if (!DiscordController.UserHasServerPermissions(id, ""))
             {
                 //TODO: get permissions
                 return BadRequest();
