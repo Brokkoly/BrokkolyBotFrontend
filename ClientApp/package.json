@@ -2,6 +2,7 @@
   "name": "brokkolybotfrontend",
   "version": "0.1.0",
   "private": true,
+  "proxy": "https://localhost:44320",
   "dependencies": {
     "@azure/app-configuration": "^1.1.0",
     "@types/bootstrap": "^4.5.0",

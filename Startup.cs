@@ -57,7 +57,7 @@ namespace BrokkolyBotFrontend
             services.AddCors(options =>
                 options.AddPolicy(name: MyAllowSpecificOrigins, builder =>
                     {
-                        builder.WithOrigins("http://discord.com", "https://discord.com");
+                        builder.WithOrigins("http://discord.com", "https://discord.com", "https://localhost:44320", "https://brokkolybot.azurewebsites.net");
                     }
             ));
 
@@ -112,6 +112,9 @@ namespace BrokkolyBotFrontend
 
             app.UseEndpoints(endpoints =>
             {
+                endpoints.MapControllerRoute(
+                      name: "discord",
+                      pattern: "api/Discord/Callback/{code?}");
                 endpoints.MapControllerRoute(
                       name: "api",
                       pattern: "api/{controller}/{action}/{id?}");
