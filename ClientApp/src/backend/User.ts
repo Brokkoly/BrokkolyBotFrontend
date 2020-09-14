@@ -1,4 +1,5 @@
 ﻿import { access } from "fs";
+import { IServer } from "./Servers";
 
 export interface IUser
 {
@@ -23,15 +24,15 @@ export interface IGuild
 
 export class User
 {
-    public guilds: IGuild[] = [];
+    //public guilds: IGuild[] = [];
     public displayName: string = "Not Logged In";
     public avatarUrl: string = "";
     public accessToken: string = "";
 
-    constructor(accessToken: string, guilds: IGuild[], displayName: string, avatarUrl: string)
+    constructor(accessToken: string, displayName: string, avatarUrl: string)
     {
         this.accessToken = accessToken;
-        this.guilds = guilds;
+        //this.guilds = guilds;
         this.displayName = displayName;
         this.avatarUrl = avatarUrl;
         //const userInfo = this.getUserInfo(access_token);
@@ -40,11 +41,11 @@ export class User
     {
         if (token) {
             const user = await User.getUserInfo(token);
-            const userGuilds = await User.getUserGuilds(token);
-            return new User(token, userGuilds, User.getDisplayName(user), User.getAvatarUrl(user))
+            //const userGuilds = await User.getUserGuilds(token);
+            return new User(token, User.getDisplayName(user), User.getAvatarUrl(user))
         }
         else {
-            return new User("", [], "", "");
+            return new User("", "", "");
         }
     }
     public static getDisplayName(user: IUser): string
@@ -81,22 +82,29 @@ export class User
         //});
     }
 
-    public static async getUserGuilds(token: string)
-    {
-        const response = fetch(`https://discord.com/api/users/@me/guilds`,
-            {
-                method: 'GET',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'content-type': 'application/json'
-                },
+    //public static async getUserGuilds(token: string)
+    //{
+    //    const response = fetch(`https://discord.com/api/users/@me/guilds`,
+    //        {
+    //            method: 'GET',
+    //            headers: {
+    //                'Authorization': `Bearer ${token}`,
+    //                'content-type': 'application/json'
+    //            },
 
-            }
-        ).then(res =>
-        {
-            return res.json();
-        });
-        return response;
-    }
+    //        }
+    //    ).then(res =>
+    //    {
+    //        return res.json();
+    //    });
+    //    return response;
+    //}
+
+
+
 }
+
+
+
+
 

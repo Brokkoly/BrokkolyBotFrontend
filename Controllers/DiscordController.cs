@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace BrokkolyBotFrontend.Controllers
 {
@@ -19,10 +20,11 @@ namespace BrokkolyBotFrontend.Controllers
     public class DiscordController : Controller
     {
         private readonly IConfiguration _configuration;
-
-        public DiscordController(IConfiguration configuration)
+        private IMemoryCache _cache;
+        public DiscordController(IConfiguration configuration, IMemoryCache memoryCache)
         {
             _configuration = configuration;
+            _cache = memoryCache;
         }
         // GET: api/Discord
         [HttpGet]
@@ -65,26 +67,65 @@ namespace BrokkolyBotFrontend.Controllers
             //}
         }
 
+        //public List<Guild> TryGetGuildsFromCache(string token)
+        //{
+        //    List<Guild> cacheGuilds;
+        //    if (!_cache.TryGetValue(CacheKeys.Guilds + token, out cacheGuilds))
+        //    {
+        //        cacheGuilds = GetServersForUser(token);
+
+        //        var cacheEntryOptions = new MemoryCacheEntryOptions().SetSlidingExpiration(TimeSpan.FromSeconds(60));
+        //        _cache.Set(CacheKeys.Guilds + token, cacheGuilds, cacheEntryOptions);
+        //    }
+        //    return cacheGuilds;
+        //}
+
         public static List<Guild> GetServersForUser(string access_token)
         {
             HttpWebRequest webRequest = (HttpWebRequest)WebRequest.Create(@"https://discord.com/api/users/@me/guilds");
             webRequest.Method = "Get";
             webRequest.ContentType = "application/json";
             webRequest.Headers.Add("Authorization", "Bearer " + access_token);
-
+            //WebResponse webResponse;
+            //bool notDone = true;
+            //do
+            //{
+            //try
+            //{
             var webResponse = webRequest.GetResponse();
+            //notDone = false;
             var responseStream = webResponse.GetResponseStream();
             if (responseStream == null) return null;
-
             var streamReader = new StreamReader(responseStream, Encoding.Default);
             var json = streamReader.ReadToEnd();
             List<Guild> guilds = JsonConvert.DeserializeObject<List<Guild>>(json);
             return guilds;
+            //}
+            //catch (WebException e)
+            //{
+            //    return null;
+            //}
+            //} while (notDone);
+            //var responseStream = webResponse.GetResponseStream();
+            //if (responseStream == null) return null;
+
+            //var streamReader = new StreamReader(responseStream, Encoding.Default);
+            //var json = streamReader.ReadToEnd();
+            //List<Guild> guilds = JsonConvert.DeserializeObject<List<Guild>>(json);
+            //return null;
         }
 
+        //public bool TryGetUserHasServerPermissions(string serverId, string accessToken)
+        //{
+
+        //}
         public static bool UserHasServerPermissions(string serverId, string accessToken)
         {
-            //TODO: 
+            List<Guild> guilds = GetServersForUser(accessToken);
+            return guilds.Find(g =>
+            {
+                return (g.id == serverId) && (g.permissions & 0x00000020) == 0x00000020;
+            }) != null;
             return false;
         }
     }
@@ -97,5 +138,9 @@ namespace BrokkolyBotFrontend.Controllers
         public bool owner { get; set; }
         public int permissions { get; set; }
         public string permissions_new { get; set; }
+        public string? timeout_role_id { get; set; }
+        public int? timeout_seconds { get; set; }
+
+        public bool canManageServer { get; set; }
     }
 }

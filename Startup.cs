@@ -60,6 +60,8 @@ namespace BrokkolyBotFrontend
                         builder.WithOrigins("http://discord.com", "https://discord.com", "https://localhost:44320", "https://brokkolybot.azurewebsites.net");
                     }
             ));
+            services.AddMemoryCache();
+            services.AddMvc().AddNewtonsoftJson();
 
         }
 

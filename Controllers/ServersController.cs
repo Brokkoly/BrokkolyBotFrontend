@@ -2,6 +2,8 @@
 using BrokkolyBotFrontend.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -13,12 +15,14 @@ namespace BrokkolyBotFrontend.Controllers
     public class ServersController : Controller
     {
         private readonly DatabaseContext _context;
+        private IMemoryCache _cache;
 
         ServerDataAccessLayer objserver = new ServerDataAccessLayer();
 
-        public ServersController(DatabaseContext context)
+        public ServersController(DatabaseContext context, IMemoryCache memoryCache)
         {
             _context = context;
+            _cache = memoryCache;
         }
 
         // GET: api/Servers
@@ -30,26 +34,73 @@ namespace BrokkolyBotFrontend.Controllers
 
         //[HttpGet("{token}")]
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Server>>> GetServerListForUser(string token)
+        public ActionResult<IEnumerable<Guild>> GetServerListForUser(string token)
         {
-            List<Guild> guilds = DiscordController.GetServersForUser(token);
-            List<string> guildIds = guilds.Select(g => g.id).ToList();
-            return await _context.ServerList.Where(srv => guildIds.Contains(srv.ServerId)).ToListAsync();
+
+            List<Guild> guilds = TryGetBotGuildsFromCache(token);
+            if (guilds == null)
+            {
+                //TODO: return more details or just wait.
+                return BadRequest();
+            }
+            else
+            {
+                return guilds;
+            }
+            ////List<string> guildIds = guilds.Select(g => g.id).ToList();
+            //List<Server> servers = _context.ServerList.ToList();
+            //List<string> serverIds = servers.Select(s => s.ServerId).ToList();
+            ////TODO: optimize the search based on length of guilds vs length of servers.
+            //List<Guild> botGuilds = guilds.Where(g =>
+            //{
+            //    int index = serverIds.IndexOf(g.id);
+            //    if (index >= 0)
+            //    {
+            //        g.timeout_role_id = servers[index].TimeoutRoleId.ToString();
+            //        g.timeout_seconds = servers[index].TimeoutSeconds;
+            //        g.canManageServer = (g.permissions & 0x00000020) == 0x00000020;
+            //        return true;
+            //    }
+            //    return false;
+            //}
+            //).ToList();
+            //return botGuilds;
         }
 
-        [HttpGet]
-        //[Route("api/Servers/Index")]
-        public ActionResult<IEnumerable<Server>> Index()
+        public List<Guild> TryGetBotGuildsFromCache(string token)
         {
-            var servers = new List<Server> { new Server
+            List<Guild> cacheGuilds;
+            if (!_cache.TryGetValue(CacheKeys.BotGuilds + token, out cacheGuilds))
             {
-                ServerId="4206969",
-                TimeoutSeconds=5,
-                TimeoutRoleId = 6942069
-            } };
-            return Ok(servers);
-            //IEnumerable<Server> servers = objserver.GetAllServers();
-            //return servers;
+                List<Guild> allGuilds = DiscordController.GetServersForUser(token);
+                List<Server> servers = _context.ServerList.ToList();
+                List<string> serverIds = servers.Select(s => s.ServerId).ToList();
+                //TODO: optimize the search based on length of guilds vs length of servers.
+                cacheGuilds = allGuilds.Where(g =>
+                {
+                    int index = serverIds.IndexOf(g.id);
+                    if (index >= 0)
+                    {
+                        g.timeout_role_id = servers[index].TimeoutRoleId.ToString();
+                        g.timeout_seconds = servers[index].TimeoutSeconds;
+                        g.canManageServer = (g.permissions & 0x00000020) == 0x00000020;
+                        return true;
+                    }
+                    return false;
+                }
+                ).ToList();
+
+                var cacheEntryOptions = new MemoryCacheEntryOptions().SetSlidingExpiration(TimeSpan.FromSeconds(60));
+                _cache.Set(CacheKeys.BotGuilds + token, cacheGuilds, cacheEntryOptions);
+            }
+            return cacheGuilds;
+        }
+
+        public bool UserHasServerPermissions(string serverId, string accessToken)
+        {
+            List<Guild> guilds = TryGetBotGuildsFromCache(accessToken);
+            return guilds.Find(g => (g.id == serverId) && g.canManageServer) != null;
+
         }
 
         // GET: api/Servers/5

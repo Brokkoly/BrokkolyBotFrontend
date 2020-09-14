@@ -32,7 +32,7 @@ export class ServerCard extends React.Component<ServerProps, {}> {
                     src={this.props.iconUrl}
                     alt={"Server Image for " + this.props.name}
                 />
-                <span className={"serverName "+(this.props.selected ? "serverNameSelected" : "")}>{this.props.name}</span>
+                <span className={"serverName " + (this.props.selected ? "serverNameSelected" : "")}>{this.props.name}</span>
                 <span
                     className={"selectedIconDiv " + (this.props.selected ? "" : "nodisp")}
                 >

@@ -1,29 +1,15 @@
-﻿import * as React from 'react';
+﻿import React, { useEffect, useState } from 'react';
+import { Commands, ICommand } from '../backend/Commands';
+import { IServer } from '../backend/Servers';
 import { CommandRow } from './CommandRow';
-
-interface Server
-{
-    id: string;
-    iconUrl?: string;
-    name?: string;
-    timeoutSeconds?: number;
-    timeoutRoleId?: number;
-}
-
-interface Command
-{
-    id: number;
-    serverId: string;
-    commandString: string;
-    entryValue: string;
-}
-
+import { LoadingMessage } from './ServerList';
 
 
 interface ServerSettingsProps
 {
-    selectedId: string;
     token: string;
+    server: IServer;
+    restrictedCommands: string[];
 }
 
 interface ServerSettingsState
@@ -33,29 +19,120 @@ interface ServerSettingsState
 
 
 
-export class ServerSettings extends React.Component<ServerSettingsProps, ServerSettingsState>{
-    public async componentWillMount()
-    {
-        await fetch("https://discord.com/api/users/@me/guilds/"+this.props.selectedId,
-            {
-                method: "GET",
-                headers: {
-                    'Content-Type': 'application/json',
-                    "Authorization": `Bearer ${this.props.token}`,
-                }
 
-            }
-        ).then(
-            response => console.log(response.text())
-        );
-    }
-    public render()
+export const ServerSettings: React.FunctionComponent<ServerSettingsProps> = ({ server, token, restrictedCommands }) =>
+{
+    const [commandList, setCommandList] = useState<ICommand[]>([]);
+    const [oldCommands, setOldCommands] = useState<Map<number, ICommand>>(new Map<number, ICommand>());
+    const [timeoutSeconds, setTimeoutSeconds] = useState(5);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() =>
     {
-        return (<div>
-            <CommandList serverId={this.props.selectedId} />
-        </div>);
+        async function fetchData(serverId: string)
+        {
+            setCommandList(await Commands.fetchCommands(serverId));
+            setLoading(false);
+        }
+        fetchData(server.serverId);
+    }, [server.serverId])
+
+    function handleCommandUpdate(index: number, newCommandString: string | undefined, newEntryValue: string | undefined)
+    {
+        if (!oldCommands.has(commandList[index].id)) {
+            setOldCommands(oldCommands =>
+            {
+                oldCommands.set(commandList[index].id, commandList[index]);
+                return oldCommands;
+            });
+        }
+        setCommandList(commandList =>
+        {
+            let newList = [...commandList]
+            if (newCommandString) {
+                newList[index].commandString = newCommandString;
+            }
+            else if (newEntryValue) {
+                newList[index].entryValue = newEntryValue;
+            }
+
+            return newList;
+        });
     }
+
+    function acceptCommand(index: number, editSuccessCallback: Function)
+    {
+        //TODO: Validation, return false if it is not accepted
+        if (doesNotHaveRestrictedCommand(index) && isNotDuplicatedInList(index)) {
+            //TODO: Save to server
+            editSuccessCallback(Commands.saveCommandEdit(token, commandList[index]));
+        }
+    }
+
+    function cancelCommand(index: number)
+    {
+
+    }
+
+    function isNotDuplicatedInList(index: number)
+    {
+        //TODO: abstract these away
+        let testCommand = commandList[index];
+        for (let i = 0; i < commandList.length; i++) {
+            if (i === index) {
+                continue;
+            }
+            if ((testCommand.commandString === commandList[i].commandString) && (testCommand.entryValue === commandList[i].entryValue)) {
+                //TODO: more verbose
+                return false;
+            }
+        }
+        return true;
+    }
+    function doesNotHaveRestrictedCommand(index: number)
+    {
+        return !restrictedCommands.find(cmdStr => cmdStr === commandList[index].commandString);
+    }
+
+    return (
+        <LoadingMessage loading={loading}>
+            <CommandList commands={commandList} updateCommand={handleCommandUpdate} acceptCommand={acceptCommand} cancelCommand={cancelCommand} userCanEdit={server.userCanManage} />
+        </LoadingMessage>
+    );
 }
+
+
+interface CommandList2Props
+{
+    commands: ICommand[];
+    updateCommand: Function;
+    acceptCommand: Function;
+    cancelCommand: Function;
+    userCanEdit: boolean;
+}
+
+export const CommandList: React.FunctionComponent<CommandList2Props> = ({ commands, updateCommand, acceptCommand, cancelCommand, userCanEdit }) =>
+{
+    return (
+        <div>
+            <ul className="commandList">
+                {
+                    commands.map((cmd, index) => (
+                        <CommandRow key={cmd.id}
+                            index={index}
+                            command={cmd}
+                            handleUpdateCallback={updateCommand}
+                            handleAcceptCallback={acceptCommand}
+                            handleCancelCallback={cancelCommand}
+                            userCanEdit={userCanEdit}
+                        />
+                    ))
+                }
+            </ul>
+        </div>
+    );
+}
+
 
 class TimeoutSecondsForm extends React.Component
 {
@@ -68,7 +145,7 @@ interface CommandListProps
 }
 interface CommandListState
 {
-    commandList: Command[];
+    commandList: ICommand[];
     loading: boolean;
     restrictedCommands: string[];
 }
@@ -76,7 +153,7 @@ interface CommandListState
 
 
 
-class CommandList extends React.Component<CommandListProps, CommandListState>
+class CommandList2 extends React.Component<CommandListProps, CommandListState>
 {
     constructor(props: any)
     {
@@ -91,14 +168,14 @@ class CommandList extends React.Component<CommandListProps, CommandListState>
     public async componentWillMount()
     {
         if (this.props.serverId) {
-            await this.fetchCommands(this.props.serverId);
+            await Commands.fetchCommands(this.props.serverId);
         }
     }
 
     public async componentDidUpdate(prevProps: CommandListProps)
     {
         if (this.props.serverId !== prevProps.serverId) {
-            this.fetchCommands(this.props.serverId);
+            Commands.fetchCommands(this.props.serverId);
         }
     }
 
@@ -124,7 +201,7 @@ class CommandList extends React.Component<CommandListProps, CommandListState>
 
     }
 
-    public async putEdit(command: Command)
+    public async putEdit(command: ICommand)
     {
         let fetchUrl = '/api/Commands/PutCommand/' + command.id;
         fetch(
@@ -148,7 +225,7 @@ class CommandList extends React.Component<CommandListProps, CommandListState>
 
     }
 
-    public async postCommand(command: Command): Promise<number>
+    public async postCommand(command: ICommand): Promise<number>
     {
         const commandJson = JSON.parse(JSON.stringify(command));
         delete commandJson['id'];
@@ -223,18 +300,18 @@ class CommandList extends React.Component<CommandListProps, CommandListState>
         }
     }
 
-    private async fetchCommands(serverId: string)
-    {
-        if (!this.state.loading) {
-            this.setState({ commandList: [], loading: true });
-        }
-        let fetchUrl = '/api/Commands/GetCommandsForServer?serverId=' + serverId;
-        const result = await fetch(fetchUrl);
-        const text = await result.text();
-        var commands = await JSON.parse(text.replace(/("[^"]*"\s*:\s*)(\d{16,})/g, '$1"$2"'));
-        commands.push({ id: -1, serverId: this.props.serverId, commandString: "", entryValue: "" });
-        this.setState({ commandList: commands, loading: false });
-    }
+    //private async fetchCommands(serverId: string)
+    //{
+    //    if (!this.state.loading) {
+    //        this.setState({ commandList: [], loading: true });
+    //    }
+    //    let fetchUrl = '/api/Commands/GetCommandsForServer?serverId=' + serverId;
+    //    const result = await fetch(fetchUrl);
+    //    const text = await result.text();
+    //    var commands = await JSON.parse(text.replace(/("[^"]*"\s*:\s*)(\d{16,})/g, '$1"$2"'));
+    //    commands.push({ id: -1, serverId: this.props.serverId, commandString: "", entryValue: "" });
+    //    this.setState({ commandList: commands, loading: false });
+    //}
 
 
     public render()
@@ -246,35 +323,36 @@ class CommandList extends React.Component<CommandListProps, CommandListState>
             </em>
             </p>
         ) : (
-                this.renderCommandList(this.state.commandList)
+                //this.renderCommandList(this.state.commandList)
+                null
             );
 
         return <div>{contents} </div>;
     }
 
-    public renderCommandList(commandList: Command[])
-    {
-        return (
-            <div>
-                <ul className="commandList">
-                    {
-                        commandList.map((cmd, index) => (
-                            <CommandRow key={cmd.id}
-                                index={index}
-                                id={cmd.id}
-                                command={cmd.commandString}
-                                serverId={cmd.serverId}
-                                value={cmd.entryValue}
-                                deleteFromListCallback={this.deleteFromList}
-                                acceptEditCallback={this.saveEdit}
-                                acceptNewCallback={this.postCommand}
-                            />
-                        ))
-                    }
-                </ul>
-            </div>
-        );
-    }
+    //public renderCommandList(commandList: ICommand[])
+    //{
+    //    return (
+    //        <div>
+    //            <ul className="commandList">
+    //                {
+    //                    commandList.map((cmd, index) => (
+    //                        <CommandRow key={cmd.id}
+    //                            index={index}
+    //                            id={cmd.id}
+    //                            command={cmd.commandString}
+    //                            serverId={cmd.serverId}
+    //                            value={cmd.entryValue}
+    //                            deleteFromListCallback={this.deleteFromList}
+    //                            acceptEditCallback={this.saveEdit}
+    //                            acceptNewCallback={this.postCommand}
+    //                        />
+    //                    ))
+    //                }
+    //            </ul>
+    //        </div>
+    //    );
+    //}
 }
 
 

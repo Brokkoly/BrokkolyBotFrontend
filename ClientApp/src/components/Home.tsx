@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { ServerListAndSettingsWrapper } from './ServerList';
+import { ServerList } from './ServerList';
 import '../css/Home.css';
 import { User } from '../backend/User';
 
@@ -21,7 +21,7 @@ export class Home extends React.Component<HomeProps, {}>
                     <div className='flexColumn'>
                         <div>
                             {this.props.user !== undefined ?
-                                <ServerListAndSettingsWrapper user={this.props.user} /> :
+                                <ServerList user={this.props.user} /> :
                                 <h3>You're not logged in. Please do so</h3>
 
                             }
