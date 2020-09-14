@@ -12,14 +12,6 @@ interface ServerSettingsProps
     restrictedCommands: string[];
 }
 
-interface ServerSettingsState
-{
-
-}
-
-
-
-
 export const ServerSettings: React.FunctionComponent<ServerSettingsProps> = ({ server, token, restrictedCommands }) =>
 {
     const [commandList, setCommandList] = useState<ICommand[]>([]);
@@ -62,16 +54,14 @@ export const ServerSettings: React.FunctionComponent<ServerSettingsProps> = ({ s
 
     function acceptCommand(index: number, editSuccessCallback: Function)
     {
-        //TODO: Validation, return false if it is not accepted
         if (doesNotHaveRestrictedCommand(index) && isNotDuplicatedInList(index)) {
-            //TODO: Save to server
             editSuccessCallback(Commands.saveCommandEdit(token, commandList[index]));
         }
     }
 
     function cancelCommand(index: number)
     {
-
+        //TODO: cancel commmand
     }
 
     function isNotDuplicatedInList(index: number)
@@ -100,7 +90,6 @@ export const ServerSettings: React.FunctionComponent<ServerSettingsProps> = ({ s
         </LoadingMessage>
     );
 }
-
 
 interface CommandList2Props
 {
@@ -150,9 +139,6 @@ interface CommandListState
     restrictedCommands: string[];
 }
 
-
-
-
 class CommandList2 extends React.Component<CommandListProps, CommandListState>
 {
     constructor(props: any)
@@ -181,8 +167,8 @@ class CommandList2 extends React.Component<CommandListProps, CommandListState>
 
     public async saveEdit(index: number, command: string, value: string)
     {
+        //TODO: check here for handling of post/put
         var listCopy = [...this.state.commandList];
-        //TODO: Validation
         listCopy[index].commandString = command;
         listCopy[index].entryValue = value;
         if (this.state.commandList[index].id < 0) {
@@ -249,11 +235,7 @@ class CommandList2 extends React.Component<CommandListProps, CommandListState>
         else {
             return -1;
         }
-
-
     }
-
-
 
     public async deleteFromList(id: string)
     {

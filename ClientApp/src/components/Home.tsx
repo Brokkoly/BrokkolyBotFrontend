@@ -23,7 +23,6 @@ export class Home extends React.Component<HomeProps, {}>
                             {this.props.user !== undefined ?
                                 <ServerList user={this.props.user} /> :
                                 <h3>You're not logged in. Please do so</h3>
-
                             }
                         </div>
                     </div>

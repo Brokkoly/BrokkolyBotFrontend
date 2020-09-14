@@ -47,24 +47,6 @@ namespace BrokkolyBotFrontend.Controllers
             {
                 return guilds;
             }
-            ////List<string> guildIds = guilds.Select(g => g.id).ToList();
-            //List<Server> servers = _context.ServerList.ToList();
-            //List<string> serverIds = servers.Select(s => s.ServerId).ToList();
-            ////TODO: optimize the search based on length of guilds vs length of servers.
-            //List<Guild> botGuilds = guilds.Where(g =>
-            //{
-            //    int index = serverIds.IndexOf(g.id);
-            //    if (index >= 0)
-            //    {
-            //        g.timeout_role_id = servers[index].TimeoutRoleId.ToString();
-            //        g.timeout_seconds = servers[index].TimeoutSeconds;
-            //        g.canManageServer = (g.permissions & 0x00000020) == 0x00000020;
-            //        return true;
-            //    }
-            //    return false;
-            //}
-            //).ToList();
-            //return botGuilds;
         }
 
         public List<Guild> TryGetBotGuildsFromCache(string token)
@@ -157,7 +139,6 @@ namespace BrokkolyBotFrontend.Controllers
         private bool ServerExists(string id)
         {
             return _context.ServerList.Any(e => e.ServerId == id);
-
         }
     }
 }

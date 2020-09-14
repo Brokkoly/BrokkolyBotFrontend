@@ -161,7 +161,6 @@ namespace BrokkolyBotFrontend.Controllers
             {
                 return false;
             }
-            //TODO check that server is correct.
             return true;
         }
 
