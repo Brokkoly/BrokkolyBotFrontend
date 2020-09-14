@@ -61,11 +61,6 @@ namespace BrokkolyBotFrontend.Controllers
             Command command = data["command"].ToObject<Command>();
             string token = data["token"].ToObject<string>();
 
-            //if (!UserCanEditCommand(id, ""))
-            //{
-            //    //TODO: get permissions
-            //    return BadRequest();
-            //}
             if (!CheckValidity(command))
             {
                 return BadRequest();
@@ -100,11 +95,13 @@ namespace BrokkolyBotFrontend.Controllers
         // To protect from overposting attacks, enable the specific properties you want to bind to, for
         // more details, see https://go.microsoft.com/fwlink/?linkid=2123754.
         [HttpPost]
-        public async Task<ActionResult<Command>> PostCommand(Command command)
+        public async Task<ActionResult<Command>> PostCommand([FromBody] JObject data)
         {
-            if (!UserCanEditCommand(command, ""))
+            Command command = data["command"].ToObject<Command>();
+            string token = data["token"].ToObject<string>();
+
+            if (!UserCanEditCommand(command, token))
             {
-                //TODO: get permissions
                 return BadRequest();
             }
             if (!CheckValidity(command))
@@ -119,20 +116,21 @@ namespace BrokkolyBotFrontend.Controllers
 
         // DELETE: api/Commands/5
         [HttpDelete]
-        public async Task<ActionResult<Command>> DeleteCommand(int id)
+        public async Task<ActionResult<Command>> DeleteCommand([FromBody] JObject data)
         {
-            if (!UserCanEditCommand(id, ""))
+            Command command = data["command"].ToObject<Command>();
+            string token = data["token"].ToObject<string>();
+            if (!UserCanEditCommand(command.Id, token))
             {
-                //TODO: get permissions
                 return BadRequest();
             }
-            var command = await _context.CommandList.FindAsync(id);
-            if (command == null)
+            var commandConfirm = await _context.CommandList.FindAsync(command.Id);
+            if (commandConfirm == null)
             {
                 return NotFound();
             }
 
-            _context.CommandList.Remove(command);
+            _context.CommandList.Remove(commandConfirm);
             await _context.SaveChangesAsync();
 
             return command;

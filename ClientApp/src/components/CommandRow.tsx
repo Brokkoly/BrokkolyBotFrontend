@@ -35,7 +35,6 @@ export const CommandRow: React.FunctionComponent<CommandRowProps> = ({ command, 
     {
         event.preventDefault();
         handleAcceptCallback(index, handleSubmitCallback);
-        //todo: validation here
     }
     function handleSubmitCallback(success: boolean)
     {

@@ -70,38 +70,10 @@ export class User
             }
         ).then(res =>
         {
-            //console.log('our response is: ', res, res.text);
             return res.json();
         });
         return response;
-        //console.log("Response: " + response);
-        //).then(response =>
-        //    console.log("Logged Response: " + response.text())
-        //).catch(err => {
-        //    console.log(err);
-        //});
     }
-
-    //public static async getUserGuilds(token: string)
-    //{
-    //    const response = fetch(`https://discord.com/api/users/@me/guilds`,
-    //        {
-    //            method: 'GET',
-    //            headers: {
-    //                'Authorization': `Bearer ${token}`,
-    //                'content-type': 'application/json'
-    //            },
-
-    //        }
-    //    ).then(res =>
-    //    {
-    //        return res.json();
-    //    });
-    //    return response;
-    //}
-
-
-
 }
 
 
