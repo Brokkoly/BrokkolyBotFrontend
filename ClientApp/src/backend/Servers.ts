@@ -9,7 +9,6 @@
     public static async getUserGuilds(token: string): Promise<IServer[]>
     {
         const result = await fetch(
-            //"https://localhost:44320/api/Servers/GetServerList?id=${}"
             `/api/Servers/GetServerListForUser?token=${token}`
         );
         const text = await result.text();

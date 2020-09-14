@@ -1,7 +1,4 @@
-﻿import { access } from "fs";
-import { IServer } from "./Servers";
-
-export interface IUser
+﻿export interface IUser
 {
     id: string;
     username: string;
@@ -24,7 +21,6 @@ export interface IGuild
 
 export class User
 {
-    //public guilds: IGuild[] = [];
     public displayName: string = "Not Logged In";
     public avatarUrl: string = "";
     public accessToken: string = "";
@@ -32,16 +28,13 @@ export class User
     constructor(accessToken: string, displayName: string, avatarUrl: string)
     {
         this.accessToken = accessToken;
-        //this.guilds = guilds;
         this.displayName = displayName;
         this.avatarUrl = avatarUrl;
-        //const userInfo = this.getUserInfo(access_token);
     }
     public static async getUserFromToken(token: string): Promise<User>
     {
         if (token) {
             const user = await User.getUserInfo(token);
-            //const userGuilds = await User.getUserGuilds(token);
             return new User(token, User.getDisplayName(user), User.getAvatarUrl(user))
         }
         else {
