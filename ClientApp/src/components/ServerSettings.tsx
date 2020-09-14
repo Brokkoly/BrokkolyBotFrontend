@@ -300,20 +300,6 @@ class CommandList2 extends React.Component<CommandListProps, CommandListState>
         }
     }
 
-    //private async fetchCommands(serverId: string)
-    //{
-    //    if (!this.state.loading) {
-    //        this.setState({ commandList: [], loading: true });
-    //    }
-    //    let fetchUrl = '/api/Commands/GetCommandsForServer?serverId=' + serverId;
-    //    const result = await fetch(fetchUrl);
-    //    const text = await result.text();
-    //    var commands = await JSON.parse(text.replace(/("[^"]*"\s*:\s*)(\d{16,})/g, '$1"$2"'));
-    //    commands.push({ id: -1, serverId: this.props.serverId, commandString: "", entryValue: "" });
-    //    this.setState({ commandList: commands, loading: false });
-    //}
-
-
     public render()
     {
         let contents = this.state.loading ? (
@@ -323,36 +309,9 @@ class CommandList2 extends React.Component<CommandListProps, CommandListState>
             </em>
             </p>
         ) : (
-                //this.renderCommandList(this.state.commandList)
                 null
             );
 
         return <div>{contents} </div>;
     }
-
-    //public renderCommandList(commandList: ICommand[])
-    //{
-    //    return (
-    //        <div>
-    //            <ul className="commandList">
-    //                {
-    //                    commandList.map((cmd, index) => (
-    //                        <CommandRow key={cmd.id}
-    //                            index={index}
-    //                            id={cmd.id}
-    //                            command={cmd.commandString}
-    //                            serverId={cmd.serverId}
-    //                            value={cmd.entryValue}
-    //                            deleteFromListCallback={this.deleteFromList}
-    //                            acceptEditCallback={this.saveEdit}
-    //                            acceptNewCallback={this.postCommand}
-    //                        />
-    //                    ))
-    //                }
-    //            </ul>
-    //        </div>
-    //    );
-    //}
 }
-
-
