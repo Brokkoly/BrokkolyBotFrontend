@@ -26,15 +26,15 @@ export class ServerCard extends React.Component<ServerProps, {}> {
                     (this.props.selected ? "serverDivSelected" : "serverDivUnselected")
                 }
                 onClick={() => this.props.onClick()}
+                title={this.props.name}
             >
                 <img
                     className="serverImg"
                     src={this.props.iconUrl}
-                    alt={"Server Image for " + this.props.name}
+                    alt={this.props.name}
                 />
-                <span className={"serverName " + (this.props.selected ? "serverNameSelected" : "")}>{this.props.name}</span>
                 <span
-                    className={"selectedIconDiv " + (this.props.selected ? "" : "nodisp")}
+                    className={(this.props.selected ? "selectedIconDiv" : "nodisp")}
                 >
                     {">"}
                 </span>

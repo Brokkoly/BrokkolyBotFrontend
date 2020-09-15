@@ -118,13 +118,14 @@ namespace BrokkolyBotFrontend.Controllers
         [HttpDelete]
         public async Task<ActionResult<Command>> DeleteCommand([FromBody] JObject data)
         {
-            Command command = data["command"].ToObject<Command>();
+
             string token = data["token"].ToObject<string>();
-            if (!UserCanEditCommand(command.Id, token))
+            int id = data["id"].ToObject<int>();
+            if (!UserCanEditCommand(id, token))
             {
                 return BadRequest();
             }
-            var commandConfirm = await _context.CommandList.FindAsync(command.Id);
+            var commandConfirm = await _context.CommandList.FindAsync(id);
             if (commandConfirm == null)
             {
                 return NotFound();
@@ -133,7 +134,7 @@ namespace BrokkolyBotFrontend.Controllers
             _context.CommandList.Remove(commandConfirm);
             await _context.SaveChangesAsync();
 
-            return command;
+            return commandConfirm;
         }
 
         private bool CommandExists(int id)

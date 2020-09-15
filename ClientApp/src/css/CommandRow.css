@@ -1,0 +1,112 @@
+﻿@import url("Home.css");
+
+._valueInput {
+    width: 100%;
+    height: auto;
+    align-self: flex-start;
+}
+
+._formInput {
+    border-radius: 10px;
+    background-color: #40444b;
+    border-color: #40444b;
+    color: #dcddde;
+    border: none;
+    font-size: medium;
+}
+
+    ._formInput:focus {
+        outline-color: #40444b;
+        outline: none;
+        /*var(--discord-blurple);*/
+    }
+
+._commandInput {
+    height: auto;
+}
+
+.valueDiv {
+    margin-left: 5px;
+    justify-content: flex-start;
+}
+
+.betweenDiv20 {
+    height: 20px;
+}
+
+.betweenDiv5 {
+    height: 5px;
+}
+
+._formButton {
+    font-size: 16px;
+    border-radius: 2px;
+    transition-duration: .4s;
+    margin: 0px 8px 0px 8px;
+}
+
+    ._formButton:focus {
+        /*outline: none;*/
+    }
+
+._acceptButton {
+    background-color: var(--discord-dark);
+    color: var(--discord-fullwhite);
+    border: 2px solid #4CAF50; /* Green */
+}
+
+    ._acceptButton:hover {
+        background-color: #4CAF50;
+        color: var(--discord-dark);
+    }
+
+    ._acceptButton:focus {
+        outline-color: #4CAF50;
+    }
+
+
+._cancelButton {
+    background-color: var(--discord-dark);
+    color: var(--discord-fullwhite);
+    border: 2px solid #e7e7e7; /* Grey */
+}
+
+    ._cancelButton:hover {
+        background-color: #e7e7e7;
+        color: var(--discord-dark);
+    }
+
+    ._cancelButton:focus {
+        outline-color: #e7e7e7;
+    }
+
+._deleteButton {
+    background-color: var(--discord-dark);
+    color: var(--discord-fullwhite);
+    border: 2px solid #f44336; /* Red */
+}
+
+    ._deleteButton:hover {
+        background-color: #f44336;
+        color: var(--discord-notquiteblack);
+    }
+
+    ._deleteButton:focus {
+        outline-color: #f44336;
+    }
+
+._buttonDiv {
+    justify-self: flex-end;
+    flex-grow: 1;
+    align-content: center;
+    justify-content: flex-end;
+    display: flex;
+}
+
+._inputText {
+    font-size: medium;
+    text-align: center;
+}
+._commandPrefix{
+    font-size: large;
+}

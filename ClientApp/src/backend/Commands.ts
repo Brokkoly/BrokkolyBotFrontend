@@ -47,6 +47,61 @@ export class Commands
         //TODO: Figure out how to do response checking and confirm when stuff works properly
         return true;
     }
+
+    public static async postCommand(token: string, command: ICommand): Promise<number>
+    {
+        let fetchUrl = '/api/Commands/PostCommand';
+        const response = await fetch(
+            fetchUrl,
+            {
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                method: 'POST',
+                body: JSON.stringify({
+                    command: {
+                        ServerId: command.serverId,
+                        CommandString: command.commandString,
+                        EntryValue: command.entryValue,
+                    },
+                    token: token
+                })
+            }
+        );
+        let commandResponse = await response.json();
+        if (commandResponse?.id) {
+            return commandResponse.id;
+        }
+        else {
+            return -1;
+        }
+    }
+
+    public static async deleteFromList(token: string, id: number)
+    {
+        let fetchUrl = '/api/Commands/DeleteCommand';
+        const response = await fetch(fetchUrl
+            , {
+                method: 'DELETE',
+                headers: {
+                    'content-type': 'application/json',
+                },
+                body: JSON.stringify({
+                    token: token,
+                    id: id
+                })
+            }
+        ).then(
+            response => response.json()
+
+        );
+        if (response?.id) {
+            return true;
+        }
+        else {
+            return false;
+        }
+    }
 }
 export interface ICommand
 {

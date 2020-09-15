@@ -100,18 +100,8 @@ export class NavMenu extends Component<{ user: User | undefined }, { collapsed: 
                         } navbar>
                             <ul className="navbar-nav flex-grow" >
                                 {this.renderUserCardOrLogin(discordAuthLink)}
-                                <NavItem>
-                                    <Button variant="outline-light"
-                                        href={`https://discord.com/api/oauth2/authorize?client_id=225369871393882113&permissions=268823664&redirect_uri=${baseUrl}&scope=bot`}
-                                    >Add To Your Server TODO: Move Me to the server list</Button>
-                                </NavItem>
-
                             </ul>
                         </Collapse>
-                        {
-
-                        }
-
                     </Container>
                 </Navbar>
             </header>

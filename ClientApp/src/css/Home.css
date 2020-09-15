@@ -31,9 +31,15 @@
     color: var(--discord-black);
 }
 
+._flexWrap {
+    flex-wrap: wrap;
+}
+
 .container-custom {
     padding-left: 0px;
     margin-left: 0px;
+    max-width: unset;
+    display: inline-block;
 }
 
 .bot-link {
@@ -70,6 +76,8 @@
 
 .serverList {
     list-style: none;
+    padding-left: 10px;
+    /*width: auto;*/
 }
 
 .serverDivSelected {
@@ -90,7 +98,6 @@
 .flexRow {
     display: flex;
     flex-direction: row;
-    margin-block-start: 0px;
 }
 
 .flexColumn {
@@ -107,7 +114,6 @@
     width: 64px;
     object-fit: cover;
     border-radius: 50%;
-    padding-right: 5px;
 }
 
 .serverName {
@@ -188,4 +194,21 @@
     to {
         transform: rotate(360deg);
     }
+}
+
+._settingsDiv {
+    width: 100%;
+}
+
+._minWidth400 {
+    min-width: 400px;
+    flex-grow: 1;
+}
+
+._commandList {
+    padding-left: 20px;
+}
+
+._width100Per {
+    width: 100%;
 }

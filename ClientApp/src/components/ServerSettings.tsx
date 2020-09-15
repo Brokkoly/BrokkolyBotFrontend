@@ -18,12 +18,22 @@ export const ServerSettings: React.FunctionComponent<ServerSettingsProps> = ({ s
     const [oldCommands, setOldCommands] = useState<Map<number, ICommand>>(new Map<number, ICommand>());
     const [timeoutSeconds, setTimeoutSeconds] = useState(5);
     const [loading, setLoading] = useState(true);
+    const [nextTempId, setNextTempId] = useState(-2);
 
     useEffect(() =>
     {
         async function fetchData(serverId: string)
         {
-            setCommandList(await Commands.fetchCommands(serverId));
+            let newCommandList = await Commands.fetchCommands(serverId);
+            if (server.userCanManage) {
+                newCommandList.push({
+                    id: -1,
+                    commandString: "",
+                    entryValue: "",
+                    serverId: server.serverId,
+                });
+            }
+            setCommandList(sortCommandList(newCommandList));
             setLoading(false);
         }
         fetchData(server.serverId);
@@ -31,20 +41,29 @@ export const ServerSettings: React.FunctionComponent<ServerSettingsProps> = ({ s
 
     function handleCommandUpdate(index: number, newCommandString: string | undefined, newEntryValue: string | undefined)
     {
-        if (!oldCommands.has(commandList[index].id)) {
+        let id = commandList[index].id;
+        if ((index === commandList.length - 1) && needEmptyCommand()) {
+            //TODO: clean this up
+            addEmptyCommandToEnd();
+        }
+        if (!oldCommands.has(id)) {
+            let original = {
+                ...commandList[index]
+            };
             setOldCommands(oldCommands =>
             {
-                oldCommands.set(commandList[index].id, commandList[index]);
-                return oldCommands;
+                let newOldCommands = new Map(oldCommands);
+                newOldCommands.set(id, original);
+                return newOldCommands;
             });
         }
         setCommandList(commandList =>
         {
-            let newList = [...commandList]
-            if (newCommandString) {
+            let newList = [...commandList];
+            if (newCommandString !== undefined) {
                 newList[index].commandString = newCommandString;
             }
-            else if (newEntryValue) {
+            else if (newEntryValue !== undefined) {
                 newList[index].entryValue = newEntryValue;
             }
 
@@ -52,16 +71,147 @@ export const ServerSettings: React.FunctionComponent<ServerSettingsProps> = ({ s
         });
     }
 
-    function acceptCommand(index: number, editSuccessCallback: Function)
+    function addEmptyCommandToEnd(): void
     {
+        setCommandList(commandList =>
+        {
+            let newList = [...commandList];
+            newList.push({
+                id: nextTempId,
+                commandString: "",
+                entryValue: "",
+                serverId: server.serverId,
+            });
+            setNextTempId(n => n - 1);
+            return newList;
+        })
+    }
+
+    function sortCommandList(list: ICommand[]): ICommand[]
+    {
+        let newList = [...list];
+        newList.sort((a, b) =>
+        {
+            if (a.id < 0 && b.id >= 0) {
+                return 1;
+            }
+            else if (b.id < 0 && a.id >= 0) {
+                return -1;
+            }
+            if (a.commandString === b.commandString) {
+                return a.id - b.id;
+            }
+            else {
+                return a.commandString > b.commandString ? 1 : -1;
+            }
+        });
+        return newList;
+    }
+
+    function needEmptyCommand(): boolean
+    {
+        if ((commandList[commandList.length - 1].commandString === "") && (commandList[commandList.length - 1].entryValue === "")) {
+            return true;
+        }
+        return false;
+    }
+
+    async function acceptCommand(index: number, editSuccessCallback: Function)
+    {
+        var id: number;
         if (doesNotHaveRestrictedCommand(index) && isNotDuplicatedInList(index)) {
-            editSuccessCallback(Commands.saveCommandEdit(token, commandList[index]));
+            if (commandList[index].id >= 0) {
+                editSuccessCallback(Commands.saveCommandEdit(token, commandList[index]));
+                id = commandList[index].id;
+                setCommandList(commandList =>
+                {
+                    let newList = [...commandList];
+                    sortCommandList(newList);
+                    return newList;
+                });
+
+            }
+            else {
+                id = commandList[index].id;
+                let newId = await Commands.postCommand(token, commandList[index]);
+                if (newId >= 0) {
+                    setCommandList(commandList =>
+                    {
+                        let newList = [...commandList];
+                        newList[index].id = newId;
+                        sortCommandList(newList);
+
+                        //newList.push({
+                        //    id: nextTempId,
+                        //    commandString: "",
+                        //    entryValue: "",
+                        //    serverId: server.serverId,
+                        //});
+                        //setNextTempId(n => n - 1);
+                        return newList;
+                    })
+                }
+            }
+            if (oldCommands.has(commandList[index].id)) {
+                setOldCommands(oldCommands =>
+                {
+                    let newOldCommands = new Map(oldCommands);
+                    newOldCommands.delete(id);
+                    return newOldCommands;
+                });
+            }
         }
     }
 
     function cancelCommand(index: number)
     {
-        //TODO: cancel commmand
+        let id = commandList[index].id;
+        if (oldCommands.has(id)) {
+            setCommandList(commandList =>
+            {
+                let newList = [...commandList];
+
+                if (id < 0) {
+                    newList.splice(index, 1);
+                }
+                else {
+                    //not undefined because we checked above
+                    let oldCommand = { ...oldCommands.get(id)! };
+                    newList[index] = oldCommand;
+                }
+                return newList;
+            });
+            setOldCommands(oldCommands =>
+            {
+                let newOldCommands = new Map(oldCommands);
+                newOldCommands.delete(id);
+                return newOldCommands;
+            });
+        }
+    }
+
+    async function deleteCommand(index: number)
+    {
+        if (await Commands.deleteFromList(token, commandList[index].id)) {
+            let id = commandList[index].id;
+            if (oldCommands.has(id)) {
+                setOldCommands(oldCommands =>
+                {
+                    let newOldCommands = new Map(oldCommands);
+                    newOldCommands.delete(id);
+                    return newOldCommands;
+                });
+                setCommandList(commandList =>
+                {
+                    //not undefined because we checked above
+                    let newList = [...commandList];
+                    newList.splice(index, 1);
+                    return newList;
+                });
+
+            }
+        }
+        //TODO: delete then send message and confirm on response
     }
 
     function isNotDuplicatedInList(index: number)
@@ -86,7 +236,7 @@ export const ServerSettings: React.FunctionComponent<ServerSettingsProps> = ({ s
 
     return (
         <LoadingMessage loading={loading}>
-            <CommandList commands={commandList} updateCommand={handleCommandUpdate} acceptCommand={acceptCommand} cancelCommand={cancelCommand} userCanEdit={server.userCanManage} />
+            <CommandList commands={commandList} updateCommand={handleCommandUpdate} acceptCommand={acceptCommand} cancelCommand={cancelCommand} userCanEdit={server.userCanManage} deleteCommand={deleteCommand} />
         </LoadingMessage>
     );
 }
@@ -97,14 +247,15 @@ interface CommandList2Props
     updateCommand: Function;
     acceptCommand: Function;
     cancelCommand: Function;
+    deleteCommand: Function;
     userCanEdit: boolean;
 }
 
-export const CommandList: React.FunctionComponent<CommandList2Props> = ({ commands, updateCommand, acceptCommand, cancelCommand, userCanEdit }) =>
+export const CommandList: React.FunctionComponent<CommandList2Props> = ({ commands, updateCommand, acceptCommand, cancelCommand, deleteCommand, userCanEdit }) =>
 {
     return (
         <div>
-            <ul className="commandList">
+            <ul className="_commandList">
                 {
                     commands.map((cmd, index) => (
                         <CommandRow key={cmd.id}
@@ -113,6 +264,7 @@ export const CommandList: React.FunctionComponent<CommandList2Props> = ({ comman
                             handleUpdateCallback={updateCommand}
                             handleAcceptCallback={acceptCommand}
                             handleCancelCallback={cancelCommand}
+                            handleDeleteCallback={deleteCommand}
                             userCanEdit={userCanEdit}
                         />
                     ))
