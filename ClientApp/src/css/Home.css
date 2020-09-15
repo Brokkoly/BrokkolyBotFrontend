@@ -63,6 +63,7 @@
     align-items: center;
     justify-content: left;
     padding: 5px;
+    border-radius: 25%;
 }
 
     .serverDiv:hover {
@@ -114,7 +115,18 @@
     width: 64px;
     object-fit: cover;
     border-radius: 50%;
+    transition: .4s;
 }
+
+    .serverImg:hover {
+        border-radius: 25%;
+    }
+.serverDivSelected .serverImg{
+    border-radius: 25%;
+}
+/*.serverDivUnselected .serverImg{
+    border-radius: 50%;
+}*/
 
 .serverName {
     word-wrap: normal;

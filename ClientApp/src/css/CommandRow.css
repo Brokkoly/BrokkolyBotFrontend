@@ -51,10 +51,14 @@
 
 ._formButton {
     font-size: 16px;
-    border-radius: 2px;
+    border-radius: 20%;
     transition-duration: .4s;
     margin: 0px 8px 0px 8px;
 }
+
+    ._formButton:hover {
+        border-radius: 10%;
+    }
 
     ._formButton:focus {
         /*outline: none;*/
