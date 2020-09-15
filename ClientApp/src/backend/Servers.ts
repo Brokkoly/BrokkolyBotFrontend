@@ -41,5 +41,6 @@ export interface IServer
     timeoutRoleId?: number;
     iconUrl64?: string;
     name?: string;
+    botManagerRoleId?: string;
     userCanManage: boolean;
 }

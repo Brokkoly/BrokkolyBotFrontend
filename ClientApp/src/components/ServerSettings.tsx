@@ -10,9 +10,10 @@ interface ServerSettingsProps
     token: string;
     server: IServer;
     restrictedCommands: string[];
+    handleServerChange: Function;
 }
 
-export const ServerSettings: React.FunctionComponent<ServerSettingsProps> = ({ server, token, restrictedCommands }) =>
+export const ServerSettings: React.FunctionComponent<ServerSettingsProps> = ({ server, token, restrictedCommands, handleServerChange }) =>
 {
     const [commandList, setCommandList] = useState<ICommand[]>([]);
     const [oldCommands, setOldCommands] = useState<Map<number, ICommand>>(new Map<number, ICommand>());
@@ -36,8 +37,9 @@ export const ServerSettings: React.FunctionComponent<ServerSettingsProps> = ({ s
             setCommandList(sortCommandList(newCommandList));
             setLoading(false);
         }
+        setLoading(true);
         fetchData(server.serverId);
-    }, [server.serverId])
+    }, [server.serverId, server.userCanManage])
 
     function handleCommandUpdate(index: number, newCommandString: string | undefined, newEntryValue: string | undefined)
     {
@@ -236,12 +238,12 @@ export const ServerSettings: React.FunctionComponent<ServerSettingsProps> = ({ s
 
     return (
         <LoadingMessage loading={loading}>
-            <CommandList commands={commandList} updateCommand={handleCommandUpdate} acceptCommand={acceptCommand} cancelCommand={cancelCommand} userCanEdit={server.userCanManage} deleteCommand={deleteCommand} />
+            <CommandList commands={commandList} updateCommand={handleCommandUpdate} acceptCommand={acceptCommand} cancelCommand={cancelCommand} userCanEdit={server.userCanManage} deleteCommand={deleteCommand} restrictedCommands={restrictedCommands} />
         </LoadingMessage>
     );
 }
 
-interface CommandList2Props
+interface CommandListProps
 {
     commands: ICommand[];
     updateCommand: Function;
@@ -249,9 +251,10 @@ interface CommandList2Props
     cancelCommand: Function;
     deleteCommand: Function;
     userCanEdit: boolean;
+    restrictedCommands: string[];
 }
 
-export const CommandList: React.FunctionComponent<CommandList2Props> = ({ commands, updateCommand, acceptCommand, cancelCommand, deleteCommand, userCanEdit }) =>
+export const CommandList: React.FunctionComponent<CommandListProps> = ({ commands, updateCommand, acceptCommand, cancelCommand, deleteCommand, userCanEdit, restrictedCommands }) =>
 {
     return (
         <div>
@@ -266,6 +269,7 @@ export const CommandList: React.FunctionComponent<CommandList2Props> = ({ comman
                             handleCancelCallback={cancelCommand}
                             handleDeleteCallback={deleteCommand}
                             userCanEdit={userCanEdit}
+                            restrictedCommands={restrictedCommands}
                         />
                     ))
                 }
@@ -274,178 +278,21 @@ export const CommandList: React.FunctionComponent<CommandList2Props> = ({ comman
     );
 }
 
-
-class TimeoutSecondsForm extends React.Component
+export const TimeoutSecondsForm: React.FunctionComponent<{ timeoutSeconds: number, updateTimeoutSeconds: Function }> = ({ timeoutSeconds, updateTimeoutSeconds }) =>
 {
+    function handleNumberChange(event: any)
+    {
 
+    }
+
+    return (
+        <div>
+            <form>
+                <input type="number" onChange={handleNumberChange} />
+            </form>
+        </div>
+    );
 }
 
-interface CommandListProps
-{
-    serverId: string;
-}
-interface CommandListState
-{
-    commandList: ICommand[];
-    loading: boolean;
-    restrictedCommands: string[];
-}
 
-class CommandList2 extends React.Component<CommandListProps, CommandListState>
-{
-    constructor(props: any)
-    {
-        super(props);
-        this.state = { commandList: [], loading: true, restrictedCommands: [] };
-        this.deleteFromList = this.deleteFromList.bind(this);
-        this.deleteFromCommandList = this.deleteFromCommandList.bind(this);
-        this.saveEdit = this.saveEdit.bind(this);
-        this.putEdit = this.putEdit.bind(this);
-        this.postCommand = this.postCommand.bind(this);
-    }
-    public async componentWillMount()
-    {
-        if (this.props.serverId) {
-            await Commands.fetchCommands(this.props.serverId);
-        }
-    }
 
-    public async componentDidUpdate(prevProps: CommandListProps)
-    {
-        if (this.props.serverId !== prevProps.serverId) {
-            Commands.fetchCommands(this.props.serverId);
-        }
-    }
-
-    public async saveEdit(index: number, command: string, value: string)
-    {
-        //TODO: check here for handling of post/put
-        var listCopy = [...this.state.commandList];
-        listCopy[index].commandString = command;
-        listCopy[index].entryValue = value;
-        if (this.state.commandList[index].id < 0) {
-            listCopy[index].id = await this.postCommand(this.state.commandList[index]);
-            listCopy.push({
-                id: -1,
-                serverId: this.props.serverId,
-                commandString: "DefaultCommand",
-                entryValue: "Enter Text Here!"
-            });
-        }
-        else {
-            this.putEdit(this.state.commandList[index]);
-        }
-        this.setState({ commandList: listCopy, loading: false });
-
-    }
-
-    public async putEdit(command: ICommand)
-    {
-        let fetchUrl = '/api/Commands/PutCommand/' + command.id;
-        fetch(
-            fetchUrl,
-            {
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                method: 'PUT',
-                body: JSON.stringify(command)
-            }
-        ).then(response => response.json())
-            .then(data =>
-            {
-                console.log('Success:', data);
-            })
-            .catch((error) =>
-            {
-                console.error('Error:', error);
-            });
-
-    }
-
-    public async postCommand(command: ICommand): Promise<number>
-    {
-        const commandJson = JSON.parse(JSON.stringify(command));
-        delete commandJson['id'];
-
-        let fetchUrl = '/api/Commands/PostCommand';
-        const response = fetch(
-            fetchUrl,
-            {
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                method: 'POST',
-                body: JSON.stringify(commandJson)
-            }
-        );
-        let commandText = await (await response).text();
-        let commandResponse = await JSON.parse(commandText);
-        if (commandResponse?.id) {
-            return commandResponse.id;
-        }
-        else {
-            return -1;
-        }
-    }
-
-    public async deleteFromList(id: string)
-    {
-        let fetchUrl = '/api/Commands/DeleteCommand?id=' + id;
-        const response = await fetch(fetchUrl
-            , {
-                method: 'DELETE',
-            }
-        ).then(
-            response => response.json()
-
-        );
-        if (response?.id) {
-            this.deleteFromCommandList(response.id);
-        }
-        else {
-            this.deleteFailed(id);
-        }
-    }
-
-    private deleteFailed(id: string)
-    {
-        console.log('delete failed for id=' + id);
-    }
-
-    private deleteSucceeded(id: string)
-    {
-
-    }
-
-    private deleteFromCommandList(id: number)
-    {
-        var listCopy = [...this.state.commandList]
-        var index = -1;
-        for (let i = 0; i < listCopy.length; i++) {
-            if (listCopy[i].id === id) {
-                index = i;
-                break;
-            }
-        }
-        if (index !== -1) {
-            listCopy.splice(index, 1);
-            this.setState({ commandList: listCopy, loading: this.state.loading })
-        }
-    }
-
-    public render()
-    {
-        let contents = this.state.loading ? (
-            <p>
-                <em>
-                    Loading...
-            </em>
-            </p>
-        ) : (
-                null
-            );
-
-        return <div>{contents} </div>;
-    }
-}

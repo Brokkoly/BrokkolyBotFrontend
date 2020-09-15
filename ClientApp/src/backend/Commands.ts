@@ -1,4 +1,5 @@
-﻿import { Servers } from "./Servers";
+﻿import { IError } from "./Error";
+import { Servers } from "./Servers";
 
 export class Commands
 {
@@ -102,7 +103,36 @@ export class Commands
             return false;
         }
     }
+    public static checkCommandValidity(command: string, restrictedCommands: string[]): IError | undefined
+    {
+        let error: IError = { message: [] };
+        if (command.length < 3) {
+            error.message.push("Command must be at least 3 characters.");
+        }
+        else if (command.length > 20) {
+            error.message.push("Command cannot be longer than 20 characters.");
+        }
+        if (restrictedCommands.findIndex(s => s === command) !== -1) {
+            error.message.push(`${command} is restricted and cannot be used as a command`);
+        }
+        if (command.match("[^a-zA-Z]+")) {
+            error.message.push("Command can only be made up of letters");
+        }
+        if (error.message.length === 0) {
+            return;
+        }
+        else {
+            return error;
+        }
+    }
+    public static checkValueValidity(value: string): IError | undefined
+    {
+        return undefined;
+    }
 }
+
+
+
 export interface ICommand
 {
     id: number;

@@ -46,6 +46,7 @@
 
 	<ItemGroup>
 		<None Remove="ClientApp\src\backend\Commands.ts" />
+		<None Remove="ClientApp\src\backend\Error.ts" />
 		<None Remove="ClientApp\src\backend\Servers.ts" />
 		<None Remove="ClientApp\src\backend\User.ts" />
 		<None Remove="ClientApp\src\components\CommandRow.tsx" />

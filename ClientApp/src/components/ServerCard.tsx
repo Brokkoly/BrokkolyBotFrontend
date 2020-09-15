@@ -33,11 +33,11 @@ export class ServerCard extends React.Component<ServerProps, {}> {
                     src={this.props.iconUrl}
                     alt={this.props.name}
                 />
-                <span
+                {/*<span
                     className={(this.props.selected ? "selectedIconDiv" : "nodisp")}
                 >
                     {">"}
-                </span>
+                </span>*/}
             </div>
         );
     }

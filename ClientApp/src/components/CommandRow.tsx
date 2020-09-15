@@ -1,9 +1,11 @@
 ﻿import * as React from 'react';
 import { useState } from 'react';
-import { ICommand } from '../backend/Commands';
-import { Helpers } from '../helpers';
-import '../css/Home.css';
+import { Input, InputProps } from 'reactstrap';
+import { Commands, ICommand } from '../backend/Commands';
+import { IError } from '../backend/Error';
 import '../css/CommandRow.css';
+import '../css/Home.css';
+import { Helpers } from '../helpers';
 
 interface CommandRowProps
 {
@@ -14,10 +16,43 @@ interface CommandRowProps
     handleCancelCallback: Function;
     handleDeleteCallback: Function;
     userCanEdit: boolean;
+    restrictedCommands: string[];
 }
-export const CommandRow: React.FunctionComponent<CommandRowProps> = ({ command, index, handleUpdateCallback, handleAcceptCallback, handleCancelCallback, handleDeleteCallback, userCanEdit }) =>
+export const CommandRow: React.FunctionComponent<CommandRowProps> = ({ command, index, handleUpdateCallback, handleAcceptCallback, handleCancelCallback, handleDeleteCallback, userCanEdit, restrictedCommands }) =>
 {
+    //TODO: maybe pass down the function to check validity
     const [hasBeenUpdated, setHasBeenUpdated] = useState(false);
+    const [commandError, setCommandError] = useState<IError | undefined>(undefined);
+    const [valueError, setValueError] = useState<IError | undefined>(undefined);
+    const [disableAccept, setDisableAccept] = useState(false);
+
+    React.useEffect(() =>
+    {
+        if (commandError || valueError) {
+            setDisableAccept(true);
+        }
+        else {
+
+            setDisableAccept(false);
+        }
+    }, [commandError, valueError])
+
+    React.useEffect(() =>
+    {
+        if (!hasBeenUpdated) {
+            setCommandError(undefined);
+            return;
+        }
+        setCommandError(Commands.checkCommandValidity(command.commandString, restrictedCommands));
+    }, [command.commandString, restrictedCommands, hasBeenUpdated])
+    React.useEffect(() =>
+    {
+        if (!hasBeenUpdated) {
+            setValueError(undefined);
+            return;
+        }
+        setValueError(Commands.checkValueValidity(command.entryValue));
+    }, [command.entryValue, hasBeenUpdated])
 
     function handleChangeCommand(event: any)
     {
@@ -28,6 +63,7 @@ export const CommandRow: React.FunctionComponent<CommandRowProps> = ({ command, 
             return;
         }
         handleUpdateCallback(index, value, undefined);
+
         setHasBeenUpdated(true);
     }
 
@@ -68,9 +104,10 @@ export const CommandRow: React.FunctionComponent<CommandRowProps> = ({ command, 
             <form onSubmit={handleSubmit}>
                 <div className="flexRow">
                     <span className="_commandPrefix">!</span>
-                    <input type="text" className="_formInput _commandInput" value={command.commandString} onChange={handleChangeCommand} disabled={!userCanEdit} />
+                    {/*<ValidatedInput error={commandError} type="text" className={"_formInput _commandInput "} value={command.commandString} onChange={handleChangeCommand} disabled={!userCanEdit} />*/}
+                    <input title={String(commandError?.message.map(s => s + "\n"))} type="text" className={"_formInput _commandInput "+Helpers.stringIf("_formError",Boolean(commandError))} value={command.commandString} onChange={handleChangeCommand} disabled={!userCanEdit} />
                     <div className="_buttonDiv">
-                        <input type="submit" value="Accept" className={"_formButton _acceptButton " + Helpers.nodispIf(!hasBeenUpdated)} disabled={!userCanEdit} />
+                        <input type="submit" value="Accept" className={"_formButton _acceptButton " + Helpers.nodispIf(!hasBeenUpdated)} disabled={disableAccept} />
                         <button onClick={handleCancel} className={"_formButton _cancelButton " + Helpers.nodispIf(!hasBeenUpdated)}>Cancel</button>
                         <button onClick={handleDelete} className={"_formButton _deleteButton " + Helpers.nodispIf((!userCanEdit) || (command.id < 0))}>Delete</button>
                     </div>
@@ -83,4 +120,32 @@ export const CommandRow: React.FunctionComponent<CommandRowProps> = ({ command, 
             </form>
         </div >
     );
+}
+
+export const ValidatedInput: React.FunctionComponent<{ error: IError | undefined } & InputProps> = ({ error, ...props }) =>
+{
+    const [errorMessage, setErrorMessage] = useState<string | undefined>(undefined);
+
+    React.useEffect(() =>
+    {
+        let m = "";
+        if (error && error.message.length > 0) {
+            for (let s of error.message) {
+                m = m + s + "\n";
+            }
+        }
+        setErrorMessage(m);
+
+    }, [error, error?.message])
+
+    return (
+        errorMessage ?
+            <input className={props?.className + " " + (errorMessage ? "_formError" : "")} title={errorMessage} {...() =>
+            {
+                let { className, ...rest } = props;
+                return rest;
+            }} />
+            :
+            <input {...props} />
+    )
 }

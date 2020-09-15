@@ -28,11 +28,27 @@ export const ServerList: React.FunctionComponent<{ user: User }> = ({ user }) =>
 
     }, [user])
 
+
     if (typeof window !== undefined) {
         var baseUrl = window.location.protocol + '//' + window.location.host;
     }
     else {
         baseUrl = "https://localhost:44320"
+    }
+
+    function handleServerChange(index: number, newTimeoutValue: number | undefined, newBotManagerRoleId: string | undefined)
+    {
+        setServers(servers =>
+        {
+            let newList = [...servers];
+            if (newTimeoutValue !== undefined) {
+                newList[index].timeoutSeconds = newTimeoutValue;
+            }
+            else if (newBotManagerRoleId !== undefined) {
+                newList[index].botManagerRoleId = newBotManagerRoleId;
+            }
+            return newList;
+        })
     }
 
     return (
@@ -67,7 +83,8 @@ export const ServerList: React.FunctionComponent<{ user: User }> = ({ user }) =>
                                     <div className="_minWidth400">
                                         <div className="_settingsDiv">
 
-                                            <ServerSettings server={servers[selectedIndex]} token={user.accessToken} restrictedCommands={restrictedCommands} />
+                                                
+                                            <ServerSettings server={servers[selectedIndex]} token={user.accessToken} restrictedCommands={restrictedCommands} handleServerChange={handleServerChange}/>
                                         </div>
                                     </div>
                                     : null}

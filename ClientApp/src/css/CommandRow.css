@@ -8,8 +8,7 @@
 
 ._formInput {
     border-radius: 10px;
-    background-color: #40444b;
-    border-color: #40444b;
+    background-color: #40444b !important;
     color: #dcddde;
     border: none;
     font-size: medium;
@@ -21,12 +20,24 @@
         /*var(--discord-blurple);*/
     }
 
+._formError {
+    border: 5px solid red !important;
+    border-width: thin;
+}
+
+    ._formError:focus {
+        outline-color: #f44336 !important;
+        outline: none;
+        /*var(--discord-blurple);*/
+    }
+
 ._commandInput {
     height: auto;
+    margin-left: 4px;
 }
 
 .valueDiv {
-    margin-left: 5px;
+    /*margin-left: 5px;*/
     justify-content: flex-start;
 }
 
@@ -107,6 +118,8 @@
     font-size: medium;
     text-align: center;
 }
-._commandPrefix{
+
+._commandPrefix {
     font-size: large;
+    align-self: center;
 }
