@@ -10,7 +10,8 @@
     border-radius: 10px;
     background-color: #40444b !important;
     color: #dcddde;
-    border: none;
+    border-width: thin;
+    border: 5px solid #40444b;
     font-size: medium;
 }
 
@@ -77,6 +78,8 @@
 
     ._acceptButton:focus {
         outline-color: #4CAF50;
+        background-color: #4CAF50;
+        color: var(--discord-dark);
     }
 
 

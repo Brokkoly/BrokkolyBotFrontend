@@ -1,6 +1,6 @@
 ﻿import * as React from 'react';
 import { useState } from 'react';
-import { Input, InputProps } from 'reactstrap';
+import { InputProps } from 'reactstrap';
 import { Commands, ICommand } from '../backend/Commands';
 import { IError } from '../backend/Error';
 import '../css/CommandRow.css';
@@ -114,7 +114,7 @@ export const CommandRow: React.FunctionComponent<CommandRowProps> = ({ command, 
                 </div>
                 <div className="betweenDiv5" />
                 <div className="flexRow valueDiv" >
-                    <textarea className="_formInput _valueInput" value={command.entryValue} onChange={handleChangeValue} disabled={!userCanEdit} />
+                    <textarea title={String(valueError?.message.map(s => s + "\n"))} className={"_formInput _valueInput " + Helpers.stringIf("_formError", Boolean(valueError))} value={command.entryValue} onChange={handleChangeValue} disabled={!userCanEdit} />
                 </div>
                 <div className="betweenDiv20" />
             </form>
@@ -122,6 +122,7 @@ export const CommandRow: React.FunctionComponent<CommandRowProps> = ({ command, 
     );
 }
 
+//TODO: figure this out or delete it.
 export const ValidatedInput: React.FunctionComponent<{ error: IError | undefined } & InputProps> = ({ error, ...props }) =>
 {
     const [errorMessage, setErrorMessage] = useState<string | undefined>(undefined);

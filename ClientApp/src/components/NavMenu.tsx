@@ -20,44 +20,7 @@ export class NavMenu extends Component<{ user: User | undefined }, { collapsed: 
             collapsed: true
         };
         this.renderUserCardOrLogin = this.renderUserCardOrLogin.bind(this);
-        //this.getUserInfo = this.getUserInfo.bind(this);
     }
-
-    //public async componentWillMount()
-    //{
-    //    let token = this.getTokenFromHash();
-    //    if (token) {
-    //        let user = await User.getUserFromToken(token);
-    //    }
-    //}
-
-
-
-    //private async getUserInfo(token: string)
-    //{
-    //    console.log(token);
-    //    const response = fetch(`https://discord.com/api/users/@me`,
-    //        {
-    //            method: 'GET',
-    //            headers: {
-    //                'Authorization': `Bearer ${token}`,
-    //                'content-type': 'application/json'
-    //            },
-
-    //        }
-    //    ).then( res => {
-    //        console.log('our response is: ', res, res.text);
-    //        return res.text;
-    //    });
-
-    //    console.log("Response: " + response);
-    //    //).then(response =>
-    //    //    console.log("Logged Response: " + response.text())
-    //    //).catch(err => {
-    //    //    console.log(err);
-    //    //});
-    //}
-
 
     toggleNavbar()
     {
@@ -71,7 +34,7 @@ export class NavMenu extends Component<{ user: User | undefined }, { collapsed: 
         return (
             this.props.user !== undefined ?
                 <NavItem>
-                    <UserCard userName={this.props.user?.displayName} avatarUrl={this.props.user?.avatarUrl} />
+                    <UserCard  userName={this.props.user?.displayName} avatarUrl={this.props.user?.avatarUrl} />
                 </NavItem>
                 :
                 <NavItem>
@@ -93,8 +56,8 @@ export class NavMenu extends Component<{ user: User | undefined }, { collapsed: 
             <header className="header" >
                 <Navbar className="navbar-expand-sm navbar-toggleable-sm ng-white border-bottom box-shadow mb-3" light >
                     <Container className="container-custom" >
-                        <img src={BrokkolyBanner} className="headerImg discord-fullwhite-text" alt="" />
-                        <NavbarBrand className="text-light" tag={Link} to={`/`} > Brokkoly Bot</NavbarBrand>
+                        <img src={BrokkolyBanner} className="headerImg textColor" alt="" />
+                        <NavbarBrand className="textColor" tag={Link} to={`/`} > Brokkoly Bot</NavbarBrand>
                         < NavbarToggler onClick={this.toggleNavbar} className="mr-2" />
                         <Collapse className="d-sm-inline-flex flex-sm-row-reverse" isOpen={!this.state.collapsed
                         } navbar>

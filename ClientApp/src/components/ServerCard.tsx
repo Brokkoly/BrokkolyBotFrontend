@@ -1,5 +1,4 @@
 ﻿import * as React from 'react';
-//import React, { Component } from "react";
 import "./../css/Home.css";
 
 interface Server
@@ -33,11 +32,6 @@ export class ServerCard extends React.Component<ServerProps, {}> {
                     src={this.props.iconUrl}
                     alt={this.props.name}
                 />
-                {/*<span
-                    className={(this.props.selected ? "selectedIconDiv" : "nodisp")}
-                >
-                    {">"}
-                </span>*/}
             </div>
         );
     }

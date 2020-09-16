@@ -165,7 +165,11 @@
     flex-direction: column;
     justify-content: left;
     font-size: calc(10px + 2vmin);
-    color: white;
+    color: #dcddde;
+}
+
+.textColor {
+    color: #dcddde !important;
 }
 
 .header {

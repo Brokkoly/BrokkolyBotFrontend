@@ -1,4 +1,4 @@
-﻿import React, { Component } from 'react';
+﻿import React from 'react';
 import '../css/Home.css';
 
 export class UserCard extends React.Component<{ userName: string | undefined, avatarUrl: string | undefined }, {}>{
@@ -7,7 +7,7 @@ export class UserCard extends React.Component<{ userName: string | undefined, av
         return (
             <div>
                 <img src={this.props.avatarUrl} className="headerImg" alt="User's Avatar" />
-                <span className="discord-fullwhite-text">{this.props.userName}</span>
+                <span className="textColor">{this.props.userName}</span>
             </div>
         )
     }

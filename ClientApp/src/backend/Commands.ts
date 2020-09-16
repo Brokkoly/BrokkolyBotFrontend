@@ -127,7 +127,19 @@ export class Commands
     }
     public static checkValueValidity(value: string): IError | undefined
     {
-        return undefined;
+        let error: IError = { message: [] }
+        if (value.length === 0) {
+            error.message.push("Value must not have a length of 0");
+        }
+        if (value.length > 500) {
+            error.message.push("Value length cannot be more than 500")
+        }
+        if (error.message.length > 0) {
+            return error;
+        }
+        else {
+            return undefined;
+        }
     }
 }
 
