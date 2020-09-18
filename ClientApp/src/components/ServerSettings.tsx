@@ -94,7 +94,6 @@ export const ServerSettings: React.FunctionComponent<ServerSettingsProps> = ({
         });
     }
 
-    function handleUpdateSeconds(newSeconds: number) { }
 
     function addEmptyCommandToEnd(): void
     {
@@ -268,6 +267,7 @@ export const ServerSettings: React.FunctionComponent<ServerSettingsProps> = ({
                 handleAcceptCallback={handleServerAccept}
                 serverRoles={serverRoles}
             />
+            <div className="betweenDiv20" />
             <CommandList
                 commands={commandList}
                 updateCommand={handleCommandUpdate}
@@ -347,7 +347,11 @@ export const OtherSettingsForm: React.FunctionComponent<{
 
         function handleNumberChange(event: any)
         {
-            updateServerSettings(serverIndex, event.target.value);
+            let actualNumber = event.target.value;
+            if (isNaN(actualNumber)) {
+                actualNumber = Number(actualNumber.replace(/\D/g, ''));
+            }
+            updateServerSettings(serverIndex, actualNumber);
             //setSecondsError(validateNumber(event.target.value));
             setHasBeenUpdated(true);
 
@@ -384,11 +388,16 @@ export const OtherSettingsForm: React.FunctionComponent<{
 
         useEffect(() => { }, [serverRoles]);
 
-        function handleCancel() { }
-        function handleAccept() { }
-        function validateNumber(seconds: number)
+        function handleCancel()
         {
-            return undefined;
+            handleCancelCallback(serverIndex);
+            setHasBeenUpdated(false);
+        }
+        function handleAccept(event: any)
+        {
+            event.preventDefault();
+            handleAcceptCallback(serverIndex);
+            setHasBeenUpdated(false);
         }
 
         function constructStyleFromNumber(color: number): CSSProperties | undefined
@@ -433,7 +442,7 @@ export const OtherSettingsForm: React.FunctionComponent<{
                         <div className="flexRow">
                             <label className="_inputText">
                                 Timeout Seconds:
-                            <input type="number" value={server.timeoutSeconds} title={String(secondsError?.message.map(s => s + "\n"))} className={"_formInput _commandInput " + Helpers.stringIf("_formError", Boolean(secondsError))} onChange={handleNumberChange} disabled={!server.userCanManage} />
+                            <input type="text" value={server.timeoutSeconds} title={String(secondsError?.message.map(s => s + "\n"))} className={"_formInput _commandInput " + Helpers.stringIf("_formError", Boolean(secondsError))} onChange={handleNumberChange} disabled={!server.userCanManage} />
                             </label>
                         </div>
                         {/*TODO: info hover icon that says what exactly these do*/}
@@ -443,10 +452,10 @@ export const OtherSettingsForm: React.FunctionComponent<{
                                 {"Select the role that can manage the bot: "}
                                 <select
                                     className="_formInput _roleSelect"
-                                    value={server.botManagerRoleId}
+                                    value={server.botManagerRoleId || ""}
                                     onChange={handleRoleChange}
                                 >
-                                    <option className="_roleOption" key={""} value={""}>
+                                    <option className="_roleOption" key={"0"} value={""}>
                                         None
             </option>
                                     {serverRoles.map((rle: IRole) => (

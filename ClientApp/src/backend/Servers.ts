@@ -10,6 +10,7 @@ export class Servers
 
     public static async getUserGuilds(token: string): Promise<IServer[]>
     {
+
         const result = await fetch(
             `/api/Servers/GetServerListForUser?token=${token}`
         );
@@ -71,6 +72,38 @@ export class Servers
         return rolesTransformed;
     }
 
+    public static async putServerEdit(token: string, server: IServer)
+    {
+        fetch(
+            "/api/Servers/PutServer/",
+            {
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                method: 'PUT',
+                body: JSON.stringify({
+                    server: {
+                        ServerId: server.serverId,
+                        TimeoutSeconds: server.timeoutSeconds,
+                        TimeoutRoleId: server.timeoutRoleId,
+                        BotManagerRoleId: server.botManagerRoleId,
+                    },
+                    token: token
+                })
+            }
+        ).then(response => response.json())
+            .then(data =>
+            {
+                console.log('Success:', data);
+            })
+            .catch((error) =>
+            {
+                console.error('Error:', error);
+            });
+        //TODO: Figure out how to do response checking and confirm when stuff works properly
+        return true;
+    }
+
 
     public static constructUrlsForServerIcon(id: string, hash: string): string
     {
@@ -78,7 +111,20 @@ export class Servers
     }
     public static checkTimeoutValidity(seconds: number): IError | undefined
     {
-        return undefined;
+        let error: IError = { message: [] };
+        if (isNaN(seconds)) {
+            error.message.push("Timeout must be a number");
+            return error;
+        }
+        if (seconds < 0) {
+            error.message.push("Timeout cannot be negative");
+        }
+        if (error.message.length === 0) {
+            return;
+        }
+        else {
+            return error;
+        }
     }
 }
 

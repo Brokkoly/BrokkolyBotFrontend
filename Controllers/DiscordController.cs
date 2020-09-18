@@ -61,6 +61,7 @@ namespace BrokkolyBotFrontend.Controllers
         }
         public static bool UserHasServerPermissions(string serverId, string accessToken)
         {
+            //TODO: also need to check for user's roles in the guild
             List<Guild> guilds = GetServersForUser(accessToken);
             return guilds.Find(g =>
             {

@@ -3,9 +3,11 @@ using BrokkolyBotFrontend.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Threading.Tasks;
 
 namespace BrokkolyBotFrontend.Controllers
@@ -52,7 +54,7 @@ namespace BrokkolyBotFrontend.Controllers
             List<Guild> cacheGuilds;
             if (!_cache.TryGetValue(CacheKeys.BotGuilds + token, out cacheGuilds))
             {
-                List<Guild> allGuilds = DiscordController.GetServersForUser(token);
+                List<Guild> allGuilds = this.TryGetServersForUserFromCache(token);
                 List<Server> servers = _context.ServerList.ToList();
                 List<string> serverIds = servers.Select(s => s.ServerId).ToList();
                 //TODO: optimize the search based on length of guilds vs length of servers.
@@ -77,6 +79,17 @@ namespace BrokkolyBotFrontend.Controllers
             }
             return cacheGuilds;
         }
+        public List<Guild> TryGetServersForUserFromCache(string access_token)
+        {
+            List<Guild> cacheGuilds;
+            if (!_cache.TryGetValue(CacheKeys.Guilds + access_token, out cacheGuilds))
+            {
+                cacheGuilds = DiscordController.GetServersForUser(access_token);
+                var cacheEntryOptions = new MemoryCacheEntryOptions().SetSlidingExpiration(System.TimeSpan.FromSeconds(60));
+                _cache.Set(CacheKeys.Guilds + access_token, cacheGuilds, cacheEntryOptions);
+            }
+            return cacheGuilds;
+        }
 
 
 
@@ -89,7 +102,7 @@ namespace BrokkolyBotFrontend.Controllers
 
         // GET: api/Servers/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<Server>> GetServer(long id)
+        public async Task<ActionResult<Server>> GetServer(string id)
         {
             var server = await _context.ServerList.FindAsync(id);
 
@@ -104,18 +117,17 @@ namespace BrokkolyBotFrontend.Controllers
         // PUT: api/Servers/5
         // To protect from overposting attacks, enable the specific properties you want to bind to, for
         // more details, see https://go.microsoft.com/fwlink/?linkid=2123754.
-        [HttpPut("{id}")]
-        public async Task<IActionResult> PutServer(string id, Server server)
+        [HttpPut]
+        public async Task<IActionResult> PutServer([FromBody] JObject data)
         {
-            if (!DiscordController.UserHasServerPermissions(id, ""))
+            Server server = data["server"].ToObject<Server>();
+            string token = data["token"].ToObject<string>();
+            if (!this.UserHasServerPermissions(server.ServerId, token))
             {
                 //TODO: get permissions
-                return BadRequest();
+                return Forbid();
             }
-            if (id != server.ServerId)
-            {
-                return BadRequest();
-            }
+            //server.TimeoutRoleId = (await _context.ServerList.FindAsync(server.ServerId)).TimeoutRoleId;
 
             _context.Entry(server).State = EntityState.Modified;
 
@@ -125,7 +137,7 @@ namespace BrokkolyBotFrontend.Controllers
             }
             catch (DbUpdateConcurrencyException)
             {
-                if (!ServerExists(id))
+                if (!ServerExists(server.ServerId))
                 {
                     return NotFound();
                 }
@@ -136,6 +148,17 @@ namespace BrokkolyBotFrontend.Controllers
             }
 
             return NoContent();
+        }
+        public bool TryGetUserHasServerPermissions(string serverId, string token)
+        {
+            bool cacheResult;
+            if (!_cache.TryGetValue(CacheKeys.CanEditGuild + token + serverId, out cacheResult))
+            {
+                cacheResult = this.UserHasServerPermissions(serverId, token);
+                var cacheEntryOptions = new MemoryCacheEntryOptions().SetSlidingExpiration(System.TimeSpan.FromSeconds(60));
+                _cache.Set(CacheKeys.CanEditGuild + token + serverId, cacheResult, cacheEntryOptions);
+            }
+            return cacheResult;
         }
 
         private bool ServerExists(string id)

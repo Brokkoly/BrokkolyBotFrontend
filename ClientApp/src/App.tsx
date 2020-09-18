@@ -1,31 +1,27 @@
 import React, { Component } from 'react';
-import { BrowserRouter, BrowserRouter as Router, Route, Switch } from 'react-router-dom';
-import { Layout } from './components/Layout';
-import { Home } from './components/Home';
-//import { ServerListAndSettingsWrapper } from './components/ServerList';
-import './custom.css'
-import { NavMenu } from './components/NavMenu';
+import { Cookies, withCookies } from 'react-cookie';
+import { Route, Switch } from 'react-router-dom';
 import { User } from './backend/User';
+import Home from './components/Home';
+import { Layout } from './components/Layout';
+//import { ServerListAndSettingsWrapper } from './components/ServerList';
+import './custom.css';
 
-export default class App extends Component<{}, { user: User | undefined }>
+class App extends Component<{ cookies: Cookies }>
 {
-    static displayName = App.name;
     constructor(props: any)
     {
         super(props);
+
         this.state = { user: undefined };
     }
 
     public async componentDidMount()
     {
-        let token = this.getTokenFromHash();
-        if (token) {
-            let user = await User.getUserFromToken(token);
-            this.setState({ user: user });
-        }
-        else {
-            this.setState({ user: undefined });
-        }
+        //let token = this.getTokenFromHash();
+        //if (token) {
+
+        await this.getUserFromHashOrCookie();
     }
     //public async componentDidUpdate()
     //{
@@ -39,6 +35,28 @@ export default class App extends Component<{}, { user: User | undefined }>
     //    }
     //}
 
+    private async getUserFromHashOrCookie()
+    {
+        const { cookies } = this.props;
+        let newUser: User | undefined = undefined;
+        newUser = cookies.get('user');
+        if (!newUser) {
+
+            var lochash = window.location.hash.substr(1),
+                token = lochash.substr(lochash.search(/(?<=^|&)access_token=/))
+                    .split('&')[0]
+                    .split('=')[1],
+                expires_in = lochash.substr(lochash.search(/(?<=^|&)expires_in=/))
+                    .split('&')[0]
+                    .split('=')[1];
+            if (token && expires_in) {
+                let user = await User.getUserFromToken(token);
+                cookies.set('user', user, { maxAge: Number(expires_in) });
+            }
+        }
+
+        return newUser;
+    }
 
     private getTokenFromHash()
     {
@@ -55,9 +73,9 @@ export default class App extends Component<{}, { user: User | undefined }>
     render()
     {
         return (
-            <Layout user={this.state.user}>
+            <Layout >
                 <Switch>
-                    <Route exact path='/' component={() => <Home user={this.state.user} />} />
+                    <Route exact path='/' component={Home} />
                     {/*<Route path='/servers/:token?' component={ServerListAndSettingsWrapper} />*/}
                 </Switch>
             </Layout >
@@ -65,3 +83,4 @@ export default class App extends Component<{}, { user: User | undefined }>
     }
 }
 
+export default withCookies(App);

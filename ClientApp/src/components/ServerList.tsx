@@ -6,12 +6,13 @@ import { ServerCard } from "./ServerCard";
 import { Button } from 'react-bootstrap';
 import { ServerSettings } from "./ServerSettings";
 
-export const ServerList: React.FunctionComponent<{ user: User }> = ({ user }) =>
+export const ServerList: React.FunctionComponent<{ user: User}> = ({ user }) =>
 {
     const [loading, setLoading] = useState(true);
     const [servers, setServers] = useState<IServer[]>([]);
     const [selectedIndex, setSelectedIndex] = useState(-1);
     const [restrictedCommands, setRestrictedCommands] = useState<string[]>([]);
+    const [oldServers, setOldServers] = useState<Map<string, IServer>>(new Map<string, IServer>());
 
     useEffect(() =>
     {
@@ -38,25 +39,66 @@ export const ServerList: React.FunctionComponent<{ user: User }> = ({ user }) =>
 
     function handleServerChange(index: number, newTimeoutValue: number | undefined, newBotManagerRoleId: string | undefined)
     {
+        let id = servers[index].serverId;
+        if (!oldServers.has(id)) {
+            let original = {
+                ...servers[index]
+            };
+            setOldServers(oldServers =>
+            {
+                let newOldServers = new Map(oldServers);
+                newOldServers.set(id, original);
+                return newOldServers;
+            });
+        }
         setServers(servers =>
         {
             let newList = [...servers];
             if (newTimeoutValue !== undefined) {
-                newList[index].timeoutSeconds = newTimeoutValue;
+                newList[index].timeoutSeconds = Math.trunc(newTimeoutValue);
             }
             else if (newBotManagerRoleId !== undefined) {
                 newList[index].botManagerRoleId = newBotManagerRoleId;
             }
             return newList;
-        })
+        });
     }
-    function handleServerAccept()
+    async function handleServerAccept(index: number)
     {
-
+        if (await Servers.putServerEdit(user.accessToken, servers[index])) {
+            if (oldServers.has(servers[index].serverId)) {
+                //TODO: should the component send up the index?
+                setOldServers(oldServers =>
+                {
+                    let newOldServers = new Map(oldServers);
+                    newOldServers.delete(servers[index].serverId);
+                    return newOldServers;
+                });
+            }
+        }
+        
     }
-    function handleServerCancel()
+    function handleServerCancel(index: number)
     {
-
+        let id = servers[index].serverId;
+        if (oldServers.has(id)) {
+            setServers(servers =>
+            {
+                let newList = [...servers];
+                    //not undefined because we checked above
+                    let oldServer = { ...oldServers.get(id)! };
+                    newList[index] = oldServer;
+                return newList;
+            })
+        }
+        if (oldServers.has(servers[index].serverId)) {
+            setOldServers(oldServers =>
+            {
+                let newOldServers = new Map(oldServers);
+                newOldServers.delete(servers[index].serverId);
+                return newOldServers;
+            });
+        }
     }
 
     return (

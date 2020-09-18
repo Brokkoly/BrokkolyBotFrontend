@@ -7,17 +7,22 @@ import '../css/Home.css'
 import { Button } from 'react-bootstrap';
 import { User } from '../backend/User';
 import { UserCard } from './UserCard';
-
-export class NavMenu extends Component<{ user: User | undefined }, { collapsed: boolean }>{
+import { withCookies, Cookies } from 'react-cookie';
+interface NavMenuProps
+{
+    //user: User | undefined;
+    cookies: Cookies;
+}
+class NavMenu extends Component<NavMenuProps, { collapsed: boolean }>{
     static displayName = NavMenu.name;
 
     constructor(props: any)
     {
         super(props);
-
+        
         this.toggleNavbar = this.toggleNavbar.bind(this);
         this.state = {
-            collapsed: true
+            collapsed: true,
         };
         this.renderUserCardOrLogin = this.renderUserCardOrLogin.bind(this);
     }
@@ -31,10 +36,12 @@ export class NavMenu extends Component<{ user: User | undefined }, { collapsed: 
 
     private renderUserCardOrLogin(discordAuthLink: string)
     {
+        const { cookies } = this.props;
+        let user = cookies.get('user');
         return (
-            this.props.user !== undefined ?
+            user !== undefined ?
                 <NavItem>
-                    <UserCard  userName={this.props.user?.displayName} avatarUrl={this.props.user?.avatarUrl} />
+                    <UserCard userName={user.displayName} avatarUrl={user.avatarUrl} />
                 </NavItem>
                 :
                 <NavItem>
@@ -71,3 +78,5 @@ export class NavMenu extends Component<{ user: User | undefined }, { collapsed: 
         );
     }
 }
+
+export default withCookies(NavMenu);

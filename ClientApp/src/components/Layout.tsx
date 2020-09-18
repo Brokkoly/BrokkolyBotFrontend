@@ -1,10 +1,10 @@
 import React, { Component } from 'react';
 import { Container } from 'reactstrap';
-import { NavMenu } from './NavMenu';
+import NavMenu from './NavMenu';
 import "../css/Home.css";
 import { User } from '../backend/User';
-
-export class Layout extends Component<{ user: User | undefined }, {}>
+import { CookiesProvider } from 'react-cookie';
+export class Layout extends Component<{}, {}>
 {
     static displayName = Layout.name;
 
@@ -12,10 +12,12 @@ export class Layout extends Component<{ user: User | undefined }, {}>
     {
         return (
             <div className="allBackground">
-                <NavMenu user={this.props.user} />
-                <Container className="container-custom">
-                    {this.props.children}
-                </Container>
+                <CookiesProvider>
+                    <NavMenu />
+                    <Container className="container-custom">
+                        {this.props.children}
+                    </Container>
+                </CookiesProvider>
             </div>
 
         );
