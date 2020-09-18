@@ -105,7 +105,7 @@ export const CommandRow: React.FunctionComponent<CommandRowProps> = ({ command, 
                 <div className="flexRow">
                     <span className="_commandPrefix">!</span>
                     {/*<ValidatedInput error={commandError} type="text" className={"_formInput _commandInput "} value={command.commandString} onChange={handleChangeCommand} disabled={!userCanEdit} />*/}
-                    <input title={String(commandError?.message.map(s => s + "\n"))} type="text" className={"_formInput _commandInput "+Helpers.stringIf("_formError",Boolean(commandError))} value={command.commandString} onChange={handleChangeCommand} disabled={!userCanEdit} />
+                    <input title={Helpers.stringIf(String(commandError?.message.map(s => s + "\n")), Boolean(commandError))} type="text" className={"_formInput _commandInput " + Helpers.stringIf("_formError", Boolean(commandError))} value={command.commandString} onChange={handleChangeCommand} disabled={!userCanEdit} />
                     <div className="_buttonDiv">
                         <input type="submit" value="Accept" className={"_formButton _acceptButton " + Helpers.nodispIf(!hasBeenUpdated)} disabled={disableAccept} />
                         <button onClick={handleCancel} className={"_formButton _cancelButton " + Helpers.nodispIf(!hasBeenUpdated)}>Cancel</button>

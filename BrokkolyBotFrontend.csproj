@@ -13,6 +13,8 @@
 	</PropertyGroup>
 
 	<ItemGroup>
+		<PackageReference Include="AspNetCore.AsyncInitialization" Version="1.1.2" />
+		<PackageReference Include="Discord.Net" Version="2.2.0" />
 		<PackageReference Include="JavaScriptEngineSwitcher.Extensions.MsDependencyInjection" Version="3.3.0" />
 		<PackageReference Include="JavaScriptEngineSwitcher.V8" Version="3.5.5" />
 		<PackageReference Include="JavaScriptEngineSwitcher.V8.Native.win-x64" Version="3.5.5" />
@@ -49,6 +51,7 @@
 		<None Remove="ClientApp\src\backend\Error.ts" />
 		<None Remove="ClientApp\src\backend\Servers.ts" />
 		<None Remove="ClientApp\src\backend\User.ts" />
+		<None Remove="ClientApp\src\components\AcceptCancelDelete.tsx" />
 		<None Remove="ClientApp\src\components\CommandRow.tsx" />
 		<None Remove="ClientApp\src\components\file.tsx" />
 		<None Remove="ClientApp\src\components\ServerCard.tsx" />

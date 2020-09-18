@@ -71,15 +71,11 @@ namespace BrokkolyBotFrontend.GeneratedModels
 
                 entity.Property(e => e.ServerId)
                     .HasColumnName("server_id")
-                    .ValueGeneratedNever();
+                    .HasColumnType("character varying");
 
-                entity.Property(e => e.IconUrl64)
-                    .HasColumnName("icon_url_64")
-                    .HasMaxLength(500);
-
-                entity.Property(e => e.Name)
-                    .HasColumnName("name")
-                    .HasMaxLength(500);
+                entity.Property(e => e.BotManagerRoleId)
+                    .HasColumnName("bot_manager_role_id")
+                    .HasMaxLength(50);
 
                 entity.Property(e => e.TimeoutRoleId).HasColumnName("timeout_role_id");
 

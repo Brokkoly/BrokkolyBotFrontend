@@ -50,6 +50,14 @@ export const ServerList: React.FunctionComponent<{ user: User }> = ({ user }) =>
             return newList;
         })
     }
+    function handleServerAccept()
+    {
+
+    }
+    function handleServerCancel()
+    {
+
+    }
 
     return (
         <div className='App'>
@@ -83,8 +91,8 @@ export const ServerList: React.FunctionComponent<{ user: User }> = ({ user }) =>
                                     <div className="_minWidth400">
                                         <div className="_settingsDiv">
 
-                                                
-                                            <ServerSettings server={servers[selectedIndex]} token={user.accessToken} restrictedCommands={restrictedCommands} handleServerChange={handleServerChange}/>
+
+                                            <ServerSettings serverIndex={selectedIndex} server={servers[selectedIndex]} token={user.accessToken} restrictedCommands={restrictedCommands} handleServerChange={handleServerChange} handleServerAccept={handleServerAccept} handleServerCancel={handleServerCancel} />
                                         </div>
                                     </div>
                                     : null}

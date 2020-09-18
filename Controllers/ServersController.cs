@@ -17,8 +17,6 @@ namespace BrokkolyBotFrontend.Controllers
         private readonly DatabaseContext _context;
         private IMemoryCache _cache;
 
-        ServerDataAccessLayer objserver = new ServerDataAccessLayer();
-
         public ServersController(DatabaseContext context, IMemoryCache memoryCache)
         {
             _context = context;
@@ -29,7 +27,7 @@ namespace BrokkolyBotFrontend.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Server>>> GetServerList()
         {
-            return await _context.ServerList.ToListAsync();
+            return await _context.ServerList.AsQueryable().ToListAsync();
         }
 
         //[HttpGet("{token}")]
@@ -63,9 +61,11 @@ namespace BrokkolyBotFrontend.Controllers
                     int index = serverIds.IndexOf(g.id);
                     if (index >= 0)
                     {
+                        //TODO: is timeout role id needed by the client?
                         g.timeout_role_id = servers[index].TimeoutRoleId.ToString();
                         g.timeout_seconds = servers[index].TimeoutSeconds;
                         g.canManageServer = (g.permissions & 0x00000020) == 0x00000020;
+                        g.botManagerRoleId = servers[index].BotManagerRoleId;
                         return true;
                     }
                     return false;
@@ -77,6 +77,8 @@ namespace BrokkolyBotFrontend.Controllers
             }
             return cacheGuilds;
         }
+
+
 
         public bool UserHasServerPermissions(string serverId, string accessToken)
         {

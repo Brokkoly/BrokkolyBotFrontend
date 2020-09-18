@@ -1,50 +1,72 @@
-﻿import React, { useEffect, useState } from 'react';
-import { Commands, ICommand } from '../backend/Commands';
-import { IServer } from '../backend/Servers';
-import { CommandRow } from './CommandRow';
-import { LoadingMessage } from './ServerList';
-
+﻿import React, { CSSProperties, useEffect, useState } from "react";
+import { Commands, ICommand } from "../backend/Commands";
+import { IError } from "../backend/Error";
+import { IServer, Servers, IRole } from "../backend/Servers";
+import { Helpers } from "../helpers";
+import { CommandRow } from "./CommandRow";
+import { LoadingMessage } from "./ServerList";
 
 interface ServerSettingsProps
 {
     token: string;
+    serverIndex: number;
     server: IServer;
     restrictedCommands: string[];
     handleServerChange: Function;
+    handleServerAccept: Function;
+    handleServerCancel: Function;
 }
 
-export const ServerSettings: React.FunctionComponent<ServerSettingsProps> = ({ server, token, restrictedCommands, handleServerChange }) =>
+export const ServerSettings: React.FunctionComponent<ServerSettingsProps> = ({
+    server,
+    token,
+    restrictedCommands,
+    handleServerChange,
+    handleServerAccept,
+    handleServerCancel,
+    serverIndex
+}) =>
 {
     const [commandList, setCommandList] = useState<ICommand[]>([]);
-    const [oldCommands, setOldCommands] = useState<Map<number, ICommand>>(new Map<number, ICommand>());
-    const [timeoutSeconds, setTimeoutSeconds] = useState(5);
+    const [oldCommands, setOldCommands] = useState<Map<number, ICommand>>(
+        new Map<number, ICommand>()
+    );
+    const [serverRoles, setServerRoles] = useState<IRole[]>([]);
     const [loading, setLoading] = useState(true);
     const [nextTempId, setNextTempId] = useState(-2);
 
-    useEffect(() =>
-    {
-        async function fetchData(serverId: string)
+    useEffect(
+        () =>
         {
-            let newCommandList = await Commands.fetchCommands(serverId);
-            if (server.userCanManage) {
-                newCommandList.push({
-                    id: -1,
-                    commandString: "",
-                    entryValue: "",
-                    serverId: server.serverId,
-                });
+            async function fetchData(serverId: string)
+            {
+                let newCommandList = await Commands.fetchCommands(serverId);
+                if (server.userCanManage) {
+                    newCommandList.push({
+                        id: -1,
+                        commandString: "",
+                        entryValue: "",
+                        serverId: server.serverId
+                    });
+                }
+                setCommandList(sortCommandList(newCommandList));
+                setServerRoles(await Servers.getGuildRoles(token, serverId));
+                setLoading(false);
             }
-            setCommandList(sortCommandList(newCommandList));
-            setLoading(false);
-        }
-        setLoading(true);
-        fetchData(server.serverId);
-    }, [server.serverId, server.userCanManage])
+            setLoading(true);
+            fetchData(server.serverId);
+        },
+        [server.serverId, server.userCanManage, token]
+    );
 
-    function handleCommandUpdate(index: number, newCommandString: string | undefined, newEntryValue: string | undefined)
+    function handleCommandUpdate(
+        index: number,
+        newCommandString: string | undefined,
+        newEntryValue: string | undefined
+    )
     {
         let id = commandList[index].id;
-        if ((index === commandList.length - 1) && needEmptyCommand()) {
+        if (index === commandList.length - 1 && needEmptyCommand()) {
             //TODO: clean this up
             addEmptyCommandToEnd();
         }
@@ -64,14 +86,15 @@ export const ServerSettings: React.FunctionComponent<ServerSettingsProps> = ({ s
             let newList = [...commandList];
             if (newCommandString !== undefined) {
                 newList[index].commandString = newCommandString;
-            }
-            else if (newEntryValue !== undefined) {
+            } else if (newEntryValue !== undefined) {
                 newList[index].entryValue = newEntryValue;
             }
 
             return newList;
         });
     }
+
+    function handleUpdateSeconds(newSeconds: number) { }
 
     function addEmptyCommandToEnd(): void
     {
@@ -82,11 +105,11 @@ export const ServerSettings: React.FunctionComponent<ServerSettingsProps> = ({ s
                 id: nextTempId,
                 commandString: "",
                 entryValue: "",
-                serverId: server.serverId,
+                serverId: server.serverId
             });
             setNextTempId(n => n - 1);
             return newList;
-        })
+        });
     }
 
     function sortCommandList(list: ICommand[]): ICommand[]
@@ -96,14 +119,12 @@ export const ServerSettings: React.FunctionComponent<ServerSettingsProps> = ({ s
         {
             if (a.id < 0 && b.id >= 0) {
                 return 1;
-            }
-            else if (b.id < 0 && a.id >= 0) {
+            } else if (b.id < 0 && a.id >= 0) {
                 return -1;
             }
             if (a.commandString === b.commandString) {
                 return a.id - b.id;
-            }
-            else {
+            } else {
                 return a.commandString > b.commandString ? 1 : -1;
             }
         });
@@ -112,7 +133,10 @@ export const ServerSettings: React.FunctionComponent<ServerSettingsProps> = ({ s
 
     function needEmptyCommand(): boolean
     {
-        if ((commandList[commandList.length - 1].commandString === "") && (commandList[commandList.length - 1].entryValue === "")) {
+        if (
+            commandList[commandList.length - 1].commandString === "" &&
+            commandList[commandList.length - 1].entryValue === ""
+        ) {
             return true;
         }
         return false;
@@ -123,7 +147,9 @@ export const ServerSettings: React.FunctionComponent<ServerSettingsProps> = ({ s
         var id: number;
         if (doesNotHaveRestrictedCommand(index) && isNotDuplicatedInList(index)) {
             if (commandList[index].id >= 0) {
-                editSuccessCallback(Commands.saveCommandEdit(token, commandList[index]));
+                editSuccessCallback(
+                    Commands.saveCommandEdit(token, commandList[index])
+                );
                 id = commandList[index].id;
                 setCommandList(commandList =>
                 {
@@ -131,9 +157,7 @@ export const ServerSettings: React.FunctionComponent<ServerSettingsProps> = ({ s
                     sortCommandList(newList);
                     return newList;
                 });
-
-            }
-            else {
+            } else {
                 id = commandList[index].id;
                 let newId = await Commands.postCommand(token, commandList[index]);
                 if (newId >= 0) {
@@ -143,15 +167,8 @@ export const ServerSettings: React.FunctionComponent<ServerSettingsProps> = ({ s
                         newList[index].id = newId;
                         sortCommandList(newList);
 
-                        //newList.push({
-                        //    id: nextTempId,
-                        //    commandString: "",
-                        //    entryValue: "",
-                        //    serverId: server.serverId,
-                        //});
-                        //setNextTempId(n => n - 1);
                         return newList;
-                    })
+                    });
                 }
             }
             if (oldCommands.has(commandList[index].id)) {
@@ -175,8 +192,7 @@ export const ServerSettings: React.FunctionComponent<ServerSettingsProps> = ({ s
 
                 if (id < 0) {
                     newList.splice(index, 1);
-                }
-                else {
+                } else {
                     //not undefined because we checked above
                     let oldCommand = { ...oldCommands.get(id)! };
                     newList[index] = oldCommand;
@@ -210,7 +226,6 @@ export const ServerSettings: React.FunctionComponent<ServerSettingsProps> = ({ s
                     newList.splice(index, 1);
                     return newList;
                 });
-
             }
         }
         //TODO: delete then send message and confirm on response
@@ -224,24 +239,47 @@ export const ServerSettings: React.FunctionComponent<ServerSettingsProps> = ({ s
             if (i === index) {
                 continue;
             }
-            if ((testCommand.commandString === commandList[i].commandString) && (testCommand.entryValue === commandList[i].entryValue)) {
+            if (
+                testCommand.commandString === commandList[i].commandString &&
+                testCommand.entryValue === commandList[i].entryValue
+            ) {
                 //TODO: more verbose
                 return false;
             }
         }
         return true;
     }
+
     function doesNotHaveRestrictedCommand(index: number)
     {
-        return !restrictedCommands.find(cmdStr => cmdStr === commandList[index].commandString);
+        //TODO: just have this validate the command
+        return !restrictedCommands.find(
+            cmdStr => cmdStr === commandList[index].commandString
+        );
     }
 
     return (
         <LoadingMessage loading={loading}>
-            <CommandList commands={commandList} updateCommand={handleCommandUpdate} acceptCommand={acceptCommand} cancelCommand={cancelCommand} userCanEdit={server.userCanManage} deleteCommand={deleteCommand} restrictedCommands={restrictedCommands} />
+            <OtherSettingsForm
+                server={server}
+                serverIndex={serverIndex}
+                updateServerSettings={handleServerChange}
+                handleCancelCallback={handleServerCancel}
+                handleAcceptCallback={handleServerAccept}
+                serverRoles={serverRoles}
+            />
+            <CommandList
+                commands={commandList}
+                updateCommand={handleCommandUpdate}
+                acceptCommand={acceptCommand}
+                cancelCommand={cancelCommand}
+                userCanEdit={server.userCanManage}
+                deleteCommand={deleteCommand}
+                restrictedCommands={restrictedCommands}
+            />
         </LoadingMessage>
     );
-}
+};
 
 interface CommandListProps
 {
@@ -254,45 +292,196 @@ interface CommandListProps
     restrictedCommands: string[];
 }
 
-export const CommandList: React.FunctionComponent<CommandListProps> = ({ commands, updateCommand, acceptCommand, cancelCommand, deleteCommand, userCanEdit, restrictedCommands }) =>
+export const CommandList: React.FunctionComponent<CommandListProps> = ({
+    commands,
+    updateCommand,
+    acceptCommand,
+    cancelCommand,
+    deleteCommand,
+    userCanEdit,
+    restrictedCommands
+}) =>
 {
     return (
         <div>
             <ul className="_commandList">
-                {
-                    commands.map((cmd, index) => (
-                        <CommandRow key={cmd.id}
-                            index={index}
-                            command={cmd}
-                            handleUpdateCallback={updateCommand}
-                            handleAcceptCallback={acceptCommand}
-                            handleCancelCallback={cancelCommand}
-                            handleDeleteCallback={deleteCommand}
-                            userCanEdit={userCanEdit}
-                            restrictedCommands={restrictedCommands}
-                        />
-                    ))
-                }
+                {commands.map((cmd, index) => (
+                    <CommandRow
+                        key={cmd.id}
+                        index={index}
+                        command={cmd}
+                        handleUpdateCallback={updateCommand}
+                        handleAcceptCallback={acceptCommand}
+                        handleCancelCallback={cancelCommand}
+                        handleDeleteCallback={deleteCommand}
+                        userCanEdit={userCanEdit}
+                        restrictedCommands={restrictedCommands}
+                    />
+                ))}
             </ul>
         </div>
     );
-}
+};
 
-export const TimeoutSecondsForm: React.FunctionComponent<{ timeoutSeconds: number, updateTimeoutSeconds: Function }> = ({ timeoutSeconds, updateTimeoutSeconds }) =>
-{
-    function handleNumberChange(event: any)
+export const OtherSettingsForm: React.FunctionComponent<{
+    server: IServer;
+    serverIndex: number;
+    updateServerSettings: Function;
+    handleAcceptCallback: Function;
+    handleCancelCallback: Function;
+    serverRoles: IRole[];
+}> = ({
+    server,
+    updateServerSettings,
+    handleAcceptCallback,
+    handleCancelCallback,
+    serverRoles,
+    serverIndex,
+}) =>
     {
+        const [hasBeenUpdated, setHasBeenUpdated] = useState(false);
+        const [secondsError, setSecondsError] = useState<undefined | IError>(
+            undefined
+        );
+        const [disableAccept, setDisableAccept] = useState(false);
 
-    }
+        function handleNumberChange(event: any)
+        {
+            updateServerSettings(serverIndex, event.target.value);
+            //setSecondsError(validateNumber(event.target.value));
+            setHasBeenUpdated(true);
 
-    return (
-        <div>
-            <form>
-                <input type="number" onChange={handleNumberChange} />
-            </form>
-        </div>
-    );
-}
+        }
+        function handleRoleChange(event: any)
+        {
+            updateServerSettings(serverIndex, undefined, event.target.value);
+            setHasBeenUpdated(true);
+        }
 
+        useEffect(
+            () =>
+            {
+                if (!hasBeenUpdated) {
+                    setSecondsError(undefined);
+                    return;
+                }
+                setSecondsError(Servers.checkTimeoutValidity(server.timeoutSeconds));
+            },
+            [server.timeoutSeconds, hasBeenUpdated]
+        );
 
+        useEffect(
+            () =>
+            {
+                if (secondsError) {
+                    setDisableAccept(true);
+                } else {
+                    setDisableAccept(false);
+                }
+            },
+            [secondsError]
+        );
 
+        useEffect(() => { }, [serverRoles]);
+
+        function handleCancel() { }
+        function handleAccept() { }
+        function validateNumber(seconds: number)
+        {
+            return undefined;
+        }
+
+        function constructStyleFromNumber(color: number): CSSProperties | undefined
+        {
+            return { color: color.toString(16) };
+        }
+
+        function renderSelectForm()
+        {
+            return (
+                <>
+                    <label>
+                        Select the role that can manage the bot:
+          <select
+                            className="_roleSelect"
+                            value={server.botManagerRoleId}
+                            onChange={handleRoleChange}
+                        >
+                            <option className="_roleOption" key={""} value={""}>
+                                None
+            </option>
+                            {serverRoles.map((rle: IRole) => (
+                                <option
+                                    className="_roleOption"
+                                    style={constructStyleFromNumber(rle.color)}
+                                    key={rle.id}
+                                    value={rle.id}
+                                >
+                                    {rle.name}
+                                </option>
+                            ))}
+                        </select>
+                    </label>
+                </>
+            );
+        }
+
+        return (
+            <div>
+                <form onSubmit={handleAccept}>
+                    <div className="flexColumn" >
+                        <div className="flexRow">
+                            <label className="_inputText">
+                                Timeout Seconds:
+                            <input type="number" value={server.timeoutSeconds} title={String(secondsError?.message.map(s => s + "\n"))} className={"_formInput _commandInput " + Helpers.stringIf("_formError", Boolean(secondsError))} onChange={handleNumberChange} disabled={!server.userCanManage} />
+                            </label>
+                        </div>
+                        {/*TODO: info hover icon that says what exactly these do*/}
+                        {/*{renderSelectForm}*/}
+                        <div className="flexRow">
+                            <label className="_inputText">
+                                {"Select the role that can manage the bot: "}
+                                <select
+                                    className="_formInput _roleSelect"
+                                    value={server.botManagerRoleId}
+                                    onChange={handleRoleChange}
+                                >
+                                    <option className="_roleOption" key={""} value={""}>
+                                        None
+            </option>
+                                    {serverRoles.map((rle: IRole) => (
+                                        <option
+                                            className="_roleOption"
+                                            style={constructStyleFromNumber(rle.color)}
+                                            key={rle.id}
+                                            value={rle.id}
+                                        >
+                                            {rle.name}
+                                        </option>
+                                    ))}
+                                </select>
+                            </label>
+                        </div>
+                        <div className="flexRow">
+                            <input
+                                type="submit"
+                                value="Accept"
+                                className={
+                                    "_formButton _acceptButton " + Helpers.nodispIf(!hasBeenUpdated)
+                                }
+                                disabled={disableAccept}
+                            />
+                            <button
+                                onClick={handleCancel}
+                                className={
+                                    "_formButton _cancelButton " + Helpers.nodispIf(!hasBeenUpdated)
+                                }
+                            >
+                                Cancel
+            </button>
+                        </div>
+                    </div>
+                </form>
+            </div >
+        );
+    };

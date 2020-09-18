@@ -1,0 +1,44 @@
+﻿@import url("Home.css");
+
+._roleSelect{
+
+}
+._roleOption{
+
+}
+
+._formInput {
+    border-radius: 10px;
+    background-color: #40444b !important;
+    color: #dcddde;
+    border-width: thin;
+    border: 5px solid #40444b;
+    font-size: medium;
+}
+
+    ._formInput:focus {
+        outline-color: #40444b;
+        outline: none;
+        /*var(--discord-blurple);*/
+    }
+
+._formError {
+    border: 5px solid red !important;
+    border-width: thin;
+}
+
+    ._formError:focus {
+        outline-color: #f44336 !important;
+        outline: none;
+        /*var(--discord-blurple);*/
+    }
+
+._inputText {
+    font-size: medium;
+    text-align: center;
+}
+
+._labelText {
+    font-size: medium;
+    text-align: center;
+}

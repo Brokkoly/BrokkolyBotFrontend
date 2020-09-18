@@ -26,14 +26,14 @@ namespace BrokkolyBotFrontend.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Command>>> GetCommandList()
         {
-            return await _context.CommandList.ToListAsync();
+            return await _context.CommandList.AsQueryable().ToListAsync();
         }
 
         // GET: api/Commands/GetCommandsForServer?serverId=5
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Command>>> GetCommandsForServer(string serverId)
         {
-            return await _context.CommandList.Where(c => c.ServerId == serverId).ToListAsync();
+            return await _context.CommandList.AsQueryable().Where(c => c.ServerId == serverId).ToListAsync();
         }
 
 
@@ -138,25 +138,25 @@ namespace BrokkolyBotFrontend.Controllers
 
         private bool CommandExists(int id)
         {
-            return _context.CommandList.Any(e => e.Id == id);
+            return _context.CommandList.AsQueryable().Any(e => e.Id == id);
         }
 
         private bool CheckValidity(Command command)
         {
-            bool wasRestricted = _context.RestrictedCommands.Where(restrictedCommand => restrictedCommand.Command == command.CommandString).Any();
+            bool wasRestricted = _context.RestrictedCommands.AsQueryable().Where(restrictedCommand => restrictedCommand.Command == command.CommandString).Any();
             if (wasRestricted)
             {
                 //Todo: more verbose response types so that I can differentiate
                 return false;
             }
-            bool valueAlreadyThere = _context.CommandList.Where(
+            bool valueAlreadyThere = _context.CommandList.AsQueryable().Where(
                 cmd => cmd.ServerId == command.ServerId && cmd.CommandString == command.CommandString && cmd.EntryValue == command.EntryValue).Any();
             if (valueAlreadyThere)
             {
                 //Todo: more verbose response types so that I can differentiate
                 return false;
             }
-            bool serverIdWasNotValid = _context.CommandList.Where(cmd => (cmd.Id == command.Id) && (cmd.ServerId != command.ServerId)).Any();
+            bool serverIdWasNotValid = _context.CommandList.AsQueryable().Where(cmd => (cmd.Id == command.Id) && (cmd.ServerId != command.ServerId)).Any();
             if (serverIdWasNotValid)
             {
                 return false;
