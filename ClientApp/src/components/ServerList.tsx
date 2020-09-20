@@ -5,6 +5,7 @@ import { User } from "../backend/User";
 import { ServerCard } from "./ServerCard";
 import { Button } from 'react-bootstrap';
 import { ServerSettings } from "./ServerSettings";
+import { toast } from 'react-toastify';
 
 export const ServerList: React.FunctionComponent<{ user: User}> = ({ user }) =>
 {
@@ -65,19 +66,30 @@ export const ServerList: React.FunctionComponent<{ user: User}> = ({ user }) =>
     }
     async function handleServerAccept(index: number)
     {
-        if (await Servers.putServerEdit(user.accessToken, servers[index])) {
-            if (oldServers.has(servers[index].serverId)) {
-                //TODO: should the component send up the index?
-                setOldServers(oldServers =>
-                {
-                    let newOldServers = new Map(oldServers);
-                    newOldServers.delete(servers[index].serverId);
-                    return newOldServers;
-                });
+        Servers.putServerEdit(user.accessToken, servers[index]).then((success: boolean) =>
+        {
+            if (success) {
+                serverAcceptSuccessCallback(index);
             }
-        }
-        
+            else {
+                toast("An error ocurred. Please try again");
+            }
+        })
     }
+
+    function serverAcceptSuccessCallback(index: number)
+    {
+        if (oldServers.has(servers[index].serverId)) {
+            //TODO: should the component send up the index?
+            setOldServers(oldServers =>
+            {
+                let newOldServers = new Map(oldServers);
+                newOldServers.delete(servers[index].serverId);
+                return newOldServers;
+            });
+        }
+    }
+
     function handleServerCancel(index: number)
     {
         let id = servers[index].serverId;

@@ -1,7 +1,7 @@
 ﻿import React, { CSSProperties, useEffect, useState } from "react";
 import { Commands, ICommand } from "../backend/Commands";
 import { IError } from "../backend/Error";
-import { IServer, Servers, IRole } from "../backend/Servers";
+import { IRole, IServer, Servers } from "../backend/Servers";
 import { Helpers } from "../helpers";
 import { CommandRow } from "./CommandRow";
 import { LoadingMessage } from "./ServerList";
@@ -141,43 +141,72 @@ export const ServerSettings: React.FunctionComponent<ServerSettingsProps> = ({
         return false;
     }
 
-    async function acceptCommand(index: number, editSuccessCallback: Function)
+    async function acceptCommand(index: number, editCallback: Function)
     {
-        var id: number;
+        //var id: number;
         if (doesNotHaveRestrictedCommand(index) && isNotDuplicatedInList(index)) {
             if (commandList[index].id >= 0) {
-                editSuccessCallback(
-                    Commands.saveCommandEdit(token, commandList[index])
-                );
-                id = commandList[index].id;
-                setCommandList(commandList =>
+                await Commands.saveCommandEdit(token, commandList[index]).then((success: boolean) =>
                 {
-                    let newList = [...commandList];
-                    sortCommandList(newList);
-                    return newList;
+                    if (success) {
+                        acceptCommandEditSuccessCallback(index);
+                    }
+                    editCallback(success);
                 });
-            } else {
-                id = commandList[index].id;
-                let newId = await Commands.postCommand(token, commandList[index]);
-                if (newId >= 0) {
-                    setCommandList(commandList =>
-                    {
-                        let newList = [...commandList];
-                        newList[index].id = newId;
-                        sortCommandList(newList);
 
-                        return newList;
-                    });
-                }
-            }
-            if (oldCommands.has(commandList[index].id)) {
-                setOldCommands(oldCommands =>
+            } else {
+                let oldId = commandList[index].id;
+                Commands.postCommand(token, commandList[index]).then((newId: number) =>
                 {
-                    let newOldCommands = new Map(oldCommands);
-                    newOldCommands.delete(id);
-                    return newOldCommands;
-                });
+                    if (newId >= 0) {
+                        acceptCommandPostSuccessCallback(index, newId, oldId);
+                        editCallback(true);
+                    }
+                    else {
+                        editCallback(false);
+                    }
+                })
             }
+        }
+    }
+
+    function acceptCommandPostSuccessCallback(index: number, newId: number, oldId: number)
+    {
+        if (newId >= 0) {
+            setCommandList(commandList =>
+            {
+                let newList = [...commandList];
+                newList[index].id = newId;
+                sortCommandList(newList);
+
+                return newList;
+            });
+            deleteFromOldCommands(oldId);
+        }
+
+    }
+
+    function acceptCommandEditSuccessCallback(index: number)
+    {
+        let id = commandList[index].id;
+        setCommandList(commandList =>
+        {
+            let newList = [...commandList];
+            sortCommandList(newList);
+            return newList;
+        });
+        deleteFromOldCommands(id);
+    }
+
+    function deleteFromOldCommands(id: number)
+    {
+        if (oldCommands.has(id)) {
+            setOldCommands(oldCommands =>
+            {
+                let newOldCommands = new Map(oldCommands);
+                newOldCommands.delete(id);
+                return newOldCommands;
+            });
         }
     }
 
@@ -405,36 +434,6 @@ export const OtherSettingsForm: React.FunctionComponent<{
             return { color: color.toString(16) };
         }
 
-        function renderSelectForm()
-        {
-            return (
-                <>
-                    <label>
-                        Select the role that can manage the bot:
-          <select
-                            className="_roleSelect"
-                            value={server.botManagerRoleId}
-                            onChange={handleRoleChange}
-                        >
-                            <option className="_roleOption" key={""} value={""}>
-                                None
-            </option>
-                            {serverRoles.map((rle: IRole) => (
-                                <option
-                                    className="_roleOption"
-                                    style={constructStyleFromNumber(rle.color)}
-                                    key={rle.id}
-                                    value={rle.id}
-                                >
-                                    {rle.name}
-                                </option>
-                            ))}
-                        </select>
-                    </label>
-                </>
-            );
-        }
-
         return (
             <div>
                 <form onSubmit={handleAccept}>
@@ -454,6 +453,7 @@ export const OtherSettingsForm: React.FunctionComponent<{
                                     className="_formInput _roleSelect"
                                     value={server.botManagerRoleId || ""}
                                     onChange={handleRoleChange}
+                                    disabled={!server.userCanManage}
                                 >
                                     <option className="_roleOption" key={"0"} value={""}>
                                         None

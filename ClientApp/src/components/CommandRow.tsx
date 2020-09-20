@@ -6,6 +6,7 @@ import { IError } from '../backend/Error';
 import '../css/CommandRow.css';
 import '../css/Home.css';
 import { Helpers } from '../helpers';
+import { toast } from "react-toastify";
 
 interface CommandRowProps
 {
@@ -85,6 +86,10 @@ export const CommandRow: React.FunctionComponent<CommandRowProps> = ({ command, 
         if (success) {
             setHasBeenUpdated(false);
         }
+        else {
+            toast('An error ocurred. Please Try again.');
+
+        }
     }
 
     function handleCancel(event: any)
@@ -114,7 +119,7 @@ export const CommandRow: React.FunctionComponent<CommandRowProps> = ({ command, 
                 </div>
                 <div className="betweenDiv5" />
                 <div className="flexRow valueDiv" >
-                    <textarea title={String(valueError?.message.map(s => s + "\n"))} className={"_formInput _valueInput " + Helpers.stringIf("_formError", Boolean(valueError))} value={command.entryValue} onChange={handleChangeValue} disabled={!userCanEdit} />
+                    <textarea title={Helpers.stringIf(String(valueError?.message.map(s => s + "\n")), Boolean(valueError))} className={"_formInput _valueInput " + Helpers.stringIf("_formError", Boolean(valueError))} value={command.entryValue} onChange={handleChangeValue} disabled={!userCanEdit} />
                 </div>
                 <div className="betweenDiv20" />
             </form>

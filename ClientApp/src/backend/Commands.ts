@@ -18,8 +18,8 @@ export class Commands
     }
     public static async saveCommandEdit(token: string, command: ICommand)
     {
-        let fetchUrl = '/api/Commands/PutCommand/'// + command.id;
-        fetch(
+        let fetchUrl = '/api/Commands/PutCommand/'
+        return fetch(
             fetchUrl,
             {
                 headers: {
@@ -36,23 +36,28 @@ export class Commands
                     token: token
                 })
             }
-        ).then(response => response.json())
-            .then(data =>
-            {
-                console.log('Success:', data);
-            })
+        ).then(response =>
+        {
+            if (response.status === 204) {
+                return true;
+            }
+            else {
+                return false;
+            }
+
+        })
             .catch((error) =>
             {
                 console.error('Error:', error);
+                return false;
             });
         //TODO: Figure out how to do response checking and confirm when stuff works properly
-        return true;
     }
 
     public static async postCommand(token: string, command: ICommand): Promise<number>
     {
         let fetchUrl = '/api/Commands/PostCommand';
-        const response = await fetch(
+        return fetch(
             fetchUrl,
             {
                 headers: {
@@ -68,18 +73,28 @@ export class Commands
                     token: token
                 })
             }
-        );
-        let commandResponse = await response.json();
-        if (commandResponse?.id) {
-            return commandResponse.id;
-        }
-        else {
-            return -1;
-        }
+        ).then(response =>
+        {
+            if (response.status === 204) {
+                return response.json();
+            }
+            else {
+                return undefined;
+            }
+        }).then(data =>
+        {
+            if (data?.id) {
+                return data.id;
+            }
+            else {
+                return -1;
+            }
+        });
     }
 
     public static async deleteFromList(token: string, id: number)
     {
+        //TODO: response code checking and add toast if error.
         let fetchUrl = '/api/Commands/DeleteCommand';
         const response = await fetch(fetchUrl
             , {

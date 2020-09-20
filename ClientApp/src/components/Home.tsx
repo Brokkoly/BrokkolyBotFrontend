@@ -4,9 +4,10 @@ import '../css/Home.css';
 import { User } from '../backend/User';
 import { Button } from 'react-bootstrap';
 import { withCookies, Cookies } from 'react-cookie';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 interface HomeProps
 {
-    //user: User | undefined;
     cookies: Cookies;
 }
 
@@ -16,13 +17,6 @@ class Home extends React.Component<HomeProps, { user: User | undefined }>
     constructor(props: any)
     {
         super(props);
-        const { cookies } = props;
-        //this.state = { user: cookies.get('user') };
-    }
-    public componentDidMount()
-    {
-        //const { cookies } = this.props;
-        //this.setState({ user: cookies.get('user') })
     }
 
     public render()
@@ -47,6 +41,17 @@ class Home extends React.Component<HomeProps, { user: User | undefined }>
                         </div>
                     </div>
                 </header>
+                <ToastContainer
+                    position="bottom-right"
+                    autoClose={5000}
+                    hideProgressBar
+                    newestOnTop={false}
+                    closeOnClick
+                    rtl={false}
+                    pauseOnFocusLoss
+                    draggable
+                    pauseOnHover
+                />
             </div>
         );
     }

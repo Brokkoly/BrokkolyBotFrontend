@@ -10,7 +10,7 @@ export class Servers
 
     public static async getUserGuilds(token: string): Promise<IServer[]>
     {
-
+        //TODO: Response checking. Let the user know if there is an error.
         const result = await fetch(
             `/api/Servers/GetServerListForUser?token=${token}`
         );
@@ -34,6 +34,7 @@ export class Servers
 
     public static async getGuildRoles(token: string, serverId: string): Promise<IRole[]>
     {
+        //TODO: Response checking. Let the user know if there is an error.
         const result = await fetch(
             `/api/Discord/GetRolesForServer?token=${token}&serverId=${serverId}`
         );
@@ -74,7 +75,7 @@ export class Servers
 
     public static async putServerEdit(token: string, server: IServer)
     {
-        fetch(
+        return fetch(
             "/api/Servers/PutServer/",
             {
                 headers: {
@@ -91,17 +92,21 @@ export class Servers
                     token: token
                 })
             }
-        ).then(response => response.json())
-            .then(data =>
-            {
-                console.log('Success:', data);
-            })
+        ).then(response =>
+        {
+            if (response.status === 204) {
+                return true;
+            }
+            else {
+                return false;
+            }
+
+        })
             .catch((error) =>
             {
                 console.error('Error:', error);
+                return false;
             });
-        //TODO: Figure out how to do response checking and confirm when stuff works properly
-        return true;
     }
 
 

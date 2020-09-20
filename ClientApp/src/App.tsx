@@ -73,12 +73,26 @@ class App extends Component<{ cookies: Cookies }>
     render()
     {
         return (
-            <Layout >
-                <Switch>
-                    <Route exact path='/' component={Home} />
-                    {/*<Route path='/servers/:token?' component={ServerListAndSettingsWrapper} />*/}
-                </Switch>
-            </Layout >
+            <>
+                {/*<ToastContainer
+                position="bottom-right"
+                autoClose={5000}
+                hideProgressBar
+                newestOnTop={false}
+                closeOnClick
+                rtl={false}
+                pauseOnFocusLoss
+                draggable
+                pauseOnHover>*/}
+                < Layout >
+                    <Switch>
+                        <Route exact path='/' component={Home} />
+                        {/*<Route path='/servers/:token?' component={ServerListAndSettingsWrapper} />*/}
+                    </Switch>
+                    
+                </Layout >
+                {/*</ToastContainer>*/}
+            </>
         );
     }
 }
