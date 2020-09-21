@@ -147,7 +147,10 @@ export class Commands
             error.message.push("Value must not have a length of 0");
         }
         if (value.length > 500) {
-            error.message.push("Value length cannot be more than 500")
+            error.message.push("Value length cannot be more than 500");
+        }
+        if (value.match("^<@[&!]?[0-9]+>")) {
+            error.message.push("You're not allowed to mention people or roles");
         }
         if (error.message.length > 0) {
             return error;
