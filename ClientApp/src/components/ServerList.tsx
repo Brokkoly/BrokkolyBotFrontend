@@ -7,7 +7,7 @@ import { Button } from 'react-bootstrap';
 import { ServerSettings } from "./ServerSettings";
 import { toast } from 'react-toastify';
 
-export const ServerList: React.FunctionComponent<{ user: User}> = ({ user }) =>
+export const ServerList: React.FunctionComponent<{ user: User }> = ({ user }) =>
 {
     const [loading, setLoading] = useState(true);
     const [servers, setServers] = useState<IServer[]>([]);
@@ -19,7 +19,27 @@ export const ServerList: React.FunctionComponent<{ user: User}> = ({ user }) =>
     {
         async function fetchData(token: string)
         {
-            setServers(await Servers.getUserGuilds(token));
+            Servers.getUserGuilds(token).then(result =>
+            {
+                if (result?.length > 0) {
+                    setServers(result);
+                }
+                else {
+                    toast('An error ocurred when loading servers. If This persists, consider refreshing', {
+                        autoClose: 10000,
+                    });
+
+                }
+            });
+                Commands.getRestrictedCommands().then(result =>
+                {
+                    if (result?.length > 0) {
+                        setRestrictedCommands(result);
+                    }
+                    else {
+                        toast('An error ocurred when loading settings. If this persists, consider refreshing');
+                    }
+                })
             setRestrictedCommands(await Commands.getRestrictedCommands());
             setLoading(false);
         }
@@ -35,7 +55,7 @@ export const ServerList: React.FunctionComponent<{ user: User}> = ({ user }) =>
         var baseUrl = window.location.protocol + '//' + window.location.host;
     }
     else {
-        baseUrl = "https://localhost:44320"
+        baseUrl = "https://localhost:44320";
     }
 
     function handleServerChange(index: number, newTimeoutValue: number | undefined, newBotManagerRoleId: string | undefined)
@@ -80,7 +100,6 @@ export const ServerList: React.FunctionComponent<{ user: User}> = ({ user }) =>
     function serverAcceptSuccessCallback(index: number)
     {
         if (oldServers.has(servers[index].serverId)) {
-            //TODO: should the component send up the index?
             setOldServers(oldServers =>
             {
                 let newOldServers = new Map(oldServers);
@@ -97,9 +116,9 @@ export const ServerList: React.FunctionComponent<{ user: User}> = ({ user }) =>
             setServers(servers =>
             {
                 let newList = [...servers];
-                    //not undefined because we checked above
-                    let oldServer = { ...oldServers.get(id)! };
-                    newList[index] = oldServer;
+                //not undefined because we checked above
+                let oldServer = { ...oldServers.get(id)! };
+                newList[index] = oldServer;
                 return newList;
             })
         }
@@ -164,12 +183,12 @@ export const LoadingMessage: React.FunctionComponent<{ loading: boolean }> = ({ 
         loading ? (
             <p>
                 {/*TODO: automatically try refreshing if it takes too long*/}
-                <em>Loading... If this lasts for a while, try refreshing</em>
+                <em>Loading...</em>
             </p>)
             : (
 
                 <>
-                    { children}
+                    {children}
                 </>
             ));
 }

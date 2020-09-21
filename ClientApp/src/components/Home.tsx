@@ -14,10 +14,6 @@ interface HomeProps
 class Home extends React.Component<HomeProps, { user: User | undefined }>
 {
     static displayName = Home.name;
-    constructor(props: any)
-    {
-        super(props);
-    }
 
     public render()
     {

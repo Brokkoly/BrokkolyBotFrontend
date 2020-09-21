@@ -381,7 +381,6 @@ export const OtherSettingsForm: React.FunctionComponent<{
                 actualNumber = Number(actualNumber.replace(/\D/g, ''));
             }
             updateServerSettings(serverIndex, actualNumber);
-            //setSecondsError(validateNumber(event.target.value));
             setHasBeenUpdated(true);
 
         }
@@ -440,7 +439,7 @@ export const OtherSettingsForm: React.FunctionComponent<{
                     <div className="flexColumn" >
                         <div className="flexRow">
                             <label className="_inputText">
-                                Timeout Seconds:
+                                Cooldown (s):
                             <input type="text" value={server.timeoutSeconds} title={String(secondsError?.message.map(s => s + "\n"))} className={"_formInput _commandInput " + Helpers.stringIf("_formError", Boolean(secondsError))} onChange={handleNumberChange} disabled={!server.userCanManage} />
                             </label>
                         </div>
