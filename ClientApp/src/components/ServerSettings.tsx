@@ -454,6 +454,7 @@ export const OtherSettingsForm: React.FunctionComponent<{
                                     className="_formInput _roleSelect"
                                     value={server.botManagerRoleId || ""}
                                     onChange={handleRoleChange}
+                                    disabled={!server.userCanManage}
                                 >
                                     <option className="_roleOption" key={"0"} value={""}>
                                         None
