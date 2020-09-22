@@ -107,21 +107,23 @@ export const CommandRow: React.FunctionComponent<CommandRowProps> = ({ command, 
     return (
         <div className="flexColumn">
             <form onSubmit={handleSubmit}>
-                <div className="flexRow">
+                <div className="flexRow _flexWrap">
                     <span className="_commandPrefix">!</span>
                     {/*<ValidatedInput error={commandError} type="text" className={"_formInput _commandInput "} value={command.commandString} onChange={handleChangeCommand} disabled={!userCanEdit} />*/}
                     <input title={Helpers.stringIf(String(commandError?.message.map(s => s + "\n")), Boolean(commandError))} type="text" className={"_formInput _commandInput " + Helpers.stringIf("_formError", Boolean(commandError))} value={command.commandString} onChange={handleChangeCommand} disabled={!userCanEdit} />
-                    <div className="_buttonDiv">
-                        <input type="submit" value="Accept" className={"_formButton _acceptButton " + Helpers.nodispIf(!hasBeenUpdated)} disabled={disableAccept} />
-                        <button onClick={handleCancel} className={"_formButton _cancelButton " + Helpers.nodispIf(!hasBeenUpdated)}>Cancel</button>
-                        <button onClick={handleDelete} className={"_formButton _deleteButton " + Helpers.nodispIf((!userCanEdit) || (command.id < 0))}>Delete</button>
-                    </div>
                 </div>
                 <div className="betweenDiv5" />
                 <div className="flexRow valueDiv" >
                     <textarea title={Helpers.stringIf(String(valueError?.message.map(s => s + "\n")), Boolean(valueError))} className={"_formInput _valueInput " + Helpers.stringIf("_formError", Boolean(valueError))} value={command.entryValue} onChange={handleChangeValue} disabled={!userCanEdit} />
                 </div>
+                <div className="betweenDiv5" />
+                <div className="_buttonDiv">
+                    <button onClick={handleDelete} className={"_formButton _deleteButton " + Helpers.nodispIf((!userCanEdit) || (command.id < 0))}>Delete</button>
+                    <button onClick={handleCancel} className={"_formButton _cancelButton " + Helpers.nodispIf(!hasBeenUpdated)}>Revert</button>
+                    <input type="submit" value="Accept" className={"_formButton _acceptButton " + Helpers.nodispIf(!hasBeenUpdated)} disabled={disableAccept} />
+                </div>
                 <div className="betweenDiv20" />
+
             </form>
         </div >
     );

@@ -37,6 +37,7 @@
 
 .container-custom {
     padding-left: 0px;
+    padding-right: 0px;
     margin-left: 0px;
     max-width: unset;
     display: inline-block;
@@ -78,6 +79,7 @@
 .serverList {
     list-style: none;
     padding-left: 10px;
+    padding-right: 20px;
     /*width: auto;*/
 }
 
@@ -121,7 +123,8 @@
     .serverImg:hover {
         border-radius: 25%;
     }
-.serverDivSelected .serverImg{
+
+.serverDivSelected .serverImg {
     border-radius: 25%;
 }
 /*.serverDivUnselected .serverImg{
@@ -214,7 +217,8 @@
 
 ._settingsDiv {
     width: 100%;
-    padding-left: 20px;
+    padding-left: 4px;
+    padding-right: 4px;
 }
 
 ._minWidth400 {

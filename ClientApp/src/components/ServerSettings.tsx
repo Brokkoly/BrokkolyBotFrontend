@@ -444,10 +444,8 @@ export const OtherSettingsForm: React.FunctionComponent<{
                             </label>
                         </div>
                         {/*TODO: info hover icon that says what exactly these do*/}
-                        {/*{renderSelectForm}*/}
                         <div className="flexRow">
-                            <label className="_inputText">
-                                {"Select the role that can manage the bot: "}
+                            <label className="_inputText">{"Select the role that can manage the bot: "}
                                 <select
                                     className="_formInput _roleSelect"
                                     value={server.botManagerRoleId || ""}
@@ -471,6 +469,15 @@ export const OtherSettingsForm: React.FunctionComponent<{
                             </label>
                         </div>
                         <div className="flexRow">
+
+                            <button
+                                onClick={handleCancel}
+                                className={
+                                    "_formButton _cancelButton " + Helpers.nodispIf(!hasBeenUpdated)
+                                }
+                            >
+                                Revert
+            </button>
                             <input
                                 type="submit"
                                 value="Accept"
@@ -479,14 +486,6 @@ export const OtherSettingsForm: React.FunctionComponent<{
                                 }
                                 disabled={disableAccept}
                             />
-                            <button
-                                onClick={handleCancel}
-                                className={
-                                    "_formButton _cancelButton " + Helpers.nodispIf(!hasBeenUpdated)
-                                }
-                            >
-                                Cancel
-            </button>
                         </div>
                     </div>
                 </form>

@@ -114,10 +114,11 @@
     }
 
 ._buttonDiv {
-    justify-self: flex-end;
+    width: calc(63px * 3);
+    justify-self: flex-start;
     flex-grow: 1;
-    align-content: center;
-    justify-content: flex-end;
+    align-content: flex-start;
+    justify-content: flex-start;
     display: flex;
 }
 
