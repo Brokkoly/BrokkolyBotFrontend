@@ -51,9 +51,11 @@
 		<None Remove="ClientApp\src\backend\Error.ts" />
 		<None Remove="ClientApp\src\backend\Servers.ts" />
 		<None Remove="ClientApp\src\backend\User.ts" />
+		<None Remove="ClientApp\src\components\About.tsx" />
 		<None Remove="ClientApp\src\components\AcceptCancelDelete.tsx" />
 		<None Remove="ClientApp\src\components\CommandRow.tsx" />
 		<None Remove="ClientApp\src\components\file.tsx" />
+		<None Remove="ClientApp\src\components\Help.tsx" />
 		<None Remove="ClientApp\src\components\ServerCard.tsx" />
 		<None Remove="ClientApp\src\components\ServerList.tsx" />
 		<None Remove="ClientApp\src\components\ServerSettings.tsx" />

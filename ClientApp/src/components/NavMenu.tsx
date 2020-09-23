@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { Collapse, Container, Navbar, NavbarBrand, NavbarToggler, NavItem } from 'reactstrap';
+import { Collapse, Container, Navbar, NavbarBrand, NavbarToggler, NavItem, NavLink } from 'reactstrap';
 import { Link } from 'react-router-dom';
 import BrokkolyBanner from '../Images/BrokkolyBanner.png';
 import './NavMenu.css';
@@ -8,6 +8,7 @@ import { Button } from 'react-bootstrap';
 import { User } from '../backend/User';
 import { UserCard } from './UserCard';
 import { withCookies, Cookies } from 'react-cookie';
+import { Helpers } from "../helpers";
 interface NavMenuProps
 {
     //user: User | undefined;
@@ -19,7 +20,7 @@ class NavMenu extends Component<NavMenuProps, { collapsed: boolean }>{
     constructor(props: any)
     {
         super(props);
-        
+
         this.toggleNavbar = this.toggleNavbar.bind(this);
         this.state = {
             collapsed: true,
@@ -53,10 +54,10 @@ class NavMenu extends Component<NavMenuProps, { collapsed: boolean }>{
     render()
     {
         if (typeof window !== undefined) {
-            var baseUrl = window.location.protocol + '//' + window.location.host;
+             var baseUrl = window.location.protocol + '//' + window.location.host;
         }
         else {
-            baseUrl = "https://localhost:44320"
+            baseUrl = "https://localhost:44320";
         }
         const discordAuthLink = `https://discord.com/api/oauth2/authorize?response_type=token&client_id=225369871393882113&scope=identify%20guilds&redirect_uri=${baseUrl}`;
         return (
@@ -65,10 +66,25 @@ class NavMenu extends Component<NavMenuProps, { collapsed: boolean }>{
                     <Container className="container-custom" >
                         <img src={BrokkolyBanner} className="headerImg textColor" alt="" />
                         <NavbarBrand className="textColor" tag={Link} to={`/`} > Brokkoly Bot</NavbarBrand>
-                        < NavbarToggler onClick={this.toggleNavbar} className="mr-2" />
+                        <NavbarToggler onClick={this.toggleNavbar} className="mr-2" />
                         <Collapse className="d-sm-inline-flex flex-sm-row-reverse" isOpen={!this.state.collapsed
                         } navbar>
                             <ul className="navbar-nav flex-grow" >
+                                <NavItem className={"_alignSelfCenter _navLinkUnselected "}>
+                                    <NavLink tag={Link} to="/" style={{ color: "#dcddde" }} className="_linkHover">
+                                        My Servers
+                                    </NavLink>
+                                </NavItem>
+                                <NavItem className={"_alignSelfCenter _navLinkUnselected "}>
+                                    <NavLink tag={Link} to="/about" style={{ color: "#dcddde" }} className="_linkHover">
+                                        About
+                                    </NavLink>
+                                </NavItem>
+                                <NavItem className={"_alignSelfCenter _navLinkUnselected "}>
+                                    <NavLink tag={Link} to="/help" style={{ color: "#dcddde" }} className="_linkHover">
+                                        Help
+                                    </NavLink>
+                                </NavItem>
                                 {this.renderUserCardOrLogin(discordAuthLink)}
                             </ul>
                         </Collapse>

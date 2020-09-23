@@ -2,6 +2,8 @@ import React, { Component } from 'react';
 import { Cookies, withCookies } from 'react-cookie';
 import { Route, Switch } from 'react-router-dom';
 import { User } from './backend/User';
+import { AboutSection } from './components/About';
+import { HelpSection } from './components/Help';
 import Home from './components/Home';
 import { Layout } from './components/Layout';
 //import { ServerListAndSettingsWrapper } from './components/ServerList';
@@ -74,24 +76,14 @@ class App extends Component<{ cookies: Cookies }>
     {
         return (
             <>
-                {/*<ToastContainer
-                position="bottom-right"
-                autoClose={5000}
-                hideProgressBar
-                newestOnTop={false}
-                closeOnClick
-                rtl={false}
-                pauseOnFocusLoss
-                draggable
-                pauseOnHover>*/}
                 < Layout >
                     <Switch>
                         <Route exact path='/' component={Home} />
-                        {/*<Route path='/servers/:token?' component={ServerListAndSettingsWrapper} />*/}
+                        <Route path='/about' component={AboutSection} />
+                        <Route path='/help' component={HelpSection} />
                     </Switch>
-                    
+
                 </Layout >
-                {/*</ToastContainer>*/}
             </>
         );
     }
