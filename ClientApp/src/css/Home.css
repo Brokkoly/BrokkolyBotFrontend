@@ -1,4 +1,9 @@
-﻿:root {
+﻿body, html {
+    height: 100%;
+    background-color: var(--discord-dark);
+}
+
+:root {
     --discord-blurple: #7289DA;
     --discord-fullwhite: #FFFFFF;
     --discord-greyple: #99AAB5;
@@ -237,6 +242,7 @@
 ._aboutSection {
     padding-left: 8px;
     padding-right: 8px;
+    height: 100%;
 }
 
 ._alignChildrenCenter {
