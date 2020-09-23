@@ -235,8 +235,8 @@
 }
 
 ._aboutSection {
-    padding-left: 4px;
-    padding-right: 4px;
+    padding-left: 8px;
+    padding-right: 8px;
 }
 
 ._alignChildrenCenter {
@@ -248,7 +248,7 @@
 }
 
 ._navLinkUnselected {
-    margin: 2px;
+    margin: 5px;
     border-radius: 10%;
     border: 1px solid #dcddde;
     transition-duration: .4s;
@@ -268,3 +268,7 @@
     ._linkHover:hover {
         color: var(--discord-notquiteblack) !important;
     }
+
+._textIndent {
+    margin-left: 10px;
+}
