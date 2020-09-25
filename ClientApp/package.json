@@ -25,7 +25,7 @@
     "rimraf": "^2.6.2"
   },
   "devDependencies": {
-    "@types/node": "^14.10.0",
+    "@types/node": "^14.11.2",
     "@types/reactstrap": "^8.5.1",
     "ajv": "^6.9.1",
     "cross-env": "^5.2.0",
