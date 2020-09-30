@@ -117,7 +117,6 @@ namespace BrokkolyBotFrontend.Controllers
         [HttpDelete]
         public async Task<ActionResult<Command>> DeleteCommand([FromBody] JObject data)
         {
-
             string token = data["token"].ToObject<string>();
             int id = data["id"].ToObject<int>();
             if (!UserCanEditCommand(id, token))

@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "proxy": "https://localhost:44320",
+  "type": "module",
   "dependencies": {
     "@azure/app-configuration": "^1.1.0",
     "@types/bootstrap": "^4.5.0",
@@ -11,6 +12,7 @@
     "dotenv": "^8.2.0",
     "jquery": "^3.4.1",
     "merge": "^1.2.1",
+    "mocha": "^8.1.3",
     "oidc-client": "^1.9.0",
     "react": "^16.0.0",
     "react-bootstrap": "^1.3.0",
@@ -22,7 +24,8 @@
     "react-scripts": "^3.4.1",
     "react-toastify": "^6.0.8",
     "reactstrap": "^8.4.1",
-    "rimraf": "^2.6.2"
+    "rimraf": "^2.6.2",
+    "ts-node": "^9.0.0"
   },
   "devDependencies": {
     "@types/node": "^14.10.0",
@@ -44,7 +47,7 @@
   "scripts": {
     "start": "rimraf ./buiytihld && react-scripts start",
     "build": "react-scripts build",
-    "test": "cross-env CI=true react-scripts test --env=jsdom",
+    "test": "mocha -r ts-node/register ./src/**/tests.ts",
     "eject": "react-scripts eject",
     "lint": "eslint ./src/"
   },
