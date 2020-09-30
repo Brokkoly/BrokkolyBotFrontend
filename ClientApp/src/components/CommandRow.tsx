@@ -1,12 +1,11 @@
 ﻿import * as React from 'react';
 import { useState } from 'react';
-import { toast } from "react-toastify";
 import { Commands, ICommand } from '../backend/Commands';
 import { ErrorLevels, Errors } from '../backend/Error';
 import '../css/CommandRow.css';
 import '../css/Home.css';
-import { ICommandRowFunctions } from './ServerSettings';
 import { Helpers } from '../helpers';
+import { ICommandRowFunctions } from './ServerSettings';
 
 interface CommandRowProps
 {
@@ -51,6 +50,10 @@ export const CommandRow: React.FunctionComponent<CommandRowProps> = ({ command, 
         setValueErrors(Commands.checkValueValidity(command.entryValue));
     }, [command.entryValue, hasBeenUpdated])
 
+    /**
+     * Handler for the command's changes
+     * @param event the event that caused the change
+     */
     function handleChangeCommand(event: any)
     {
         let value = event.target.value;
@@ -64,7 +67,10 @@ export const CommandRow: React.FunctionComponent<CommandRowProps> = ({ command, 
         setHasBeenUpdated(true);
     }
 
-
+    /**
+     * Handler for the command's value
+     * @param event the event that caused the change
+     */
     function handleChangeValue(event: any)
     {
         let value = event.target.value as string;
@@ -72,28 +78,38 @@ export const CommandRow: React.FunctionComponent<CommandRowProps> = ({ command, 
         setHasBeenUpdated(true);
     }
 
+    /**
+     * Handler for the form's submit. Lets the list know to save this command's changes
+     * @param event need to prevent the default behavior
+     */
     function handleSubmit(event: React.FormEvent)
     {
         event.preventDefault();
         commandRowFunctions.acceptCommand(index, handleSubmitCallback);
     }
-    function handleSubmitCallback(success: boolean)
+    /**
+     * Callback if the edit was successful. Resets hasBeenUpdated
+     */
+    function handleSubmitCallback()
     {
-        if (success) {
-            setHasBeenUpdated(false);
-        }
-        else {
-            toast('An error ocurred while saving the command. Please Try again.');
-
-        }
+        setHasBeenUpdated(false);
     }
 
+    /**
+     * Handler for the cancel button. Tells the list to cancel changes to this command. Resets hasBeenUpdated
+     * @param event the button's event.
+     */
     function handleCancel(event: any)
     {
         event.preventDefault();
         commandRowFunctions.cancelCommand(index);
         setHasBeenUpdated(false);
     }
+
+    /**
+     * Handler for the delete button. Tells the list to delete this command.
+     * @param event the button's event.
+     */
     function handleDelete(event: any)
     {
         event.preventDefault();

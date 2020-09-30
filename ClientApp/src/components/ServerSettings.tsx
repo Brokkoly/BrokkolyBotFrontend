@@ -7,6 +7,7 @@ import { CommandRow } from "./CommandRow";
 import { IServerFunctions, LoadingMessage } from "./ServerList";
 import '../css/CommandRow.css';
 import { toast } from "react-toastify";
+import { Func } from "mocha";
 
 interface IServerSettingsProps
 {
@@ -22,13 +23,12 @@ interface IUpdateCommandProps
     newCommandString?: string;
     newEntryValue?: string;
 }
-type SuccessCallback = (success: boolean) => void;
 export interface ICommandRowFunctions
 {
     updateCommand(args: IUpdateCommandProps): void;
     cancelCommand(index: number): void;
     deleteCommand(index: number): void;
-    acceptCommand(index: number, editCallback: SuccessCallback): void;
+    acceptCommand(index: number, editCallback: Function): void;
 }
 
 export const ServerSettings: React.FunctionComponent<IServerSettingsProps> = ({
@@ -163,7 +163,7 @@ export const ServerSettings: React.FunctionComponent<IServerSettingsProps> = ({
      * @param index the index of the command being edited
      * @param editCallback the callback from the component for the command
      */
-    async function acceptCommand(index: number, editCallback: SuccessCallback)
+    async function acceptCommand(index: number, editCallback: Function)
     {
         if (Commands.checkCommandValidity(commandList[index].commandString, restrictedCommands).getHighestErrorLevel() < ErrorLevels.Warning
             && Commands.checkValueValidity(commandList[index].entryValue).getHighestErrorLevel() < ErrorLevels.Warning
@@ -174,8 +174,11 @@ export const ServerSettings: React.FunctionComponent<IServerSettingsProps> = ({
                 {
                     if (success) {
                         acceptCommandEditSuccessCallback(index);
+                        editCallback();
                     }
-                    editCallback(success);
+                    else {
+                        toast('An error ocurred while saving the command. Please Try again.');
+                    }
                 });
 
             } else {
@@ -184,10 +187,10 @@ export const ServerSettings: React.FunctionComponent<IServerSettingsProps> = ({
                 {
                     if (newId >= 0) {
                         acceptCommandPostSuccessCallback(index, newId, oldId);
-                        editCallback(true);
+                        editCallback();
                     }
                     else {
-                        editCallback(false);
+                        toast('An error ocurred while saving the command. Please Try again.');
                     }
                 })
             }
