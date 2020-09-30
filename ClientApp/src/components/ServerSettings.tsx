@@ -1,13 +1,12 @@
 ﻿import React, { CSSProperties, useEffect, useState } from "react";
+import { toast } from "react-toastify";
 import { Commands, ICommand } from "../backend/Commands";
-import { ErrorLevels, Errors, IError } from "../backend/Error";
+import { ErrorLevels, Errors } from "../backend/Error";
 import { IChannel, IRole, IServer, IServerInfo, Servers } from "../backend/Servers";
+import '../css/CommandRow.css';
 import { Helpers } from "../helpers";
 import { CommandRow } from "./CommandRow";
 import { IServerFunctions, LoadingMessage } from "./ServerList";
-import '../css/CommandRow.css';
-import { toast } from "react-toastify";
-import { Func } from "mocha";
 
 interface IServerSettingsProps
 {
@@ -62,7 +61,7 @@ export const ServerSettings: React.FunctionComponent<IServerSettingsProps> = ({
                         serverId: server.serverId
                     });
                 }
-                setCommandList(sortCommandList(newCommandList));
+                setCommandList(sortListOfCommands(newCommandList));
                 const serverInfo: IServerInfo = await Servers.getGuildInfo(token, serverId);
                 setServerRoles(serverInfo.roles);
                 setServerChannels(serverInfo.channels);
@@ -74,6 +73,12 @@ export const ServerSettings: React.FunctionComponent<IServerSettingsProps> = ({
         [server.serverId, server.userCanManage, token]
     );
 
+    /**
+     * Handles updates to a command. If the command has not yet been modified, 
+     * saves its old value to oldCommands in case changes need to be reverted.
+     * updates the state with whichever value in args is not undefined
+     * @param args
+     */
     function handleCommandUpdate(
         args: IUpdateCommandProps
     )
@@ -81,7 +86,7 @@ export const ServerSettings: React.FunctionComponent<IServerSettingsProps> = ({
         let index = args.index;
         let id = commandList[index].id;
         if (index === commandList.length - 1 && needEmptyCommand()) {
-            addEmptyCommandToEnd();
+            addEmptyCommandToEndOfCommandList();
         }
         if (!oldCommands.has(id)) {
             let original = {
@@ -107,8 +112,10 @@ export const ServerSettings: React.FunctionComponent<IServerSettingsProps> = ({
         });
     }
 
-
-    function addEmptyCommandToEnd(): void
+    /**
+     * Add an empty command to the end of commandList
+     * */
+    function addEmptyCommandToEndOfCommandList(): void
     {
         setCommandList(commandList =>
         {
@@ -124,7 +131,14 @@ export const ServerSettings: React.FunctionComponent<IServerSettingsProps> = ({
         });
     }
 
-    function sortCommandList(list: ICommand[]): ICommand[]
+    /**
+     * Sorts a list of ICommands. Returns the sorted list
+     * Sorts new unsaved commands at the bottom, by id.
+     * Saved commands are sorted alphabetically by commandString, then on their ids (aka creation time)
+     * @param list the list to sort
+     * @returns the sorted list.
+     */
+    function sortListOfCommands(list: ICommand[]): ICommand[]
     {
         let newList = [...list];
         newList.sort((a, b) =>
@@ -197,6 +211,12 @@ export const ServerSettings: React.FunctionComponent<IServerSettingsProps> = ({
         }
     }
 
+    /**
+     * Handles the result of a successful POST of a new command by setting its id 
+     * @param index index of the command in commandList
+     * @param newId the new actual database id.
+     * @param oldId the negative temporary id.
+     */
     function acceptCommandPostSuccessCallback(index: number, newId: number, oldId: number)
     {
         if (newId >= 0) {
@@ -204,13 +224,12 @@ export const ServerSettings: React.FunctionComponent<IServerSettingsProps> = ({
             {
                 let newList = [...commandList];
                 newList[index].id = newId;
-                sortCommandList(newList);
+                sortListOfCommands(newList);
 
                 return newList;
             });
             deleteFromOldCommands(oldId);
         }
-
     }
 
     /**
@@ -223,7 +242,7 @@ export const ServerSettings: React.FunctionComponent<IServerSettingsProps> = ({
         setCommandList(commandList =>
         {
             let newList = [...commandList];
-            sortCommandList(newList);
+            sortListOfCommands(newList);
             return newList;
         });
         deleteFromOldCommands(id);
@@ -277,7 +296,7 @@ export const ServerSettings: React.FunctionComponent<IServerSettingsProps> = ({
 
     /**
      * Deletes a command from the commandList, oldCommands, and has the web server delete it.
-     * @param index
+     * @param index the index of the command in commandList
      */
     async function deleteCommand(index: number)
     {
@@ -305,9 +324,14 @@ export const ServerSettings: React.FunctionComponent<IServerSettingsProps> = ({
                 toast("An error ocurred while deleting the command. Please try again");
             }
         });
-        //TODO: delete then send message and confirm on response
     }
-    function isNotDuplicatedInList(index: number)
+
+    /**
+     * Checks to make sure that there is not an identical command in the list.
+     * @param index the index of the command to check
+     * @returns False if the command is duplicated in the list, true otherwise
+     */
+    function isNotDuplicatedInList(index: number): boolean
     {
         //TODO: abstract these away
         let testCommand = commandList[index];
@@ -324,14 +348,6 @@ export const ServerSettings: React.FunctionComponent<IServerSettingsProps> = ({
             }
         }
         return true;
-    }
-
-    function doesNotHaveRestrictedCommand(index: number)
-    {
-        //TODO: just have this validate the command
-        return !restrictedCommands.find(
-            cmdStr => cmdStr === commandList[index].commandString
-        );
     }
 
     return (
@@ -406,6 +422,10 @@ export const OtherSettingsForm: React.FunctionComponent<{
         const [prefixErrors, setPrefixErrors] = useState<Errors>(new Errors());
         const [disableAccept, setDisableAccept] = useState(false);
 
+        /**
+         * Handler for changes in the timeout's value
+         * @param event the form event that caused the change
+         */
         function handleNumberChange(event: any)
         {
             let actualNumber = event.target.value;
@@ -414,19 +434,31 @@ export const OtherSettingsForm: React.FunctionComponent<{
             }
             serverFunctions.handleServerChange({ index: serverIndex, newTimeoutValue: actualNumber });
             setHasBeenUpdated(true);
-
         }
+
+        /**
+         * Handler for a change in the botManagerRoleId
+         * @param event the form event that caused the change
+         */
         function handleRoleChange(event: any)
         {
             serverFunctions.handleServerChange({ index: serverIndex, newBotManagerRoleId: event.target.value });
             setHasBeenUpdated(true);
         }
 
+        /**
+         * Handler for a change in the twitchChannel
+         * @param event the form event that caused the change
+         */
         function handleTwitchChannelChange(event: any)
         {
             serverFunctions.handleServerChange({ index: serverIndex, newTwitchChannelId: event.target.value });
             setHasBeenUpdated(true);
         }
+        /**
+         * Handler for a change in the command prefix.
+         * @param event the form event that caused the change
+         */
         function handlePrefixChange(event: any)
         {
             serverFunctions.handleServerChange({ index: serverIndex, newCommandPrefix: event.target.value });
@@ -476,12 +508,21 @@ export const OtherSettingsForm: React.FunctionComponent<{
         }, [server.commandPrefix, hasBeenUpdated]
         );
 
+        /**
+        * Handler for the cancel button. Tells the list to cancel changes to this command. Resets hasBeenUpdated
+        * @param event the button's event.
+        */
         function handleCancel(event: any)
         {
             event.preventDefault();
             serverFunctions.handleServerCancel(serverIndex);
             setHasBeenUpdated(false);
         }
+        /**
+        * Handler for the form's submit. Lets the list know to save this server's changes
+        * Resets hasBeenUpdated
+        * @param event need to prevent the default behavior
+        */
         function handleAccept(event: any)
         {
             event.preventDefault();

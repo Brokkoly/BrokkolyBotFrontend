@@ -113,7 +113,7 @@ export const CommandRow: React.FunctionComponent<CommandRowProps> = ({ command, 
     function handleDelete(event: any)
     {
         event.preventDefault();
-        commandRowFunctions.cancelCommand(index);
+        commandRowFunctions.deleteCommand(index);
     }
 
     return (
