@@ -1,4 +1,4 @@
-﻿import { IError } from "./Error";
+﻿import { CommandValidationError, Errors, IError, ValueValidationError } from "./Error";
 import { Servers } from "./Servers";
 
 export class Commands
@@ -75,7 +75,7 @@ export class Commands
             }
         ).then(response =>
         {
-            if (response.status === 204) {
+            if (response.status === 201) {
                 return response.json();
             }
             else {
@@ -118,46 +118,37 @@ export class Commands
             return false;
         }
     }
-    public static checkCommandValidity(command: string, restrictedCommands: string[]): IError | undefined
+    public static checkCommandValidity(command: string, restrictedCommands: string[]): Errors
     {
-        let error: IError = { message: [] };
+        let errors: IError[] = [];
         if (command.length < 3) {
-            error.message.push("Command must be at least 3 characters.");
+            errors.push(new CommandValidationError("Command must be at least 3 characters."));
         }
         else if (command.length > 20) {
-            error.message.push("Command cannot be longer than 20 characters.");
+            errors.push(new CommandValidationError("Command cannot be longer than 20 characters."));
         }
         if (restrictedCommands.findIndex(s => s === command) !== -1) {
-            error.message.push(`${command} is restricted and cannot be used as a command`);
+            errors.push(new CommandValidationError(`${command} is restricted and cannot be used as a command`));
         }
         if (command.match("[^a-zA-Z]+")) {
-            error.message.push("Command can only be made up of letters");
+            errors.push(new CommandValidationError("Command can only be made up of letters"));
         }
-        if (error.message.length === 0) {
-            return;
-        }
-        else {
-            return error;
-        }
+        return new Errors(errors);
     }
-    public static checkValueValidity(value: string): IError | undefined
+    public static checkValueValidity(value: string): Errors
     {
-        let error: IError = { message: [] }
+        let errors
+            : IError[] = [];
         if (value.length === 0) {
-            error.message.push("Value must not have a length of 0");
+            errors.push(new ValueValidationError("Value must not have a length of 0"));
         }
         if (value.length > 500) {
-            error.message.push("Value length cannot be more than 500");
+            errors.push(new ValueValidationError("Value length cannot be more than 500"));
         }
         if (value.match("^<@[&!]?[0-9]+>")) {
-            error.message.push("You're not allowed to mention people or roles");
+            errors.push(new ValueValidationError("You're not allowed to mention people or roles"));
         }
-        if (error.message.length > 0) {
-            return error;
-        }
-        else {
-            return undefined;
-        }
+        return new Errors(errors);
     }
 }
 

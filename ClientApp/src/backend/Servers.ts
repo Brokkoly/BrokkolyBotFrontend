@@ -1,4 +1,4 @@
-﻿import { IError } from "./Error";
+﻿import { ErrorLevels, Errors, IError, PrefixValidationError, TimeoutValidationError } from "./Error";
 
 export class Servers
 {
@@ -27,21 +27,23 @@ export class Servers
                 iconUrl64: Servers.constructUrlsForServerIcon(srv.id, srv.icon),
                 userCanManage: srv.canManageServer,
                 botManagerRoleId: srv.botManagerRoleId,
+                twitchChannel: srv.twitchChannel,
+                commandPrefix: srv.commandPrefix,
             }
         });
         return serversTransformed;
     }
 
-    public static async getGuildRoles(token: string, serverId: string): Promise<IRole[]>
+    public static async getGuildInfo(token: string, serverId: string): Promise<IServerInfo>
     {
         //TODO: Response checking. Let the user know if there is an error.
         const result = await fetch(
-            `/api/Discord/GetRolesForServer?token=${token}&serverId=${serverId}`
+            `/api/Discord/GetServerInfo?token=${token}&serverId=${serverId}`
         );
         const text = await result.text();
-        const roles = await JSON.parse(text.replace(/("[^"]*"\s*:\s*)(\d{16,})/g, '$1"$2"'));
+        const serverInfo = await JSON.parse(text.replace(/("[^"]*"\s*:\s*)(\d{16,})/g, '$1"$2"'));
         //TODO: make this better
-        const rolesTransformed: IRole[] = roles.map((rle: any) => 
+        const rolesTransformed: IRole[] = serverInfo.myRoles.map((rle: any) => 
         {
             return {
                 id: rle.id,
@@ -50,7 +52,14 @@ export class Servers
                 position: rle.postition,
             }
         });
-        return rolesTransformed;
+        const channelsTransformed: IChannel[] = serverInfo.myChannels.map((channel: any) =>
+        {
+            return {
+                id: channel.id,
+                name: channel.name,
+            }
+        });
+        return { roles: rolesTransformed, channels: channelsTransformed };
     }
     public static async getUserRolesInGuild(token: string, serverId: string): Promise<IRole[]>
     {
@@ -88,6 +97,8 @@ export class Servers
                         TimeoutSeconds: server.timeoutSeconds,
                         TimeoutRoleId: server.timeoutRoleId,
                         BotManagerRoleId: server.botManagerRoleId,
+                        TwitchChannel: server.twitchChannelId,
+                        CommandPrefix: server.commandPrefix,
                     },
                     token: token
                 })
@@ -114,24 +125,45 @@ export class Servers
     {
         return `https://cdn.discordapp.com/icons/${id}/${hash}.${hash.substr(0, 2) === "a_" ? "gif" : "png"}?size=64`;
     }
-    public static checkTimeoutValidity(seconds: number): IError | undefined
+
+    public static checkTimeoutValidity(seconds: number): Errors
     {
-        let error: IError = { message: [] };
+        let errors: IError[] = [];
         if (isNaN(seconds)) {
-            error.message.push("Timeout must be a number");
-            return error;
-        }
-        if (seconds < 0) {
-            error.message.push("Timeout cannot be negative");
-        }
-        if (error.message.length === 0) {
-            return;
+            errors.push(new TimeoutValidationError("Timeout must be a number", ErrorLevels.Critical));
         }
         else {
-            return error;
+            //We don't want to be comparing nan to numbers
+            if (seconds < 0) {
+                errors.push(new TimeoutValidationError("Timeout cannot be negative", ErrorLevels.Critical));
+            }
         }
+        return new Errors(errors);
+    }
+
+    public static checkCommandPrefixValidity(prefix: string): Errors
+    {
+        let errors: IError[] = [];
+        if (prefix === "") {
+            errors.push(new PrefixValidationError("A prefix is required to use the bot.", ErrorLevels.Critical));
+        }
+        if (prefix.length > 2) {
+            errors.push(new PrefixValidationError("Prefixes cannot be longer than 2 characters", ErrorLevels.Critical));
+        }
+        for (let i = 0; i < prefix.length; i++) {
+            let code = prefix.charCodeAt(i);
+            if (code > 126 || code < 33) {
+                errors.push(new PrefixValidationError(`"${prefix[i]}" is not a valid prefix character`, ErrorLevels.Critical));
+            }
+            if (/^[0-9A-Za-z]/.test(prefix[i])) {
+                errors.push(new PrefixValidationError(`"${prefix[i]}" is a number or letter, and may cause unexpected responses from the bot`, ErrorLevels.Warning));
+            }
+        }
+        return new Errors(errors);
     }
 }
+
+
 
 export interface IServer
 {
@@ -142,7 +174,10 @@ export interface IServer
     name?: string;
     botManagerRoleId?: string;
     userCanManage: boolean;
-    roles: IRole[];
+    //roles: IRole[];
+    //channels: IChannel[];
+    commandPrefix: string;
+    twitchChannelId: string;
 }
 export interface IRole
 {
@@ -150,4 +185,14 @@ export interface IRole
     name: string;
     color: number;
     position: number;
+}
+export interface IChannel
+{
+    id: string;
+    name: string;
+}
+export interface IServerInfo
+{
+    roles: IRole[];
+    channels: IChannel[];
 }
