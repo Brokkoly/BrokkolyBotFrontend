@@ -1,58 +1,54 @@
 ﻿import * as React from 'react';
 import { useState } from 'react';
-import { InputProps } from 'reactstrap';
+import { toast } from "react-toastify";
 import { Commands, ICommand } from '../backend/Commands';
-import { IError } from '../backend/Error';
+import { ErrorLevels, Errors } from '../backend/Error';
 import '../css/CommandRow.css';
 import '../css/Home.css';
+import { ICommandRowFunctions } from './ServerSettings';
 import { Helpers } from '../helpers';
-import { toast } from "react-toastify";
 
 interface CommandRowProps
 {
     command: ICommand;
     index: number;
-    handleUpdateCallback: Function;
-    handleAcceptCallback: Function;
-    handleCancelCallback: Function;
-    handleDeleteCallback: Function;
+    commandRowFunctions: ICommandRowFunctions;
     userCanEdit: boolean;
     restrictedCommands: string[];
 }
-export const CommandRow: React.FunctionComponent<CommandRowProps> = ({ command, index, handleUpdateCallback, handleAcceptCallback, handleCancelCallback, handleDeleteCallback, userCanEdit, restrictedCommands }) =>
+export const CommandRow: React.FunctionComponent<CommandRowProps> = ({ command, index, commandRowFunctions, userCanEdit, restrictedCommands }) =>
 {
-    //TODO: maybe pass down the function to check validity
     const [hasBeenUpdated, setHasBeenUpdated] = useState(false);
-    const [commandError, setCommandError] = useState<IError | undefined>(undefined);
-    const [valueError, setValueError] = useState<IError | undefined>(undefined);
+    const [commandErrors, setCommandErrors] = useState<Errors>(new Errors());
+    const [valueErrors, setValueErrors] = useState<Errors>(new Errors());
     const [disableAccept, setDisableAccept] = useState(false);
 
     React.useEffect(() =>
     {
-        if (commandError || valueError) {
+        if (commandErrors.getHighestErrorLevel() > ErrorLevels.Warning || valueErrors.getHighestErrorLevel() > ErrorLevels.Warning) {
             setDisableAccept(true);
         }
         else {
 
             setDisableAccept(false);
         }
-    }, [commandError, valueError])
+    }, [commandErrors, valueErrors])
 
     React.useEffect(() =>
     {
         if (!hasBeenUpdated) {
-            setCommandError(undefined);
+            setCommandErrors(new Errors());
             return;
         }
-        setCommandError(Commands.checkCommandValidity(command.commandString, restrictedCommands));
+        setCommandErrors(Commands.checkCommandValidity(command.commandString, restrictedCommands));
     }, [command.commandString, restrictedCommands, hasBeenUpdated])
     React.useEffect(() =>
     {
         if (!hasBeenUpdated) {
-            setValueError(undefined);
+            setValueErrors(new Errors());
             return;
         }
-        setValueError(Commands.checkValueValidity(command.entryValue));
+        setValueErrors(Commands.checkValueValidity(command.entryValue));
     }, [command.entryValue, hasBeenUpdated])
 
     function handleChangeCommand(event: any)
@@ -63,7 +59,7 @@ export const CommandRow: React.FunctionComponent<CommandRowProps> = ({ command, 
             //We don't need to update because the user just changed the case of a value
             return;
         }
-        handleUpdateCallback(index, value, undefined);
+        commandRowFunctions.updateCommand({ index: index, newCommandString: value });
 
         setHasBeenUpdated(true);
     }
@@ -72,14 +68,14 @@ export const CommandRow: React.FunctionComponent<CommandRowProps> = ({ command, 
     function handleChangeValue(event: any)
     {
         let value = event.target.value as string;
-        handleUpdateCallback(index, undefined, value);
+        commandRowFunctions.updateCommand({ index: index, newEntryValue: value });
         setHasBeenUpdated(true);
     }
 
     function handleSubmit(event: React.FormEvent)
     {
         event.preventDefault();
-        handleAcceptCallback(index, handleSubmitCallback);
+        commandRowFunctions.acceptCommand(index, handleSubmitCallback);
     }
     function handleSubmitCallback(success: boolean)
     {
@@ -87,7 +83,7 @@ export const CommandRow: React.FunctionComponent<CommandRowProps> = ({ command, 
             setHasBeenUpdated(false);
         }
         else {
-            toast('An error ocurred. Please Try again.');
+            toast('An error ocurred while saving the command. Please Try again.');
 
         }
     }
@@ -95,13 +91,13 @@ export const CommandRow: React.FunctionComponent<CommandRowProps> = ({ command, 
     function handleCancel(event: any)
     {
         event.preventDefault();
-        handleCancelCallback(index);
+        commandRowFunctions.cancelCommand(index);
         setHasBeenUpdated(false);
     }
     function handleDelete(event: any)
     {
         event.preventDefault();
-        handleDeleteCallback(index);
+        commandRowFunctions.cancelCommand(index);
     }
 
     return (
@@ -110,11 +106,11 @@ export const CommandRow: React.FunctionComponent<CommandRowProps> = ({ command, 
                 <div className="flexRow _flexWrap">
                     <span className="_commandPrefix">!</span>
                     {/*<ValidatedInput error={commandError} type="text" className={"_formInput _commandInput "} value={command.commandString} onChange={handleChangeCommand} disabled={!userCanEdit} />*/}
-                    <input title={Helpers.stringIf(String(commandError?.message.map(s => s + "\n")), Boolean(commandError))} type="text" className={"_formInput _commandInput " + Helpers.stringIf("_formError", Boolean(commandError))} value={command.commandString} onChange={handleChangeCommand} disabled={!userCanEdit} />
+                    <input title={commandErrors.toErrorMessage() || undefined} type="text" className={"_formInput _commandInput " + commandErrors.getCssForError()} value={command.commandString} onChange={handleChangeCommand} disabled={!userCanEdit} />
                 </div>
                 <div className="betweenDiv5" />
                 <div className="flexRow valueDiv" >
-                    <textarea title={Helpers.stringIf(String(valueError?.message.map(s => s + "\n")), Boolean(valueError))} className={"_formInput _valueInput " + Helpers.stringIf("_formError", Boolean(valueError))} value={command.entryValue} onChange={handleChangeValue} disabled={!userCanEdit} />
+                    <textarea title={valueErrors.toErrorMessage() || undefined} className={"_formInput _valueInput " + valueErrors.getCssForError()} value={command.entryValue} onChange={handleChangeValue} disabled={!userCanEdit} />
                 </div>
                 <div className="betweenDiv5" />
                 <div className="_buttonDiv">
@@ -129,31 +125,31 @@ export const CommandRow: React.FunctionComponent<CommandRowProps> = ({ command, 
     );
 }
 
-//TODO: figure this out or delete it.
-export const ValidatedInput: React.FunctionComponent<{ error: IError | undefined } & InputProps> = ({ error, ...props }) =>
-{
-    const [errorMessage, setErrorMessage] = useState<string | undefined>(undefined);
+////TODO: figure this out or delete it.
+//export const ValidatedInput: React.FunctionComponent<{ error: IError | undefined } & InputProps> = ({ error, ...props }) =>
+//{
+//    const [errorMessage, setErrorMessage] = useState<string | undefined>(undefined);
 
-    React.useEffect(() =>
-    {
-        let m = "";
-        if (error && error.message.length > 0) {
-            for (let s of error.message) {
-                m = m + s + "\n";
-            }
-        }
-        setErrorMessage(m);
+//    React.useEffect(() =>
+//    {
+//        let m = "";
+//        if (error && error.message.length > 0) {
+//            for (let s of error.message) {
+//                m = m + s + "\n";
+//            }
+//        }
+//        setErrorMessage(m);
 
-    }, [error, error?.message])
+//    }, [error, error?.message])
 
-    return (
-        errorMessage ?
-            <input className={props?.className + " " + (errorMessage ? "_formError" : "")} title={errorMessage} {...() =>
-            {
-                let { className, ...rest } = props;
-                return rest;
-            }} />
-            :
-            <input {...props} />
-    )
-}
+//    return (
+//        errorMessage ?
+//            <input className={props?.className + " " + (errorMessage ? "_formError" : "")} title={errorMessage} {...() =>
+//            {
+//                let { className, ...rest } = props;
+//                return rest;
+//            }} />
+//            :
+//            <input {...props} />
+//    )
+//}

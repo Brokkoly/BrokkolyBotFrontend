@@ -7,6 +7,24 @@ import { Button } from 'react-bootstrap';
 import { ServerSettings } from "./ServerSettings";
 import { toast } from 'react-toastify';
 
+
+export interface IServerFunctions
+{
+    handleServerChange(args: IServerChangeArgs): void;
+    handleServerAccept(index: number): void;
+    handleServerCancel(index: number): void;
+
+}
+
+export interface IServerChangeArgs
+{
+    index: number;
+    newTimeoutValue?: number;
+    newBotManagerRoleId?: string;
+    newTwitchChannelId?: string;
+    newCommandPrefix?: string;
+}
+
 export const ServerList: React.FunctionComponent<{ user: User }> = ({ user }) =>
 {
     const [loading, setLoading] = useState(true);
@@ -31,15 +49,15 @@ export const ServerList: React.FunctionComponent<{ user: User }> = ({ user }) =>
 
                 }
             });
-                Commands.getRestrictedCommands().then(result =>
-                {
-                    if (result?.length > 0) {
-                        setRestrictedCommands(result);
-                    }
-                    else {
-                        toast('An error ocurred when loading settings. If this persists, consider refreshing');
-                    }
-                })
+            Commands.getRestrictedCommands().then(result =>
+            {
+                if (result?.length > 0) {
+                    setRestrictedCommands(result);
+                }
+                else {
+                    toast('An error ocurred when loading settings. If this persists, consider refreshing');
+                }
+            })
             setRestrictedCommands(await Commands.getRestrictedCommands());
             setLoading(false);
         }
@@ -50,6 +68,34 @@ export const ServerList: React.FunctionComponent<{ user: User }> = ({ user }) =>
 
     }, [user])
 
+    //useEffect(() =>
+    //{
+    //    async function fetchServerRolesAndChannels(token: string)
+    //    {
+    //        Servers.getGuildInfo(token, servers[selectedIndex].serverId).then(result =>
+    //        {
+    //            if (result.channels?.length > 0 && result.roles?.length > 0) {
+    //                setServers(srvs =>
+    //                {
+    //                    let newServers = [...srvs];
+    //                    newServers[selectedIndex].channels = result.channels;
+    //                    newServers[selectedIndex].roles = result.roles;
+    //                    return newServers;
+    //                });
+
+    //            }
+    //            else {
+    //                toast('An error ocurred when loading settings. If this persists, consider refreshing');
+    //            }
+    //        });
+    //    }
+    //    if (!selectedIndex) {
+    //        return;
+    //    }
+    //    fetchServerRolesAndChannels(user.accessToken)
+
+    //}, [selectedIndex, servers, user.accessToken])
+
 
     if (typeof window !== undefined) {
         var baseUrl = window.location.protocol + '//' + window.location.host;
@@ -58,8 +104,9 @@ export const ServerList: React.FunctionComponent<{ user: User }> = ({ user }) =>
         baseUrl = "https://localhost:44320";
     }
 
-    function handleServerChange(index: number, newTimeoutValue: number | undefined, newBotManagerRoleId: string | undefined)
+    function handleServerChange(args: IServerChangeArgs)
     {
+        let index = args.index;
         let id = servers[index].serverId;
         if (!oldServers.has(id)) {
             let original = {
@@ -75,24 +122,31 @@ export const ServerList: React.FunctionComponent<{ user: User }> = ({ user }) =>
         setServers(servers =>
         {
             let newList = [...servers];
-            if (newTimeoutValue !== undefined) {
-                newList[index].timeoutSeconds = Math.trunc(newTimeoutValue);
+            if (args.newTimeoutValue !== undefined) {
+                newList[index].timeoutSeconds = Math.trunc(args.newTimeoutValue);
             }
-            else if (newBotManagerRoleId !== undefined) {
-                newList[index].botManagerRoleId = newBotManagerRoleId;
+            else if (args.newBotManagerRoleId !== undefined) {
+                newList[index].botManagerRoleId = args.newBotManagerRoleId;
+            }
+            else if (args.newTwitchChannelId !== undefined) {
+                newList[index].twitchChannelId = args.newTwitchChannelId;
+            }
+            else if (args.newCommandPrefix !== undefined) {
+                newList[index].commandPrefix = args.newCommandPrefix;
             }
             return newList;
         });
     }
     async function handleServerAccept(index: number)
     {
+        //TODO: validate the server properties
         Servers.putServerEdit(user.accessToken, servers[index]).then((success: boolean) =>
         {
             if (success) {
                 serverAcceptSuccessCallback(index);
             }
             else {
-                toast("An error ocurred. Please try again");
+                toast("An error ocurred while saving settings. Please try again");
             }
         })
     }
@@ -165,7 +219,9 @@ export const ServerList: React.FunctionComponent<{ user: User }> = ({ user }) =>
                                         <div className="_settingsDiv">
 
 
-                                            <ServerSettings serverIndex={selectedIndex} server={servers[selectedIndex]} token={user.accessToken} restrictedCommands={restrictedCommands} handleServerChange={handleServerChange} handleServerAccept={handleServerAccept} handleServerCancel={handleServerCancel} />
+                                            <ServerSettings serverIndex={selectedIndex} server={servers[selectedIndex]} token={user.accessToken} restrictedCommands={restrictedCommands}
+                                                serverFunctions={{ handleServerAccept: handleServerAccept, handleServerCancel: handleServerCancel, handleServerChange: handleServerChange }}
+                                            />
                                         </div>
                                     </div>
                                     : null}

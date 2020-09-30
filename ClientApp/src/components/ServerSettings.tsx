@@ -1,29 +1,41 @@
 ﻿import React, { CSSProperties, useEffect, useState } from "react";
 import { Commands, ICommand } from "../backend/Commands";
-import { IError } from "../backend/Error";
-import { IRole, IServer, Servers } from "../backend/Servers";
+import { ErrorLevels, Errors, IError } from "../backend/Error";
+import { IChannel, IRole, IServer, IServerInfo, Servers } from "../backend/Servers";
 import { Helpers } from "../helpers";
 import { CommandRow } from "./CommandRow";
-import { LoadingMessage } from "./ServerList";
+import { IServerFunctions, LoadingMessage } from "./ServerList";
+import '../css/CommandRow.css';
+import { toast } from "react-toastify";
 
-interface ServerSettingsProps
+interface IServerSettingsProps
 {
     token: string;
     serverIndex: number;
     server: IServer;
     restrictedCommands: string[];
-    handleServerChange: Function;
-    handleServerAccept: Function;
-    handleServerCancel: Function;
+    serverFunctions: IServerFunctions;
+}
+interface IUpdateCommandProps
+{
+    index: number;
+    newCommandString?: string;
+    newEntryValue?: string;
+}
+type SuccessCallback = (success: boolean) => void;
+export interface ICommandRowFunctions
+{
+    updateCommand(args: IUpdateCommandProps): void;
+    cancelCommand(index: number): void;
+    deleteCommand(index: number): void;
+    acceptCommand(index: number, editCallback: SuccessCallback): void;
 }
 
-export const ServerSettings: React.FunctionComponent<ServerSettingsProps> = ({
+export const ServerSettings: React.FunctionComponent<IServerSettingsProps> = ({
     server,
     token,
     restrictedCommands,
-    handleServerChange,
-    handleServerAccept,
-    handleServerCancel,
+    serverFunctions,
     serverIndex
 }) =>
 {
@@ -32,6 +44,7 @@ export const ServerSettings: React.FunctionComponent<ServerSettingsProps> = ({
         new Map<number, ICommand>()
     );
     const [serverRoles, setServerRoles] = useState<IRole[]>([]);
+    const [serverChannels, setServerChannels] = useState<IChannel[]>([]);
     const [loading, setLoading] = useState(true);
     const [nextTempId, setNextTempId] = useState(-2);
 
@@ -50,7 +63,9 @@ export const ServerSettings: React.FunctionComponent<ServerSettingsProps> = ({
                     });
                 }
                 setCommandList(sortCommandList(newCommandList));
-                setServerRoles(await Servers.getGuildRoles(token, serverId));
+                const serverInfo: IServerInfo = await Servers.getGuildInfo(token, serverId);
+                setServerRoles(serverInfo.roles);
+                setServerChannels(serverInfo.channels);
                 setLoading(false);
             }
             setLoading(true);
@@ -60,14 +75,12 @@ export const ServerSettings: React.FunctionComponent<ServerSettingsProps> = ({
     );
 
     function handleCommandUpdate(
-        index: number,
-        newCommandString: string | undefined,
-        newEntryValue: string | undefined
+        args: IUpdateCommandProps
     )
     {
+        let index = args.index;
         let id = commandList[index].id;
         if (index === commandList.length - 1 && needEmptyCommand()) {
-            //TODO: clean this up
             addEmptyCommandToEnd();
         }
         if (!oldCommands.has(id)) {
@@ -84,10 +97,10 @@ export const ServerSettings: React.FunctionComponent<ServerSettingsProps> = ({
         setCommandList(commandList =>
         {
             let newList = [...commandList];
-            if (newCommandString !== undefined) {
-                newList[index].commandString = newCommandString;
-            } else if (newEntryValue !== undefined) {
-                newList[index].entryValue = newEntryValue;
+            if (args.newCommandString !== undefined) {
+                newList[index].commandString = args.newCommandString;
+            } else if (args.newEntryValue !== undefined) {
+                newList[index].entryValue = args.newEntryValue;
             }
 
             return newList;
@@ -130,6 +143,10 @@ export const ServerSettings: React.FunctionComponent<ServerSettingsProps> = ({
         return newList;
     }
 
+    /**
+     * Checks if commandList needs a new empty command at the end of the list
+     * @returns True if a new command is needed
+     */
     function needEmptyCommand(): boolean
     {
         if (
@@ -141,10 +158,17 @@ export const ServerSettings: React.FunctionComponent<ServerSettingsProps> = ({
         return false;
     }
 
-    async function acceptCommand(index: number, editCallback: Function)
+    /**
+     * Checks that commands are valid and saves them
+     * @param index the index of the command being edited
+     * @param editCallback the callback from the component for the command
+     */
+    async function acceptCommand(index: number, editCallback: SuccessCallback)
     {
-        //var id: number;
-        if (doesNotHaveRestrictedCommand(index) && isNotDuplicatedInList(index)) {
+        if (Commands.checkCommandValidity(commandList[index].commandString, restrictedCommands).getHighestErrorLevel() < ErrorLevels.Warning
+            && Commands.checkValueValidity(commandList[index].entryValue).getHighestErrorLevel() < ErrorLevels.Warning
+            && isNotDuplicatedInList(index)) {
+
             if (commandList[index].id >= 0) {
                 await Commands.saveCommandEdit(token, commandList[index]).then((success: boolean) =>
                 {
@@ -186,6 +210,10 @@ export const ServerSettings: React.FunctionComponent<ServerSettingsProps> = ({
 
     }
 
+    /**
+     * Sort the command list and deletes the command from the old commands map.
+     * @param index index of the command
+     */
     function acceptCommandEditSuccessCallback(index: number)
     {
         let id = commandList[index].id;
@@ -198,6 +226,10 @@ export const ServerSettings: React.FunctionComponent<ServerSettingsProps> = ({
         deleteFromOldCommands(id);
     }
 
+    /**
+     * Delete a command from the old commands map
+     * @param id the id of the command
+     */
     function deleteFromOldCommands(id: number)
     {
         if (oldCommands.has(id)) {
@@ -210,6 +242,10 @@ export const ServerSettings: React.FunctionComponent<ServerSettingsProps> = ({
         }
     }
 
+    /**
+     * Cancel changes being made to the command
+     * @param index index of the command
+     */
     function cancelCommand(index: number)
     {
         let id = commandList[index].id;
@@ -236,29 +272,38 @@ export const ServerSettings: React.FunctionComponent<ServerSettingsProps> = ({
         }
     }
 
+    /**
+     * Deletes a command from the commandList, oldCommands, and has the web server delete it.
+     * @param index
+     */
     async function deleteCommand(index: number)
     {
-        if (await Commands.deleteFromList(token, commandList[index].id)) {
-            let id = commandList[index].id;
-            if (oldCommands.has(id)) {
-                setOldCommands(oldCommands =>
-                {
-                    let newOldCommands = new Map(oldCommands);
-                    newOldCommands.delete(id);
-                    return newOldCommands;
-                });
-                setCommandList(commandList =>
-                {
-                    //not undefined because we checked above
-                    let newList = [...commandList];
-                    newList.splice(index, 1);
-                    return newList;
-                });
+        await Commands.deleteFromList(token, commandList[index].id).then(success =>
+        {
+            if (success) {
+                let id = commandList[index].id;
+                if (oldCommands.has(id)) {
+                    setOldCommands(oldCommands =>
+                    {
+                        let newOldCommands = new Map(oldCommands);
+                        newOldCommands.delete(id);
+                        return newOldCommands;
+                    });
+                    setCommandList(commandList =>
+                    {
+                        //not undefined because we checked above
+                        let newList = [...commandList];
+                        newList.splice(index, 1);
+                        return newList;
+                    });
+                }
             }
-        }
+            else {
+                toast("An error ocurred while deleting the command. Please try again");
+            }
+        });
         //TODO: delete then send message and confirm on response
     }
-
     function isNotDuplicatedInList(index: number)
     {
         //TODO: abstract these away
@@ -291,19 +336,15 @@ export const ServerSettings: React.FunctionComponent<ServerSettingsProps> = ({
             <OtherSettingsForm
                 server={server}
                 serverIndex={serverIndex}
-                updateServerSettings={handleServerChange}
-                handleCancelCallback={handleServerCancel}
-                handleAcceptCallback={handleServerAccept}
                 serverRoles={serverRoles}
+                serverChannels={serverChannels}
+                serverFunctions={serverFunctions}
             />
             <div className="betweenDiv20" />
             <CommandList
                 commands={commandList}
-                updateCommand={handleCommandUpdate}
-                acceptCommand={acceptCommand}
-                cancelCommand={cancelCommand}
+                commandRowFunctions={{ updateCommand: handleCommandUpdate, acceptCommand: acceptCommand, cancelCommand: cancelCommand, deleteCommand: deleteCommand }}
                 userCanEdit={server.userCanManage}
-                deleteCommand={deleteCommand}
                 restrictedCommands={restrictedCommands}
             />
         </LoadingMessage>
@@ -313,20 +354,14 @@ export const ServerSettings: React.FunctionComponent<ServerSettingsProps> = ({
 interface CommandListProps
 {
     commands: ICommand[];
-    updateCommand: Function;
-    acceptCommand: Function;
-    cancelCommand: Function;
-    deleteCommand: Function;
+    commandRowFunctions: ICommandRowFunctions;
     userCanEdit: boolean;
     restrictedCommands: string[];
 }
 
 export const CommandList: React.FunctionComponent<CommandListProps> = ({
     commands,
-    updateCommand,
-    acceptCommand,
-    cancelCommand,
-    deleteCommand,
+    commandRowFunctions,
     userCanEdit,
     restrictedCommands
 }) =>
@@ -339,10 +374,7 @@ export const CommandList: React.FunctionComponent<CommandListProps> = ({
                         key={cmd.id}
                         index={index}
                         command={cmd}
-                        handleUpdateCallback={updateCommand}
-                        handleAcceptCallback={acceptCommand}
-                        handleCancelCallback={cancelCommand}
-                        handleDeleteCallback={deleteCommand}
+                        commandRowFunctions={commandRowFunctions}
                         userCanEdit={userCanEdit}
                         restrictedCommands={restrictedCommands}
                     />
@@ -355,23 +387,20 @@ export const CommandList: React.FunctionComponent<CommandListProps> = ({
 export const OtherSettingsForm: React.FunctionComponent<{
     server: IServer;
     serverIndex: number;
-    updateServerSettings: Function;
-    handleAcceptCallback: Function;
-    handleCancelCallback: Function;
+    serverFunctions: IServerFunctions;
     serverRoles: IRole[];
+    serverChannels: IChannel[];
 }> = ({
     server,
-    updateServerSettings,
-    handleAcceptCallback,
-    handleCancelCallback,
-    serverRoles,
+    serverFunctions,
     serverIndex,
+    serverRoles,
+    serverChannels,
 }) =>
     {
         const [hasBeenUpdated, setHasBeenUpdated] = useState(false);
-        const [secondsError, setSecondsError] = useState<undefined | IError>(
-            undefined
-        );
+        const [secondsErrors, setSecondsErrors] = useState<Errors>(new Errors());
+        const [prefixErrors, setPrefixErrors] = useState<Errors>(new Errors());
         const [disableAccept, setDisableAccept] = useState(false);
 
         function handleNumberChange(event: any)
@@ -380,13 +409,24 @@ export const OtherSettingsForm: React.FunctionComponent<{
             if (isNaN(actualNumber)) {
                 actualNumber = Number(actualNumber.replace(/\D/g, ''));
             }
-            updateServerSettings(serverIndex, actualNumber);
+            serverFunctions.handleServerChange({ index: serverIndex, newTimeoutValue: actualNumber });
             setHasBeenUpdated(true);
 
         }
         function handleRoleChange(event: any)
         {
-            updateServerSettings(serverIndex, undefined, event.target.value);
+            serverFunctions.handleServerChange({ index: serverIndex, newBotManagerRoleId: event.target.value });
+            setHasBeenUpdated(true);
+        }
+
+        function handleTwitchChannelChange(event: any)
+        {
+            serverFunctions.handleServerChange({ index: serverIndex, newTwitchChannelId: event.target.value });
+            setHasBeenUpdated(true);
+        }
+        function handlePrefixChange(event: any)
+        {
+            serverFunctions.handleServerChange({ index: serverIndex, newCommandPrefix: event.target.value });
             setHasBeenUpdated(true);
         }
 
@@ -394,10 +434,13 @@ export const OtherSettingsForm: React.FunctionComponent<{
             () =>
             {
                 if (!hasBeenUpdated) {
-                    setSecondsError(undefined);
+                    setSecondsErrors(new Errors());
                     return;
                 }
-                setSecondsError(Servers.checkTimeoutValidity(server.timeoutSeconds));
+                setSecondsErrors(secErr =>
+                {
+                    return Servers.checkTimeoutValidity(server.timeoutSeconds);
+                });
             },
             [server.timeoutSeconds, hasBeenUpdated]
         );
@@ -405,26 +448,41 @@ export const OtherSettingsForm: React.FunctionComponent<{
         useEffect(
             () =>
             {
-                if (secondsError) {
+                if (secondsErrors.getHighestErrorLevel() >= ErrorLevels.Critical || prefixErrors.getHighestErrorLevel() >= ErrorLevels.Critical) {
                     setDisableAccept(true);
                 } else {
                     setDisableAccept(false);
                 }
             },
-            [secondsError]
+            [secondsErrors, prefixErrors]
         );
 
         useEffect(() => { }, [serverRoles]);
 
-        function handleCancel()
+        useEffect(() =>
         {
-            handleCancelCallback(serverIndex);
+            if (!hasBeenUpdated) {
+                setPrefixErrors(new Errors());
+                return;
+            }
+            setPrefixErrors(preErr =>
+            {
+                let prefixErr = Servers.checkCommandPrefixValidity(server.commandPrefix);
+                return prefixErr;
+            });
+        }, [server.commandPrefix, hasBeenUpdated]
+        );
+
+        function handleCancel(event: any)
+        {
+            event.preventDefault();
+            serverFunctions.handleServerCancel(serverIndex);
             setHasBeenUpdated(false);
         }
         function handleAccept(event: any)
         {
             event.preventDefault();
-            handleAcceptCallback(serverIndex);
+            serverFunctions.handleServerAccept(serverIndex);
             setHasBeenUpdated(false);
         }
 
@@ -433,6 +491,7 @@ export const OtherSettingsForm: React.FunctionComponent<{
             return { color: color.toString(16) };
         }
 
+
         return (
             <div>
                 <form onSubmit={handleAccept}>
@@ -440,7 +499,7 @@ export const OtherSettingsForm: React.FunctionComponent<{
                         <div className="flexRow">
                             <label className="_inputText">
                                 Cooldown (s):
-                            <input type="text" value={server.timeoutSeconds} title={String(secondsError?.message.map(s => s + "\n"))} className={"_formInput _commandInput " + Helpers.stringIf("_formError", Boolean(secondsError))} onChange={handleNumberChange} disabled={!server.userCanManage} />
+                            <input type="text" value={server.timeoutSeconds} title={secondsErrors.toErrorMessage()} className={"_formInput _commandInput " + secondsErrors.getCssForError()} onChange={handleNumberChange} disabled={!server.userCanManage} />
                             </label>
                         </div>
                         {/*TODO: info hover icon that says what exactly these do*/}
@@ -469,15 +528,44 @@ export const OtherSettingsForm: React.FunctionComponent<{
                             </label>
                         </div>
                         <div className="flexRow">
+                            <label className="_inputText">
+                                {"Select the channel where twitch updates should be posted:  "}
+                                <select
+                                    className="_formInput _roleSelect"
+                                    value={server.twitchChannelId || ""}
+                                    onChange={handleTwitchChannelChange}
+                                    disabled={!server.userCanManage}
+                                >
+                                    <option className="_roleOption" key={"0"} value={""}>
+                                        None
+                                    </option>
+                                    {serverChannels.map((channel: IChannel) => (
+                                        <option
+                                            className="_roleOption"
+                                            key={channel.id}
+                                            value={channel.id}
+                                        >
+                                            {channel.name}
+                                        </option>
+                                    ))}
+                                </select>
+                            </label>
+                        </div>
+                        <div className="flexRow">
+                            <label className="_inputText">
+                                {"Command Prefix: "}
+                                <input type="text" value={server.commandPrefix || ""} title={prefixErrors.toErrorMessage()} className={"_formInput _commandInput " + prefixErrors.getCssForError()} onChange={handlePrefixChange} disabled={!server.userCanManage} placeholder="!" />
+
+                            </label>
+                        </div>
+                        <div className="flexRow">
 
                             <button
                                 onClick={handleCancel}
                                 className={
                                     "_formButton _cancelButton " + Helpers.nodispIf(!hasBeenUpdated)
                                 }
-                            >
-                                Revert
-            </button>
+                            >Revert</button>
                             <input
                                 type="submit"
                                 value="Accept"
