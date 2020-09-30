@@ -9,5 +9,7 @@ namespace BrokkolyBotFrontend.GeneratedModels
         public int? TimeoutSeconds { get; set; }
         public long? TimeoutRoleId { get; set; }
         public string BotManagerRoleId { get; set; }
+        public string CommandPrefix { get; set; }
+        public string TwitchChannel { get; set; }
     }
 }

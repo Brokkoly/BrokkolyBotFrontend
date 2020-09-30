@@ -77,9 +77,17 @@ namespace BrokkolyBotFrontend.GeneratedModels
                     .HasColumnName("bot_manager_role_id")
                     .HasMaxLength(50);
 
+                entity.Property(e => e.CommandPrefix)
+                    .HasColumnName("command_prefix")
+                    .HasMaxLength(2);
+
                 entity.Property(e => e.TimeoutRoleId).HasColumnName("timeout_role_id");
 
                 entity.Property(e => e.TimeoutSeconds).HasColumnName("timeout_seconds");
+
+                entity.Property(e => e.TwitchChannel)
+                    .HasColumnName("twitch_channel")
+                    .HasMaxLength(50);
             });
 
             modelBuilder.Entity<TimedOutUser>(entity =>
