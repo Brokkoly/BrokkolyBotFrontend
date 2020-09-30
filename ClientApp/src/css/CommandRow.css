@@ -21,13 +21,24 @@
         /*var(--discord-blurple);*/
     }
 
-._formError {
+._formCritical {
     border: 5px solid red !important;
     border-width: thin;
 }
 
-    ._formError:focus {
+    ._formCritical:focus {
         outline-color: #f44336 !important;
+        outline: none;
+        /*var(--discord-blurple);*/
+    }
+
+._formWarning {
+    border: 5px solid #eed202 !important;
+    border-width: thin;
+}
+
+    ._formWarning:focus {
+        outline-color: #eed202 !important;
         outline: none;
         /*var(--discord-blurple);*/
     }
