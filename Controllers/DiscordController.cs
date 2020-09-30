@@ -85,13 +85,23 @@ namespace BrokkolyBotFrontend.Controllers
             return (await TryGetRolesForServerFromCache(token, serverId));
         }
 
+        [HttpGet]
+        public async Task<ActionResult<ServerInfo>> GetServerInfo([FromQuery] string token, [FromQuery] string serverId)
+        {
+            if (String.IsNullOrEmpty(token))
+            {
+                return BadRequest();
+            }
+            if (String.IsNullOrEmpty(serverId))
+            {
+                return BadRequest();
+            }
+            return await TryGetServerInfoFromCache(token, serverId);
+        }
+
         public async Task<ActionResult<IEnumerable<MyRole>>> TryGetRolesForServerFromCache(string accessToken, string serverId)
         {
-            //List<IRole> cacheRoles;
-            //if (!_cache.TryGetValue(CacheKeys.Roles + serverId, out cacheRoles))
-            //{
-            //await _client.LoginAsync(Discord.TokenType.Bot, Environment.GetEnvironmentVariable("BOT_TOKEN"));
-            //await _client.StartAsync();
+            //TODO: delete when it's time
             List<IRole> roles = new List<IRole>((await _client.GetGuildAsync(ulong.Parse(serverId))).Roles.ToList());
             List<MyRole> myRoles = new List<MyRole>();
             foreach (IRole r in roles)
@@ -106,10 +116,37 @@ namespace BrokkolyBotFrontend.Controllers
 
             }
             return myRoles;
-            //    var cacheEntryOptions = new MemoryCacheEntryOptions().SetSlidingExpiration(TimeSpan.FromSeconds(60));
-            //    _cache.Set(CacheKeys.UserRoles + serverId + accessToken, cacheRoles, cacheEntryOptions);
-            //}
-            //return cacheRoles;
+        }
+        public async Task<ActionResult<ServerInfo>> TryGetServerInfoFromCache(string accessToken, string serverId)
+        {
+            //TODO: extract to cache function
+            IGuild guild = await _client.GetGuildAsync(ulong.Parse(serverId));
+            List<MyRole> myRoles = new List<MyRole>();
+            List<MyChannel> myChannels = new List<MyChannel>();
+            foreach (IRole r in guild.Roles)
+            {
+                myRoles.Add(new MyRole()
+                {
+                    name = r.Name,
+                    color = r.Color.GetHashCode(),
+                    position = r.Position,
+                    id = r.Id.ToString(),
+                });
+            }
+            foreach (IChannel channel in await guild.GetTextChannelsAsync())
+            {
+                myChannels.Add(new MyChannel()
+                {
+                    id = channel.Id.ToString(),
+                    name = channel.Name,
+                });
+            }
+            return new ServerInfo()
+            {
+                myChannels = myChannels.ToArray(),
+                myRoles = myRoles.ToArray()
+            };
+
         }
 
         // GET: api/Discord/GetRolesForUser
@@ -172,6 +209,21 @@ namespace BrokkolyBotFrontend.Controllers
         public int? timeout_seconds { get; set; }
         public string botManagerRoleId { get; set; }
         public bool canManageServer { get; set; }
+        //public Channel[] channels { get; set; }
+        public string commandPrefix { get; set; }
+        public string twitchChannelId { get; set; }
+    }
+
+    public class MyChannel
+    {
+        public string id { get; set; }
+        public string name { get; set; }
+    }
+
+    public class ServerInfo
+    {
+        public MyChannel[] myChannels { get; set; }
+        public MyRole[] myRoles { get; set; }
     }
 
     public class ServerUser

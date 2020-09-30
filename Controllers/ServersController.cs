@@ -41,7 +41,7 @@ namespace BrokkolyBotFrontend.Controllers
             if (guilds == null)
             {
                 //TODO: return more details or just wait.
-                return BadRequest();
+                return BadRequest("Could Not Retrieve Guilds");
             }
             else
             {
@@ -55,7 +55,7 @@ namespace BrokkolyBotFrontend.Controllers
             if (!_cache.TryGetValue(CacheKeys.BotGuilds + token, out cacheGuilds))
             {
                 List<Guild> allGuilds = this.TryGetServersForUserFromCache(token);
-                List<Server> servers = _context.ServerList.ToList();
+                List<Server> servers = _context.ServerList.AsNoTracking().ToList();
                 List<string> serverIds = servers.Select(s => s.ServerId).ToList();
                 //TODO: optimize the search based on length of guilds vs length of servers.
                 cacheGuilds = allGuilds.Where(g =>
@@ -68,6 +68,8 @@ namespace BrokkolyBotFrontend.Controllers
                         g.timeout_seconds = servers[index].TimeoutSeconds;
                         g.canManageServer = (g.permissions & 0x00000020) == 0x00000020;
                         g.botManagerRoleId = servers[index].BotManagerRoleId;
+                        g.commandPrefix = servers[index].CommandPrefix;
+                        g.twitchChannelId = servers[index].TwitchChannel;
                         return true;
                     }
                     return false;
@@ -126,6 +128,10 @@ namespace BrokkolyBotFrontend.Controllers
             {
                 //TODO: get permissions
                 return Forbid();
+            }
+            if(!System.Text.RegularExpressions.Regex.IsMatch(server.CommandPrefix, pattern: "^[!-~]{1,2}$"))
+            {
+                return BadRequest();
             }
             //server.TimeoutRoleId = (await _context.ServerList.FindAsync(server.ServerId)).TimeoutRoleId;
 
