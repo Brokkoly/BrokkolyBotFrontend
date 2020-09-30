@@ -139,7 +139,7 @@ export const ServerList: React.FunctionComponent<{ user: User }> = ({ user }) =>
     }
     async function handleServerAccept(index: number)
     {
-        //TODO: validate the server properties
+        //TODO: validate the variables before sending them to the server.
         Servers.putServerEdit(user.accessToken, servers[index]).then((success: boolean) =>
         {
             if (success) {
