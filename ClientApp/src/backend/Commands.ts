@@ -3,11 +3,20 @@ import { Servers } from "./Servers";
 
 export class Commands
 {
+    /**
+     * Loads the bot's restricted commands
+     * @returns a promise of a list of restricted commands
+     */
     public static async getRestrictedCommands(): Promise<string[]>
     {
         return Servers.getRestrictedCommands().then(data =>
             data.map((restrictedCommand: IRestrictedCommand) => restrictedCommand.command));
     }
+
+    /**
+     * Gets a list of commands for a server
+     * @param serverId
+     */
     public static async fetchCommands(serverId: string): Promise<ICommand[]>
     {
         let fetchUrl = '/api/Commands/GetCommandsForServer?serverId=' + serverId;
@@ -16,7 +25,13 @@ export class Commands
         var commands = await JSON.parse(text.replace(/("[^"]*"\s*:\s*)(\d{16,})/g, '$1"$2"'));
         return commands;
     }
-    public static async saveCommandEdit(token: string, command: ICommand)
+    /**
+     * Sends a put command for the particular command.
+     * @param token the user's access token, for validation
+     * @param command the command to save to the database
+     * @returns true if the status was good, otherwise false
+     */
+    public static async saveCommandEdit(token: string, command: ICommand): Promise<boolean>
     {
         let fetchUrl = '/api/Commands/PutCommand/'
         return fetch(
@@ -51,9 +66,14 @@ export class Commands
                 console.error('Error:', error);
                 return false;
             });
-        //TODO: Figure out how to do response checking and confirm when stuff works properly
     }
 
+    /**
+     * Sends a new command to the server
+     * @param token the user's access token
+     * @param command The command to save to the database
+     * @returns the command's new id in the database
+     */
     public static async postCommand(token: string, command: ICommand): Promise<number>
     {
         let fetchUrl = '/api/Commands/PostCommand';
@@ -92,9 +112,14 @@ export class Commands
         });
     }
 
-    public static async deleteFromList(token: string, id: number)
+    /**
+     * Deletes a command from the database
+     * @param token the user's access token
+     * @param id the id of the command to delete
+     * @returns Promise<true if the deletion was successful, otherwise false>
+     */
+    public static async deleteFromList(token: string, id: number): Promise<boolean>
     {
-        //TODO: response code checking and add toast if error.
         let fetchUrl = '/api/Commands/DeleteCommand';
         const response = await fetch(fetchUrl
             , {
@@ -109,7 +134,6 @@ export class Commands
             }
         ).then(
             response => response.json()
-
         );
         if (response?.id) {
             return true;
@@ -118,6 +142,13 @@ export class Commands
             return false;
         }
     }
+
+    /**
+     * Checks if the command string is valid
+     * @param command the commandValue string to check
+     * @param restrictedCommands a list of commands that are not allowed
+     * @returns an Errors object with the errors accumulated during the check.
+     */
     public static checkCommandValidity(command: string, restrictedCommands: string[]): Errors
     {
         let errors: IError[] = [];
@@ -135,10 +166,15 @@ export class Commands
         }
         return new Errors(errors);
     }
+
+    /**
+     * Checks if the entry value is valid
+     * @param value the value to check
+     * @returns an Errors object with the errors accumulated during the check.
+     */
     public static checkValueValidity(value: string): Errors
     {
-        let errors
-            : IError[] = [];
+        let errors: IError[] = [];
         if (value.length === 0) {
             errors.push(new ValueValidationError("Value must not have a length of 0"));
         }
@@ -151,8 +187,6 @@ export class Commands
         return new Errors(errors);
     }
 }
-
-
 
 export interface ICommand
 {
