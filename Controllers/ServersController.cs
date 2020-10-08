@@ -1,13 +1,18 @@
 ﻿using BrokkolyBotFrontend.GeneratedModels;
 using BrokkolyBotFrontend.Models;
+using Discord;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Net;
+using System.Text;
 using System.Threading.Tasks;
 
 namespace BrokkolyBotFrontend.Controllers
@@ -18,11 +23,13 @@ namespace BrokkolyBotFrontend.Controllers
     {
         private readonly DatabaseContext _context;
         private IMemoryCache _cache;
+        private readonly IDiscordClient _client;
 
-        public ServersController(DatabaseContext context, IMemoryCache memoryCache)
+        public ServersController(DatabaseContext context, IMemoryCache memoryCache, IDiscordClient client)
         {
             _context = context;
             _cache = memoryCache;
+            _client = client;
         }
 
         // GET: api/Servers
@@ -34,10 +41,10 @@ namespace BrokkolyBotFrontend.Controllers
 
         //[HttpGet("{token}")]
         [HttpGet]
-        public ActionResult<IEnumerable<Guild>> GetServerListForUser(string token)
+        public async Task<ActionResult<IEnumerable<Guild>>> GetServerListForUser(string token)
         {
 
-            List<Guild> guilds = TryGetBotGuildsFromCache(token);
+            List<Guild> guilds = await TryGetBotGuildsFromCache(token);
             if (guilds == null)
             {
                 //TODO: return more details or just wait.
@@ -49,7 +56,7 @@ namespace BrokkolyBotFrontend.Controllers
             }
         }
 
-        public List<Guild> TryGetBotGuildsFromCache(string token)
+        public async Task<List<Guild>> TryGetBotGuildsFromCache(string token)
         {
             List<Guild> cacheGuilds;
             if (!_cache.TryGetValue(CacheKeys.BotGuilds + token, out cacheGuilds))
@@ -57,8 +64,14 @@ namespace BrokkolyBotFrontend.Controllers
                 List<Guild> allGuilds = this.TryGetServersForUserFromCache(token);
                 List<Server> servers = _context.ServerList.AsNoTracking().ToList();
                 List<string> serverIds = servers.Select(s => s.ServerId).ToList();
+                Dictionary<string, bool> userHasManagerRoleMap = new Dictionary<string, bool>();
+                string userId = TryGetUserIdFromAccessTokenFromCache(token);
+                foreach (string s in serverIds)
+                {
+                    userHasManagerRoleMap.Add(s, await GetUserHasBotManagerRoleForServer(s, userId));
+                }
                 //TODO: optimize the search based on length of guilds vs length of servers.
-                cacheGuilds = allGuilds.Where(g =>
+                cacheGuilds = allGuilds.Where((g) =>
                 {
                     int index = serverIds.IndexOf(g.id);
                     if (index >= 0)
@@ -66,7 +79,9 @@ namespace BrokkolyBotFrontend.Controllers
                         //TODO: is timeout role id needed by the client?
                         g.timeout_role_id = servers[index].TimeoutRoleId.ToString();
                         g.timeout_seconds = servers[index].TimeoutSeconds;
-                        g.canManageServer = (g.permissions & 0x00000020) == 0x00000020;
+                        bool hasManagerRole = false;
+                        userHasManagerRoleMap.TryGetValue(g.id.ToString(), out hasManagerRole);
+                        g.canManageServer = ((g.permissions & 0x00000020) == 0x00000020) || hasManagerRole;
                         g.botManagerRoleId = servers[index].BotManagerRoleId;
                         g.commandPrefix = servers[index].CommandPrefix;
                         g.twitchChannelId = servers[index].TwitchChannel;
@@ -81,24 +96,62 @@ namespace BrokkolyBotFrontend.Controllers
             }
             return cacheGuilds;
         }
-        public List<Guild> TryGetServersForUserFromCache(string access_token)
+        public List<Guild> TryGetServersForUserFromCache(string accessToken)
         {
             List<Guild> cacheGuilds;
-            if (!_cache.TryGetValue(CacheKeys.Guilds + access_token, out cacheGuilds))
+            if (!_cache.TryGetValue(CacheKeys.Guilds + accessToken, out cacheGuilds))
             {
-                cacheGuilds = DiscordController.GetServersForUser(access_token);
+                cacheGuilds = DiscordController.GetServersForUser(accessToken);
                 var cacheEntryOptions = new MemoryCacheEntryOptions().SetSlidingExpiration(System.TimeSpan.FromSeconds(60));
-                _cache.Set(CacheKeys.Guilds + access_token, cacheGuilds, cacheEntryOptions);
+                _cache.Set(CacheKeys.Guilds + accessToken, cacheGuilds, cacheEntryOptions);
             }
             return cacheGuilds;
         }
 
 
 
-        public bool UserHasServerPermissions(string serverId, string accessToken)
+        public async Task<bool> UserHasServerPermissions(string serverId, string accessToken)
         {
-            List<Guild> guilds = TryGetBotGuildsFromCache(accessToken);
+            List<Guild> guilds = await TryGetBotGuildsFromCache(accessToken);
             return guilds.Find(g => (g.id == serverId) && g.canManageServer) != null;
+
+        }
+
+        public string TryGetUserIdFromAccessTokenFromCache(string accessToken)
+        {
+            string userId = "";
+            if (!_cache.TryGetValue(CacheKeys.UserId + accessToken, out userId))
+            {
+                HttpWebRequest webRequest = (HttpWebRequest)WebRequest.Create(@"https://discord.com/api/users/@me");
+                webRequest.Method = "Get";
+                webRequest.ContentType = "application/json";
+                webRequest.Headers.Add("Authorization", "Bearer " + accessToken);
+                var webResponse = webRequest.GetResponse();
+                var responseStream = webResponse.GetResponseStream();
+                if (responseStream == null) return null;
+                var streamReader = new StreamReader(responseStream, Encoding.Default);
+                var json = streamReader.ReadToEnd();
+                dynamic userObject = JsonConvert.DeserializeObject(json);
+                userId = userObject.id;
+                if (userId != null && userId != "")
+                {
+                    var cacheEntryOptions = new MemoryCacheEntryOptions().SetSlidingExpiration(System.TimeSpan.FromSeconds(600000));
+                    _cache.Set(CacheKeys.Guilds + accessToken, userId, cacheEntryOptions);
+                }
+            }
+            return userId;
+            //TODO: 
+        }
+
+        public async Task<bool> GetUserHasBotManagerRoleForServer(string serverId, string userId)
+        {
+            bool cacheUserHasBotManagerRole = false;
+
+            Task<Server> serverFromDb = _context.ServerList.AsNoTracking().FirstAsync(g => g.ServerId == serverId);
+            Task<IGuild> guild = _client.GetGuildAsync(ulong.Parse(serverId), CacheMode.AllowDownload);
+            Task<IGuildUser> user = (await guild).GetUserAsync(ulong.Parse(userId));
+            var serverBotManagerRoleId = (await serverFromDb).BotManagerRoleId ?? "0";
+            return (await user).RoleIds.Contains(ulong.Parse(serverBotManagerRoleId));
 
         }
 
@@ -124,12 +177,12 @@ namespace BrokkolyBotFrontend.Controllers
         {
             Server server = data["server"].ToObject<Server>();
             string token = data["token"].ToObject<string>();
-            if (!this.UserHasServerPermissions(server.ServerId, token))
+            if (!await UserHasServerPermissions(server.ServerId, token))
             {
                 //TODO: get permissions
                 return Forbid();
             }
-            if(!System.Text.RegularExpressions.Regex.IsMatch(server.CommandPrefix, pattern: "^[!-~]{1,2}$"))
+            if (!System.Text.RegularExpressions.Regex.IsMatch(server.CommandPrefix, pattern: "^[!-~]{1,2}$"))
             {
                 return BadRequest();
             }
@@ -155,12 +208,12 @@ namespace BrokkolyBotFrontend.Controllers
 
             return NoContent();
         }
-        public bool TryGetUserHasServerPermissions(string serverId, string token)
+        public async Task<bool> TryGetUserHasServerPermissions(string serverId, string token)
         {
             bool cacheResult;
             if (!_cache.TryGetValue(CacheKeys.CanEditGuild + token + serverId, out cacheResult))
             {
-                cacheResult = this.UserHasServerPermissions(serverId, token);
+                cacheResult = await UserHasServerPermissions(serverId, token);
                 var cacheEntryOptions = new MemoryCacheEntryOptions().SetSlidingExpiration(System.TimeSpan.FromSeconds(60));
                 _cache.Set(CacheKeys.CanEditGuild + token + serverId, cacheResult, cacheEntryOptions);
             }

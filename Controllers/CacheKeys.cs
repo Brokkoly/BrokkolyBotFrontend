@@ -12,5 +12,6 @@ namespace BrokkolyBotFrontend.Controllers
         public static string CanEditGuild { get { return "_CanEditGuild"; } }
         public static string Roles { get { return "_Roles"; } }
         public static string UserRoles { get { return "_UserRoles"; } }
+        public static string UserId { get { return "_UserId"; } }
     }
 }

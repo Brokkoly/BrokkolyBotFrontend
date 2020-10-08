@@ -163,9 +163,9 @@ export const ServerSettings: React.FunctionComponent<IServerSettingsProps> = ({
      */
     function needEmptyCommand(): boolean
     {
-        if (
+        if (commandList.length === 0 || (
             commandList[commandList.length - 1].commandString === "" &&
-            commandList[commandList.length - 1].entryValue === ""
+            commandList[commandList.length - 1].entryValue === "")
         ) {
             return true;
         }
