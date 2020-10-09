@@ -278,3 +278,16 @@
 ._textIndent {
     margin-left: 10px;
 }
+
+._maxWidth1000px{
+    max-width: 1000px;
+    flex-grow:1;
+}
+
+._maxWidth500px{
+    max-width: 500px;
+}
+
+._textOverflowEllipsis{
+    text-overflow: ellipsis;
+}

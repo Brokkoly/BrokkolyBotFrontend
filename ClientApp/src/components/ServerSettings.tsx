@@ -4,6 +4,7 @@ import { Commands, ICommand } from "../backend/Commands";
 import { ErrorLevels, Errors } from "../backend/Error";
 import { IChannel, IRole, IServer, IServerInfo, Servers } from "../backend/Servers";
 import '../css/CommandRow.css';
+import '../css/Settings.css';
 import { Helpers } from "../helpers";
 import { CommandRow } from "./CommandRow";
 import { IServerFunctions, LoadingMessage } from "./ServerList";
@@ -352,6 +353,12 @@ export const ServerSettings: React.FunctionComponent<IServerSettingsProps> = ({
 
     return (
         <LoadingMessage loading={loading}>
+
+            <div className="_inputText">
+                <h3>
+                    {server.name}
+                </h3>
+            </div>
             <OtherSettingsForm
                 server={server}
                 serverIndex={serverIndex}
@@ -547,8 +554,9 @@ export const OtherSettingsForm: React.FunctionComponent<{
                             </label>
                         </div>
                         {/*TODO: info hover icon that says what exactly these do*/}
-                        <div className="flexRow">
-                            <label className="_inputText">{"Select the role that can manage the bot: "}
+                        <div className="flexRow ">
+                            <label className="_inputText">
+                                {"Select the role that can manage the bot: "}
                                 <select
                                     className="_formInput _roleSelect"
                                     value={server.botManagerRoleId || ""}
@@ -580,7 +588,7 @@ export const OtherSettingsForm: React.FunctionComponent<{
                                     onChange={handleTwitchChannelChange}
                                     disabled={!server.userCanManage}
                                 >
-                                    <option className="_roleOption" key={"0"} value={""}>
+                                    <option className="_roleOption " key={"0"} value={""}>
                                         None
                                     </option>
                                     {serverChannels.map((channel: IChannel) => (

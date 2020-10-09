@@ -1,10 +1,13 @@
 ﻿@import url("Home.css");
 
-._roleSelect{
-
+._roleSelect {
+    max-width: 500px;
+    text-overflow: ellipsis;
 }
-._roleOption{
 
+._roleOption {
+    max-width: 500px;
+    text-overflow: ellipsis;
 }
 
 ._formInput {
