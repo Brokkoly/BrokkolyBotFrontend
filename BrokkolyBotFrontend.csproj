@@ -61,6 +61,7 @@
 		<None Remove="ClientApp\src\components\ServerSettings.tsx" />
 		<None Remove="ClientApp\src\components\TimeoutSecondsForm.tsx" />
 		<None Remove="ClientApp\src\components\UserCard.tsx" />
+		<None Remove="ClientApp\src\components\UtilitySection.tsx" />
 		<None Remove="ClientApp\src\helpers.ts" />
 		<None Remove="ClientApp\src\Secrets.ts" />
 		<None Remove="ClientApp\src\test.ts" />

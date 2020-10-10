@@ -85,6 +85,11 @@ class NavMenu extends Component<NavMenuProps, { collapsed: boolean }>{
                                         Help
                                     </NavLink>
                                 </NavItem>
+                                <NavItem className={"_alignSelfCenter _navLinkUnselected "}>
+                                    <NavLink tag={Link} to="/utilities" style={{ color: "#dcddde" }} className="_linkHover">
+                                        Utilities
+                                    </NavLink>
+                                </NavItem>
                                 {this.renderUserCardOrLogin(discordAuthLink)}
                             </ul>
                         </Collapse>

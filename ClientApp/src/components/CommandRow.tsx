@@ -14,8 +14,9 @@ interface CommandRowProps
     commandRowFunctions: ICommandRowFunctions;
     userCanEdit: boolean;
     restrictedCommands: string[];
+    commandPrefix: string;
 }
-export const CommandRow: React.FunctionComponent<CommandRowProps> = ({ command, index, commandRowFunctions, userCanEdit, restrictedCommands }) =>
+export const CommandRow: React.FunctionComponent<CommandRowProps> = ({ command, index, commandRowFunctions, userCanEdit, restrictedCommands, commandPrefix }) =>
 {
     const [hasBeenUpdated, setHasBeenUpdated] = useState(false);
     const [commandErrors, setCommandErrors] = useState<Errors>(new Errors());
@@ -120,7 +121,7 @@ export const CommandRow: React.FunctionComponent<CommandRowProps> = ({ command, 
         <div className="flexColumn">
             <form onSubmit={handleSubmit}>
                 <div className="flexRow _flexWrap">
-                    <span className="_commandPrefix">!</span>
+                    <span className="_commandPrefix">{commandPrefix}</span>
                     {/*<ValidatedInput error={commandError} type="text" className={"_formInput _commandInput "} value={command.commandString} onChange={handleChangeCommand} disabled={!userCanEdit} />*/}
                     <input title={commandErrors.toErrorMessage() || undefined} type="text" className={"_formInput _commandInput " + commandErrors.getCssForError()} value={command.commandString} onChange={handleChangeCommand} disabled={!userCanEdit} />
                 </div>

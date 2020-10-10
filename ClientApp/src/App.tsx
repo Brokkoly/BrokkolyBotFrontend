@@ -6,6 +6,7 @@ import { AboutSection } from './components/About';
 import { HelpSection } from './components/Help';
 import Home from './components/Home';
 import { Layout } from './components/Layout';
+import UtilitySection from './components/UtilitySection';
 //import { ServerListAndSettingsWrapper } from './components/ServerList';
 import './custom.css';
 
@@ -81,6 +82,7 @@ class App extends Component<{ cookies: Cookies }>
                         <Route exact path='/' component={Home} />
                         <Route path='/about' component={AboutSection} />
                         <Route path='/help' component={HelpSection} />
+                        <Route path='/utilities' component={UtilitySection} />
                     </Switch>
 
                 </Layout >

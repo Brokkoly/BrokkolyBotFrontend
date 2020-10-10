@@ -1,9 +1,8 @@
 import React, { Component } from 'react';
-import { Container } from 'reactstrap';
-import NavMenu from './NavMenu';
-import "../css/Home.css";
-import { User } from '../backend/User';
 import { CookiesProvider } from 'react-cookie';
+import { Container } from 'reactstrap';
+import "../css/Home.css";
+import NavMenu from './NavMenu';
 export class Layout extends Component<{}, {}>
 {
     static displayName = Layout.name;

@@ -354,7 +354,7 @@ export const ServerSettings: React.FunctionComponent<IServerSettingsProps> = ({
     return (
         <LoadingMessage loading={loading}>
 
-            <div className="_inputText">
+            <div className="_inputText" style={{ maxWidth: "900px", justifyContent: "center" }}>
                 <h3>
                     {server.name}
                 </h3>
@@ -372,8 +372,9 @@ export const ServerSettings: React.FunctionComponent<IServerSettingsProps> = ({
                 commandRowFunctions={{ updateCommand: handleCommandUpdate, acceptCommand: acceptCommand, cancelCommand: cancelCommand, deleteCommand: deleteCommand }}
                 userCanEdit={server.userCanManage}
                 restrictedCommands={restrictedCommands}
+                commandPrefix={server.commandPrefix || "!"}
             />
-        </LoadingMessage>
+        </LoadingMessage >
     );
 };
 
@@ -383,13 +384,15 @@ interface CommandListProps
     commandRowFunctions: ICommandRowFunctions;
     userCanEdit: boolean;
     restrictedCommands: string[];
+    commandPrefix: string;
 }
 
 export const CommandList: React.FunctionComponent<CommandListProps> = ({
     commands,
     commandRowFunctions,
     userCanEdit,
-    restrictedCommands
+    restrictedCommands,
+    commandPrefix,
 }) =>
 {
     return (
@@ -403,6 +406,7 @@ export const CommandList: React.FunctionComponent<CommandListProps> = ({
                         commandRowFunctions={commandRowFunctions}
                         userCanEdit={userCanEdit}
                         restrictedCommands={restrictedCommands}
+                        commandPrefix={commandPrefix}
                     />
                 ))}
             </ul>
