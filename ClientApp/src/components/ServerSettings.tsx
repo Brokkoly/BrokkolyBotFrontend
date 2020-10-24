@@ -312,14 +312,14 @@ export const ServerSettings: React.FunctionComponent<IServerSettingsProps> = ({
                         newOldCommands.delete(id);
                         return newOldCommands;
                     });
-                    setCommandList(commandList =>
-                    {
-                        //not undefined because we checked above
-                        let newList = [...commandList];
-                        newList.splice(index, 1);
-                        return newList;
-                    });
                 }
+                setCommandList(commandList =>
+                {
+                    //not undefined because we checked above
+                    let newList = [...commandList];
+                    newList.splice(index, 1);
+                    return newList;
+                });
             }
             else {
                 toast("An error ocurred while deleting the command. Please try again");

@@ -27,7 +27,7 @@ export class Servers
                 iconUrl64: Servers.constructUrlsForServerIcon(srv.id, srv.icon),
                 userCanManage: srv.canManageServer,
                 botManagerRoleId: srv.botManagerRoleId,
-                twitchChannel: srv.twitchChannel,
+                twitchChannelId: srv.twitchChannelId,
                 commandPrefix: srv.commandPrefix,
             }
         });
