@@ -11,5 +11,6 @@ namespace BrokkolyBotFrontend.GeneratedModels
         public string BotManagerRoleId { get; set; }
         public string CommandPrefix { get; set; }
         public string TwitchChannel { get; set; }
+        public string TwitchLiveRoleId { get; set; }
     }
 }

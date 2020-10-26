@@ -21,8 +21,8 @@ namespace BrokkolyBotFrontend.GeneratedModels
         public virtual DbSet<Command> CommandList { get; set; }
         public virtual DbSet<Server> ServerList { get; set; }
         public virtual DbSet<TimedOutUser> TimedOutUsers { get; set; }
-        public virtual DbSet<RestrictedCommand
-            > RestrictedCommands { get; set; }
+        public virtual DbSet<TwitchUser> TwitchUsers { get; set; }
+        public virtual DbSet<RestrictedCommand> RestrictedCommands { get; set; }
 
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
@@ -62,6 +62,8 @@ namespace BrokkolyBotFrontend.GeneratedModels
                 entity.Property(e => e.ServerId).HasColumnName("server_id");
             });
 
+
+
             modelBuilder.Entity<Server>(entity =>
             {
                 entity.HasKey(e => e.ServerId)
@@ -88,6 +90,31 @@ namespace BrokkolyBotFrontend.GeneratedModels
                 entity.Property(e => e.TwitchChannel)
                     .HasColumnName("twitch_channel")
                     .HasMaxLength(50);
+
+                entity.Property(e => e.TwitchLiveRoleId)
+                    .HasColumnName("twitch_live_role_id")
+                    .HasMaxLength(25);
+            });
+
+            modelBuilder.Entity<TwitchUser>(entity =>
+            {
+                entity.ToTable("twitch_users");
+
+                entity.Property(e => e.Id).HasColumnName("id");
+
+                entity.Property(e => e.ChannelName)
+                    .IsRequired()
+                    .HasColumnName("channel_name")
+                    .HasMaxLength(25);
+
+                entity.Property(e => e.DiscordUserId)
+                    .HasColumnName("discord_user_id")
+                    .HasMaxLength(25);
+
+                entity.Property(e => e.ServerId)
+                    .IsRequired()
+                    .HasColumnName("server_id")
+                    .HasMaxLength(25);
             });
 
             modelBuilder.Entity<TimedOutUser>(entity =>
