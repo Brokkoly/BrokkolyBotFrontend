@@ -181,7 +181,7 @@
 }
 
 .header {
-    height: 128px;
+    /*height: 128px;*/
     padding: 5px;
     width: 100%;
     justify-content: left;

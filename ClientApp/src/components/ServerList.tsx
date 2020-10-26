@@ -28,10 +28,17 @@ export interface IServerChangeArgs
 export const ServerList: React.FunctionComponent<{ user: User }> = ({ user }) =>
 {
     const [loading, setLoading] = useState(true);
+    const [serverLoading, setServerLoading] = useState(true);
+    const [restrictedCommandsLoading, setRestrictedCommandsLoading] = useState(true);
     const [servers, setServers] = useState<IServer[]>([]);
     const [selectedIndex, setSelectedIndex] = useState(-1);
     const [restrictedCommands, setRestrictedCommands] = useState<string[]>([]);
     const [oldServers, setOldServers] = useState<Map<string, IServer>>(new Map<string, IServer>());
+
+    useEffect(() =>
+    {
+        setLoading(serverLoading || restrictedCommandsLoading);
+    }, [serverLoading, restrictedCommandsLoading]);
 
     useEffect(() =>
     {
@@ -46,8 +53,10 @@ export const ServerList: React.FunctionComponent<{ user: User }> = ({ user }) =>
                     toast('An error ocurred when loading servers. If This persists, consider refreshing', {
                         autoClose: 10000,
                     });
-
                 }
+            }).then(() =>
+            {
+                setServerLoading(false);
             });
             Commands.getRestrictedCommands().then(result =>
             {
@@ -57,6 +66,9 @@ export const ServerList: React.FunctionComponent<{ user: User }> = ({ user }) =>
                 else {
                     toast('An error ocurred when loading settings. If this persists, consider refreshing');
                 }
+            }).then(() =>
+            {
+                setRestrictedCommandsLoading(false);
             })
             setRestrictedCommands(await Commands.getRestrictedCommands());
             setLoading(false);

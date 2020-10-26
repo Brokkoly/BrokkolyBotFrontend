@@ -1,19 +1,34 @@
 import React, { Component } from 'react';
+import { Button } from 'react-bootstrap';
+import { Cookies, useCookies, withCookies } from 'react-cookie';
+import { Link, useHistory } from 'react-router-dom';
 import { Collapse, Container, Navbar, NavbarBrand, NavbarToggler, NavItem, NavLink } from 'reactstrap';
-import { Link } from 'react-router-dom';
+import '../css/Home.css';
 import BrokkolyBanner from '../Images/BrokkolyBanner.png';
 import './NavMenu.css';
-import '../css/Home.css'
-import { Button } from 'react-bootstrap';
-import { User } from '../backend/User';
 import { UserCard } from './UserCard';
-import { withCookies, Cookies } from 'react-cookie';
-import { Helpers } from "../helpers";
 interface NavMenuProps
 {
     //user: User | undefined;
     cookies: Cookies;
 }
+
+export const LogoutButton: React.FunctionComponent = () =>
+{
+    let history = useHistory();
+    const [cookies,setCookies,removeCookie]= useCookies();
+    function logoutClicked()
+    {
+        history.push('/');
+        removeCookie('user');
+    }
+
+    return (
+        <Button variant="outline-light" style={{ border: "none" }} onClick={logoutClicked} >Logout</Button>
+        )
+
+}
+
 class NavMenu extends Component<NavMenuProps, { collapsed: boolean }>{
     static displayName = NavMenu.name;
 
@@ -35,18 +50,25 @@ class NavMenu extends Component<NavMenuProps, { collapsed: boolean }>{
         });
     }
 
+
+
     private renderUserCardOrLogin(discordAuthLink: string)
     {
         const { cookies } = this.props;
         let user = cookies.get('user');
         return (
             user !== undefined ?
-                <NavItem>
-                    <UserCard userName={user.displayName} avatarUrl={user.avatarUrl} />
-                </NavItem>
+                <>
+                    <NavItem className={"_alignSelfCenter "}>
+                        <UserCard userName={user.displayName} avatarUrl={user.avatarUrl} />
+                    </NavItem>
+                    <NavItem className={"_alignSelfCenter _navLinkUnselected "}>
+                        <LogoutButton/>
+                    </NavItem>
+                </>
                 :
-                <NavItem>
-                    <Button variant="outline-light" href={discordAuthLink} >Discord Login</Button>
+                <NavItem className={"_alignSelfCenter _navLinkUnselected "}>
+                    <Button variant="outline-light"  href={discordAuthLink} >Discord Login</Button>
                 </NavItem>
         )
     }
@@ -54,7 +76,7 @@ class NavMenu extends Component<NavMenuProps, { collapsed: boolean }>{
     render()
     {
         if (typeof window !== undefined) {
-             var baseUrl = window.location.protocol + '//' + window.location.host;
+            var baseUrl = window.location.protocol + '//' + window.location.host;
         }
         else {
             baseUrl = "https://localhost:44320";

@@ -64,6 +64,14 @@ namespace BrokkolyBotFrontend.Controllers
                 List<Guild> allGuilds = this.TryGetServersForUserFromCache(token);
                 List<Server> servers = _context.ServerList.AsNoTracking().ToList();
                 List<string> serverIds = servers.Select(s => s.ServerId).ToList();
+                allGuilds.RemoveAll(g =>
+                {
+                    return !serverIds.Contains(g.id);
+                });
+                serverIds.RemoveAll(id =>
+                {
+                    return !allGuilds.Where(g => g.id == id).Any();
+                });
                 Dictionary<string, bool> userHasManagerRoleMap = new Dictionary<string, bool>();
                 string userId = TryGetUserIdFromAccessTokenFromCache(token);
                 foreach (string s in serverIds)
@@ -73,7 +81,7 @@ namespace BrokkolyBotFrontend.Controllers
                 //TODO: optimize the search based on length of guilds vs length of servers.
                 cacheGuilds = allGuilds.Where((g) =>
                 {
-                    int index = serverIds.IndexOf(g.id);
+                    int index = servers.FindIndex(s => s.ServerId == g.id);
                     if (index >= 0)
                     {
                         //TODO: is timeout role id needed by the client?
@@ -148,8 +156,11 @@ namespace BrokkolyBotFrontend.Controllers
             bool cacheUserHasBotManagerRole = false;
 
             Task<Server> serverFromDb = _context.ServerList.AsNoTracking().FirstAsync(g => g.ServerId == serverId);
+            var serverFromDbAwaited = await serverFromDb;
             Task<IGuild> guild = _client.GetGuildAsync(ulong.Parse(serverId), CacheMode.AllowDownload);
+            var guildAwaited = await guild;
             Task<IGuildUser> user = (await guild).GetUserAsync(ulong.Parse(userId));
+            var userAwaited = await user;
             var serverBotManagerRoleId = (await serverFromDb).BotManagerRoleId ?? "0";
             return (await user).RoleIds.Contains(ulong.Parse(serverBotManagerRoleId));
 
