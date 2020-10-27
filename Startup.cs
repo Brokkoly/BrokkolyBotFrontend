@@ -150,7 +150,7 @@ namespace BrokkolyBotFrontend
             {
                 var db = serviceScope.ServiceProvider.GetService<DatabaseContext>();
                 var twitch = app.ApplicationServices.GetService<TwitchConnection>();
-                var discord = app.ApplicationServices.GetService<IDiscordClient>();
+                //var discord = app.ApplicationServices.GetService<IDiscordClient>();
             }
             //var twitch = app.ApplicationServices.GetService<TwitchConnection>();
             //twitch.CreateTwitchSubscriptions(context.TwitchUsers.ToList());

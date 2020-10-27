@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
@@ -7,6 +8,7 @@ using BrokkolyBotFrontend.GeneratedModels;
 using Discord;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 
 namespace BrokkolyBotFrontend.Controllers
 {
@@ -27,12 +29,22 @@ namespace BrokkolyBotFrontend.Controllers
         [HttpGet]
         public async Task<ActionResult> StreamChange()
         {
+
             return StatusCode(200);
         }
 
         [HttpPost]
-        public async Task<ActionResult> StreamChange(string username)
+        public async Task<ActionResult> StreamChange(string username, [FromBody]StreamChangeRequest request)
         {
+            if (request.data.Any())
+            {
+                //Stream Changed
+            }
+            else
+            {
+                //Stream Offline
+            }
+
             return StatusCode(200);
         }
 

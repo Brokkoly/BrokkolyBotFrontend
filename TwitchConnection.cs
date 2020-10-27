@@ -243,7 +243,7 @@ public class StreamChangeInfo
     public string thumbnail_url { get; set; }
 }
 
-public class StreamChangeResponse
+public class StreamChangeRequest
 {
     public List<StreamChangeInfo> data { get; set; }
 }
