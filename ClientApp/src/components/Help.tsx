@@ -25,10 +25,14 @@ export const HelpSection: React.FunctionComponent = () =>
             <p className="_textIndent">
                 If you have the Manage Guild permission on discord, or you have the bot's manager role on your server, you can add commands to the bot on the server or on this website. Managers can also use the manager-only commands listed below:
             </p>
+            <h3>!twitchadd (Coming Soon)</h3>
+            <p className="_textIndent">
+                Soon BrokkolyBot will be able to notify you when somebody goes live on twitch. You will be able to subscribe to streams, and you can even specify users in the server to associate with a stream. Then you can elevate them to a visible role indicating that they are live now!
+            </p>
             <h3>!Add</h3>
             <p className="_textIndent">
                 !Add &lt;commandName&gt; &lt;Message&gt; will add a new response for commandName.
-                <br/>
+                <br />
                 Restrictions:
                 <ul>
                     <li>The commandName must be longer than 3 characters and cannot be longer than 20 characters. It can only contain letters.</li>
