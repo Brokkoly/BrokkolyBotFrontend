@@ -1,3 +1,4 @@
+using Discord.Rest;
 using Discord.WebSocket;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
@@ -18,8 +19,8 @@ namespace BrokkolyBotFrontend
                 try
                 {
                     var client = services.GetService<Discord.IDiscordClient>();
-                    await ((DiscordSocketClient)client).LoginAsync(Discord.TokenType.Bot, Environment.GetEnvironmentVariable("BOT_TOKEN"));
-                    await ((DiscordSocketClient)client).StartAsync();
+                    await ((DiscordRestClient)client).LoginAsync(Discord.TokenType.Bot, Environment.GetEnvironmentVariable("BOT_TOKEN"));
+                    //await ((DiscordRestClient)client).StartAsync();
                 }
                 catch (Exception ex)
                 {

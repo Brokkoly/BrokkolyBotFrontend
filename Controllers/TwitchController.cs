@@ -45,7 +45,7 @@ namespace BrokkolyBotFrontend.Controllers
                 //Stream Offline
             }
 
-            return StatusCode(200);
+            return StatusCode(201);
         }
 
 

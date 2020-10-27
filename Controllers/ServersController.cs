@@ -1,6 +1,7 @@
 ﻿using BrokkolyBotFrontend.GeneratedModels;
 using BrokkolyBotFrontend.Models;
 using Discord;
+using Discord.Rest;
 using Discord.WebSocket;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.CodeAnalysis.CSharp;
@@ -24,13 +25,13 @@ namespace BrokkolyBotFrontend.Controllers
     {
         private readonly DatabaseContext _context;
         private IMemoryCache _cache;
-        private readonly IDiscordClient _client;
+        private readonly DiscordRestClient _client;
 
         public ServersController(DatabaseContext context, IMemoryCache memoryCache, IDiscordClient client)
         {
             _context = context;
             _cache = memoryCache;
-            _client = client;
+            _client = (DiscordRestClient)client;
         }
 
         // GET: api/Servers
@@ -69,20 +70,20 @@ namespace BrokkolyBotFrontend.Controllers
                 {
                     return !serverIds.Contains(g.id);
                 });
-                serverIds.RemoveAll(id =>
-                {
-                    return !allGuilds.Where(g => g.id == id).Any();
-                });
+                //serverIds.RemoveAll(id =>
+                //{
+                //    return !allGuilds.Where(g => g.id == id).Any();
+                //});
                 Dictionary<string, bool> userHasManagerRoleMap = new Dictionary<string, bool>();
                 string userId = TryGetUserIdFromAccessTokenFromCache(token);
-                //foreach(Guild g in allGuilds)
-                //{
-                //    userHasManagerRoleMap.Add(g, await GetUserHasBotManagerRoleForServer(g, userId));
-                //}
-                foreach (string s in serverIds)
+                foreach (Guild g in allGuilds)
                 {
-                    userHasManagerRoleMap.Add(s, await GetUserHasBotManagerRoleForServer(s, userId));
+                    userHasManagerRoleMap.Add(g.id, await GetUserHasBotManagerRoleForServer(g.id, userId));
                 }
+                //foreach (string s in serverIds)
+                //{
+                //    userHasManagerRoleMap.Add(s, await GetUserHasBotManagerRoleForServer(s, userId));
+                //}
                 //TODO: optimize the search based on length of guilds vs length of servers.
                 cacheGuilds = allGuilds.Where((g) =>
                 {
@@ -163,19 +164,21 @@ namespace BrokkolyBotFrontend.Controllers
 
             Task<Server> serverFromDb = _context.ServerList.AsNoTracking().FirstAsync(g => g.ServerId == serverId);
             //var serverFromDbAwaited = await serverFromDb;
-            Task<IGuild> guild = _client.GetGuildAsync(ulong.Parse(serverId), CacheMode.AllowDownload);
+            //Task<IRestGuild
+
+            Task<RestGuild> getGuildTask = _client.GetGuildAsync(ulong.Parse(serverId));
             //var guildAwaited = await guild;
 
-            if (!((SocketGuild)await guild).IsSynced)
-            {
-                await guild.Result.DownloadUsersAsync();
-            }
+            //if (!((SocketGuild)await guild).IsSynced)
+            //{
+            //    await guild.Result.DownloadUsersAsync();
+            //}
             //_client.Rest.
-            Task<IGuildUser> user = guild.Result.GetUserAsync(ulong.Parse(userId));
+            Task<RestGuildUser> getUserTask = (await getGuildTask).GetUserAsync(ulong.Parse(userId));
             //IGuildUser user2 = ((Discord.WebSocket.SocketGuild)guildAwaited).GetUser(ulong.Parse(userId));
             //var userAwaited = await user;
             var serverBotManagerRoleId = (await serverFromDb).BotManagerRoleId ?? "0";
-            return (await user).RoleIds.Contains(ulong.Parse(serverBotManagerRoleId));
+            return (await getUserTask).RoleIds.Contains(ulong.Parse(serverBotManagerRoleId));
 
         }
 

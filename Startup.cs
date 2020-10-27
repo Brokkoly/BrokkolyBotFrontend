@@ -33,7 +33,7 @@ namespace BrokkolyBotFrontend
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
-            services.AddSingleton<IDiscordClient, DiscordSocketClient>();
+            services.AddSingleton<IDiscordClient, DiscordRestClient>();
             services.AddSingleton<ITwitchConnection, TwitchConnection>();
 
 
