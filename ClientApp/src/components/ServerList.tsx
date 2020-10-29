@@ -81,35 +81,6 @@ export const ServerList: React.FunctionComponent<{ user: User }> = ({ user }) =>
 
     }, [user])
 
-    //useEffect(() =>
-    //{
-    //    async function fetchServerRolesAndChannels(token: string)
-    //    {
-    //        Servers.getGuildInfo(token, servers[selectedIndex].serverId).then(result =>
-    //        {
-    //            if (result.channels?.length > 0 && result.roles?.length > 0) {
-    //                setServers(srvs =>
-    //                {
-    //                    let newServers = [...srvs];
-    //                    newServers[selectedIndex].channels = result.channels;
-    //                    newServers[selectedIndex].roles = result.roles;
-    //                    return newServers;
-    //                });
-
-    //            }
-    //            else {
-    //                toast('An error ocurred when loading settings. If this persists, consider refreshing');
-    //            }
-    //        });
-    //    }
-    //    if (!selectedIndex) {
-    //        return;
-    //    }
-    //    fetchServerRolesAndChannels(user.accessToken)
-
-    //}, [selectedIndex, servers, user.accessToken])
-
-
     if (typeof window !== undefined) {
         var baseUrl = window.location.protocol + '//' + window.location.host;
     }

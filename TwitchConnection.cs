@@ -46,9 +46,6 @@ namespace BrokkolyBotFrontend
             for (int i = 0; i < usernameChunks.Count; i++)
             {
                 this.CreateTwitchSubscriptionsForChunk(usernameChunks[i]);
-                //Thread thread = new Thread(() => this.CreateTwitchSubscriptionsForChunkAsync(usernameChunks[i]));
-                //thread.Start();
-                //threads.Add(thread);
             }
         }
 
@@ -104,13 +101,6 @@ namespace BrokkolyBotFrontend
                 streamWriter.Write(j);
             }
             webRequest.GetResponse();
-            //TODO: anything else here?
-
-            //var responseStream = webResponse.GetResponseStream();
-            //if (responseStream == null) return;
-            //var streamReader = new StreamReader(responseStream, Encoding.Default);
-            //var json = streamReader.ReadToEnd();
-            //StreamChangeResponse response = JsonConvert.DeserializeObject<StreamChangeResponse>(json);
         }
 
         public async Task CreateTwitchSubscriptionAsync(string id, string username)
@@ -134,14 +124,6 @@ namespace BrokkolyBotFrontend
                 streamWriter.Write(j);
             }
             await webRequest.GetResponseAsync();
-
-            //TODO: anything else here?
-
-            //var responseStream = webResponse.GetResponseStream();
-            //if (responseStream == null) return;
-            //var streamReader = new StreamReader(responseStream, Encoding.Default);
-            //var json = streamReader.ReadToEnd();
-            //StreamChangeResponse response = JsonConvert.DeserializeObject<StreamChangeResponse>(json);
         }
 
 

@@ -21,22 +21,8 @@ class App extends Component<{ cookies: Cookies }>
 
     public async componentDidMount()
     {
-        //let token = this.getTokenFromHash();
-        //if (token) {
-
         await this.getUserFromHashOrCookie();
     }
-    //public async componentDidUpdate()
-    //{
-    //    let token = this.getTokenFromHash();
-    //    if (token) {
-    //        let user = await User.getUserFromToken(token);
-    //        this.setState({ user: user });
-    //    }
-    //    else {
-    //        this.setState({ user: undefined });
-    //    }
-    //}
 
     private async getUserFromHashOrCookie()
     {

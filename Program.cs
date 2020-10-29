@@ -23,13 +23,6 @@ namespace BrokkolyBotFrontend
                 {
                     var client = services.GetService<Discord.IDiscordClient>();
                     await ((DiscordRestClient)client).LoginAsync(Discord.TokenType.Bot, Environment.GetEnvironmentVariable("BOT_TOKEN"));
-                    //await ((DiscordRestClient)client).StartAsync();
-
-                    //var db = services.GetService<DatabaseContext>();
-                    //var usersTask = db.TwitchUsers.AsNoTracking().ToListAsync();
-                    //var twitch = services.GetService<TwitchConnection>();
-                    //twitch.CreateTwitchSubscriptions(await usersTask);
-
                 }
                 catch (Exception ex)
                 {

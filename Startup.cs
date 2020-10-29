@@ -36,8 +36,6 @@ namespace BrokkolyBotFrontend
             services.AddSingleton<IDiscordClient, DiscordRestClient>();
             services.AddSingleton<ITwitchConnection, TwitchConnection>();
 
-
-
             services.AddReact();
 
             services.AddControllersWithViews();
@@ -125,9 +123,6 @@ namespace BrokkolyBotFrontend
 
             app.UseEndpoints(endpoints =>
             {
-                //endpoints.MapControllerRoute(
-                //    name: "streamchange",
-                //    pattern: "api/Twitch/StreamChange/{username}");
                 endpoints.MapControllerRoute(
                       name: "discord",
                       pattern: "api/Discord/Callback/{code?}");
@@ -149,17 +144,6 @@ namespace BrokkolyBotFrontend
                     spa.UseReactDevelopmentServer(npmScript: "start");
                 }
             });
-
-
-            //using (var serviceScope = app.ApplicationServices.GetRequiredService<IServiceScopeFactory>().CreateScope())
-            //{
-            //    var db = serviceScope.ServiceProvider.GetService<DatabaseContext>();
-            //    var users = db.TwitchUsers.AsNoTracking().ToList();
-            //    twitch.CreateTwitchSubscriptions(users);
-            //    //var discord = app.ApplicationServices.GetService<IDiscordClient>();
-            //}
-            //var twitch = app.ApplicationServices.GetService<TwitchConnection>();
-            //twitch.CreateTwitchSubscriptions(context.TwitchUsers.ToList());
         }
     }
 
