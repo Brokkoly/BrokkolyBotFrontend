@@ -41,11 +41,19 @@ namespace BrokkolyBotFrontend.Controllers
             return await _context.ServerList.AsQueryable().ToListAsync();
         }
 
+        public async Task SendMessage(string message)
+        {
+            RestGuild guild = (RestGuild)await _client.GetGuildAsync(225374061386006528);
+            RestTextChannel channel = await guild.GetTextChannelAsync(718854497245462588);
+            await channel.SendMessageAsync(message);
+        }
+
+
         //[HttpGet("{token}")]
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Guild>>> GetServerListForUser(string token)
         {
-
+            //await SendMessage("In GetServerListForUser");
             List<Guild> guilds = await TryGetBotGuildsFromCache(token);
             if (guilds == null)
             {

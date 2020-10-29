@@ -67,7 +67,7 @@ namespace BrokkolyBotFrontend
             services.AddCors(options =>
                 options.AddPolicy(name: MyAllowSpecificOrigins, builder =>
                     {
-                        builder.WithOrigins("http://discord.com", "https://discord.com", "https://localhost:44320", "https://brokkolybot.azurewebsites.net", "https://id.twitch.tv", "https://api.twitch.tv");
+                        builder.WithOrigins("http://discord.com", "https://discord.com", "https://localhost:44320", "https://brokkolybot.azurewebsites.net", "https://id.twitch.tv", "https://api.twitch.tv", "https://id.twitch.tv");
                     }
             ));
             services.AddMemoryCache();
@@ -125,6 +125,9 @@ namespace BrokkolyBotFrontend
 
             app.UseEndpoints(endpoints =>
             {
+                //endpoints.MapControllerRoute(
+                //    name: "streamchange",
+                //    pattern: "api/Twitch/StreamChange/{username}");
                 endpoints.MapControllerRoute(
                       name: "discord",
                       pattern: "api/Discord/Callback/{code?}");
@@ -137,6 +140,7 @@ namespace BrokkolyBotFrontend
                 endpoints.MapControllers();
             });
 
+
             app.UseSpa(spa =>
             {
                 spa.Options.SourcePath = "ClientApp";
@@ -146,12 +150,14 @@ namespace BrokkolyBotFrontend
                 }
             });
 
-            using (var serviceScope = app.ApplicationServices.GetRequiredService<IServiceScopeFactory>().CreateScope())
-            {
-                var db = serviceScope.ServiceProvider.GetService<DatabaseContext>();
-                var twitch = app.ApplicationServices.GetService<TwitchConnection>();
-                //var discord = app.ApplicationServices.GetService<IDiscordClient>();
-            }
+
+            //using (var serviceScope = app.ApplicationServices.GetRequiredService<IServiceScopeFactory>().CreateScope())
+            //{
+            //    var db = serviceScope.ServiceProvider.GetService<DatabaseContext>();
+            //    var users = db.TwitchUsers.AsNoTracking().ToList();
+            //    twitch.CreateTwitchSubscriptions(users);
+            //    //var discord = app.ApplicationServices.GetService<IDiscordClient>();
+            //}
             //var twitch = app.ApplicationServices.GetService<TwitchConnection>();
             //twitch.CreateTwitchSubscriptions(context.TwitchUsers.ToList());
         }

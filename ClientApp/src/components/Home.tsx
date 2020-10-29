@@ -37,6 +37,9 @@ class Home extends React.Component<HomeProps, { user: User | undefined }>
                         </div>
                     </div>
                 </header>
+                <div>
+                    I'm currently updating features, so the website may experience some instability
+                </div>
                 <ToastContainer
                     position="bottom-right"
                     autoClose={5000}

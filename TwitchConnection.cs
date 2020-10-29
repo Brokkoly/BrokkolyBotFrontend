@@ -42,24 +42,29 @@ namespace BrokkolyBotFrontend
 
         public void CreateTwitchSubscriptions(IEnumerable<TwitchUser> twitchUsers)
         {
-            List<List<string>> usernameChunks = ChunkList<string>((List<string>)twitchUsers, 100);
-            List<Thread> threads = new List<Thread>();
-            for (int i = 0; i < usernameChunks.Count(); i++)
+            List<List<string>> usernameChunks = ChunkList<string>(twitchUsers.Select(t => t.ChannelName).ToList(), 100);
+            for (int i = 0; i < usernameChunks.Count; i++)
             {
-                Thread thread = new Thread(() => this.CreateTwitchSubscriptionsForChunkAsync(usernameChunks[i]));
-                thread.Start();
-                threads.Add(thread);
+                this.CreateTwitchSubscriptionsForChunk(usernameChunks[i]);
+                //Thread thread = new Thread(() => this.CreateTwitchSubscriptionsForChunkAsync(usernameChunks[i]));
+                //thread.Start();
+                //threads.Add(thread);
             }
-            foreach (Thread t in threads)
+        }
+
+        public void CreateTwitchSubscriptionsForChunk(List<string> usernames)
+        {
+            List<TwitchUserInfo> userInfos = GetUserIds(usernames);
+            for (int i = 0; i < userInfos.Count; i++)
             {
-                t.Join();
+                CreateTwitchSubscription(userInfos[i].id, userInfos[i].login);
             }
         }
         public async void CreateTwitchSubscriptionsForChunkAsync(List<string> usernames)
         {
             List<TwitchUserInfo> userInfos = GetUserIds(usernames);
             List<Task> tasks = new List<Task>();
-            for (int i = 0; i < userInfos.Count(); i++)
+            for (int i = 0; i < userInfos.Count; i++)
             {
                 tasks.Append(CreateTwitchSubscriptionAsync(userInfos[i].id, userInfos[i].login));
             }
@@ -78,10 +83,40 @@ namespace BrokkolyBotFrontend
             public static string Secret { get { return "hub.secret"; } }
         }
 
+        public void CreateTwitchSubscription(string id, string username)
+        {
+            string subscribeString = CreateSubscribeString(id);
+            string callbackString = "https://brokkolybot.azurewebsites.com/api/Twitch/StreamChange/" + username;
+            string fetchUrl = "https://api.twitch.tv/helix/webhooks/hub";
+            HttpWebRequest webRequest = (HttpWebRequest)WebRequest.Create(fetchUrl);
+            webRequest.Method = "POST";
+            webRequest.ContentType = "application/json";
+            webRequest.Headers.Add(HttpRequestHeader.Authorization, "Bearer " + AccessToken);
+            webRequest.Headers.Add("Client-Id: " + ClientId);
+            using (var streamWriter = new StreamWriter(webRequest.GetRequestStream()))
+            {
+                string j = "{" + string.Format("\"{0}\":\"{1}\",", Hub.Callback, callbackString) +
+                              string.Format("\"{0}\":\"{1}\",", Hub.Mode, "subscribe") +
+                              string.Format("\"{0}\":\"{1}\",", Hub.Topic, subscribeString) +
+                              string.Format("\"{0}\":\"{1}\",", Hub.LeaseSeconds, "86400") +
+                              string.Format("\"{0}\":\"{1}\"", Hub.Secret, ClientSecret) + "}";
+
+                streamWriter.Write(j);
+            }
+            webRequest.GetResponse();
+            //TODO: anything else here?
+
+            //var responseStream = webResponse.GetResponseStream();
+            //if (responseStream == null) return;
+            //var streamReader = new StreamReader(responseStream, Encoding.Default);
+            //var json = streamReader.ReadToEnd();
+            //StreamChangeResponse response = JsonConvert.DeserializeObject<StreamChangeResponse>(json);
+        }
+
         public async Task CreateTwitchSubscriptionAsync(string id, string username)
         {
             string subscribeString = CreateSubscribeString(id);
-            string callbackString = "https://brokkolybot.azurewebsites.com/api/Twitch/StreamChange?username=" + username;
+            string callbackString = "https://brokkolybot.azurewebsites.com/api/Twitch/StreamChange/" + username;
             string topicUrl = "https://api.twitch.tv/helix/streams";
             HttpWebRequest webRequest = (HttpWebRequest)WebRequest.Create(subscribeString);
             webRequest.Method = "POST";
@@ -99,6 +134,7 @@ namespace BrokkolyBotFrontend
                 streamWriter.Write(j);
             }
             await webRequest.GetResponseAsync();
+
             //TODO: anything else here?
 
             //var responseStream = webResponse.GetResponseStream();
@@ -168,7 +204,7 @@ namespace BrokkolyBotFrontend
 
         private string CreateSubscribeString(string id)
         {
-            return string.Format("https://api.twitch.tv/helix/streams?user_id={0}", id);
+            return "https://api.twitch.tv/helix/streams?user_id=" + id;
         }
 
         private static List<List<T>> ChunkList<T>(List<T> source, int chunkSize)
