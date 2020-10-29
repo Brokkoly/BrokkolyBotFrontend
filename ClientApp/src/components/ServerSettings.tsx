@@ -456,6 +456,11 @@ export const OtherSettingsForm: React.FunctionComponent<{
             serverFunctions.handleServerChange({ index: serverIndex, newBotManagerRoleId: event.target.value });
             setHasBeenUpdated(true);
         }
+        function handleTwitchLiveRoleChange(event: any)
+        {
+            serverFunctions.handleServerChange({ index: serverIndex, newTwitchLiveRoleId: event.target.value });
+            setHasBeenUpdated(true);
+        }
 
         /**
          * Handler for a change in the twitchChannel
@@ -602,6 +607,31 @@ export const OtherSettingsForm: React.FunctionComponent<{
                                             value={channel.id}
                                         >
                                             {channel.name}
+                                        </option>
+                                    ))}
+                                </select>
+                            </label>
+                        </div>
+                        <div className="flexRow ">
+                            <label className="_inputText">
+                                {"Select the role for users currently broadcasting on twitch: "}
+                                <select
+                                    className="_formInput _roleSelect"
+                                    value={server.twitchLiveRoleId || ""}
+                                    onChange={handleTwitchLiveRoleChange}
+                                    disabled={!server.userCanManage}
+                                >
+                                    <option className="_roleOption" key={"0"} value={""}>
+                                        None
+            </option>
+                                    {serverRoles.map((rle: IRole) => (
+                                        <option
+                                            className="_roleOption"
+                                            style={constructStyleFromNumber(rle.color)}
+                                            key={rle.id}
+                                            value={rle.id}
+                                        >
+                                            {rle.name}
                                         </option>
                                     ))}
                                 </select>

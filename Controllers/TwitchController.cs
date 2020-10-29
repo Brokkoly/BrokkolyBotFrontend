@@ -40,7 +40,7 @@ namespace BrokkolyBotFrontend.Controllers
             //Response.ContentType = "text/plain";
             //Response.StatusCode = 200;
             //await Response.WriteAsync("challenge");
-            await SendMessage("In StreamChange, challenge was: " + challenge+"\nReason Was: "+reason);
+            //await SendMessage("In StreamChange, challenge was: " + challenge+"\nReason Was: "+reason);
             return Ok(challenge);
         }
 
@@ -55,7 +55,7 @@ namespace BrokkolyBotFrontend.Controllers
         [HttpPost, Route("{username=username}")]
         public async Task<ActionResult> StreamChange(string username, [FromBody] StreamChangeRequest request)
         {
-            await SendMessage("In StreamChange, username was: " + username + "\nrequest was:\n" + JsonConvert.SerializeObject(request));
+            //await SendMessage("In StreamChange, username was: " + username + "\nrequest was:\n" + JsonConvert.SerializeObject(request));
             Task<List<TwitchUser>> twitchUsersTask = _context.TwitchUsers
                     .AsQueryable()
                     .Where(t => (t.ChannelName == username))
@@ -163,11 +163,10 @@ namespace BrokkolyBotFrontend.Controllers
             _cache.Set(CacheKeys.TwitchUsername + username, streamChangeInfo, cacheEntryOptions);
         }
 
-
         // GET: api/Twitch/5
         public async Task<ActionResult> RefreshStreams()
         {
-            await SendMessage("In RefreshStreams");
+            //await SendMessage("In RefreshStreams");
             try
             {
                 _twitch.CreateTwitchSubscriptions(_context.TwitchUsers.ToList());

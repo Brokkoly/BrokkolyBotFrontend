@@ -29,6 +29,7 @@ export class Servers
                 botManagerRoleId: srv.botManagerRoleId,
                 twitchChannelId: srv.twitchChannelId,
                 commandPrefix: srv.commandPrefix,
+                twitchLiveRoleId: srv.twitchLiveRoleId
             }
         });
         return serversTransformed;
@@ -36,13 +37,11 @@ export class Servers
 
     public static async getGuildInfo(token: string, serverId: string): Promise<IServerInfo>
     {
-        //TODO: Response checking. Let the user know if there is an error.
         const result = await fetch(
             `/api/Discord/GetServerInfo?token=${token}&serverId=${serverId}`
         );
         const text = await result.text();
         const serverInfo = await JSON.parse(text.replace(/("[^"]*"\s*:\s*)(\d{16,})/g, '$1"$2"'));
-        //TODO: make this better
         const rolesTransformed: IRole[] = serverInfo.myRoles.map((rle: any) => 
         {
             return {
@@ -99,6 +98,7 @@ export class Servers
                         BotManagerRoleId: server.botManagerRoleId,
                         TwitchChannel: server.twitchChannelId,
                         CommandPrefix: server.commandPrefix,
+                        TwitchLiveRoleId: server.twitchLiveRoleId
                     },
                     token: token
                 })
@@ -144,19 +144,21 @@ export class Servers
     public static checkCommandPrefixValidity(prefix: string): Errors
     {
         let errors: IError[] = [];
-        if (prefix === "") {
-            errors.push(new PrefixValidationError("A prefix is required to use the bot.", ErrorLevels.Critical));
+        if (!prefix) {
+            return new Errors(errors);
         }
-        if (prefix.length > 2) {
-            errors.push(new PrefixValidationError("Prefixes cannot be longer than 2 characters", ErrorLevels.Critical));
-        }
-        for (let i = 0; i < prefix.length; i++) {
-            let code = prefix.charCodeAt(i);
-            if (code > 126 || code < 33) {
-                errors.push(new PrefixValidationError(`"${prefix[i]}" is not a valid prefix character`, ErrorLevels.Critical));
+        else {
+            if (prefix.length > 2) {
+                errors.push(new PrefixValidationError("Prefixes cannot be longer than 2 characters", ErrorLevels.Critical));
             }
-            if (/^[0-9A-Za-z]/.test(prefix[i])) {
-                errors.push(new PrefixValidationError(`"${prefix[i]}" is a number or letter, and may cause unexpected responses from the bot`, ErrorLevels.Warning));
+            for (let i = 0; i < prefix.length; i++) {
+                let code = prefix.charCodeAt(i);
+                if (code > 126 || code < 33) {
+                    errors.push(new PrefixValidationError(`"${prefix[i]}" is not a valid prefix character`, ErrorLevels.Critical));
+                }
+                if (/^[0-9A-Za-z]/.test(prefix[i])) {
+                    errors.push(new PrefixValidationError(`"${prefix[i]}" is a number or letter, and may cause unexpected responses from the bot`, ErrorLevels.Warning));
+                }
             }
         }
         return new Errors(errors);
@@ -178,6 +180,7 @@ export interface IServer
     //channels: IChannel[];
     commandPrefix: string;
     twitchChannelId: string;
+    twitchLiveRoleId: string;
 }
 export interface IRole
 {

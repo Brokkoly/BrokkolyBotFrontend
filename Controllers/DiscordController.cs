@@ -36,12 +36,7 @@ namespace BrokkolyBotFrontend.Controllers
         [HttpGet]
         public ActionResult Callback(string access_token)
         {
-            //TODO: Probably delete me
-            string clientId = Environment.GetEnvironmentVariable("CLIENT_ID");
-            string clientSecret = Environment.GetEnvironmentVariable("CLIENT_SECRET");
             string baseURL = Environment.GetEnvironmentVariable("BASE_URL");
-            string redirect_url = baseURL + "/api/Discord/Callback/";
-
             return Redirect(baseURL + "/servers/" + access_token);
         }
 
@@ -167,9 +162,8 @@ namespace BrokkolyBotFrontend.Controllers
 
         public ActionResult<IEnumerable<MyRole>> TryGetRolesForUserFromCache(string accessToken, string serverId)
         {
-            List<MyRole> cacheRoles;
             ServerUser serverUser;
-            if (!_cache.TryGetValue(CacheKeys.UserRoles + serverId + accessToken, out cacheRoles))
+            if (!_cache.TryGetValue(CacheKeys.UserRoles + serverId + accessToken, out List<MyRole> cacheRoles))
             {
                 HttpWebRequest webRequest = (HttpWebRequest)WebRequest.Create(@"https://discord.com/api/users/@me/guilds");
                 webRequest.Method = "Get";
@@ -209,9 +203,9 @@ namespace BrokkolyBotFrontend.Controllers
         public int? timeout_seconds { get; set; }
         public string botManagerRoleId { get; set; }
         public bool canManageServer { get; set; }
-        //public Channel[] channels { get; set; }
         public string commandPrefix { get; set; }
         public string twitchChannelId { get; set; }
+        public string twitchLiveRoleId { get; set; }
     }
 
     public class MyChannel

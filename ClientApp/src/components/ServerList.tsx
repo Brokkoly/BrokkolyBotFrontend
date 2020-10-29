@@ -23,6 +23,7 @@ export interface IServerChangeArgs
     newBotManagerRoleId?: string;
     newTwitchChannelId?: string;
     newCommandPrefix?: string;
+    newTwitchLiveRoleId?: string;
 }
 
 export const ServerList: React.FunctionComponent<{ user: User }> = ({ user }) =>
@@ -145,6 +146,9 @@ export const ServerList: React.FunctionComponent<{ user: User }> = ({ user }) =>
             }
             else if (args.newCommandPrefix !== undefined) {
                 newList[index].commandPrefix = args.newCommandPrefix;
+            }
+            else if (args.newTwitchLiveRoleId !== undefined) {
+                newList[index].twitchLiveRoleId = args.newTwitchLiveRoleId;
             }
             return newList;
         });

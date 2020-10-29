@@ -1,10 +1,7 @@
 ﻿using BrokkolyBotFrontend.GeneratedModels;
-using BrokkolyBotFrontend.Models;
 using Discord;
 using Discord.Rest;
-using Discord.WebSocket;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using Newtonsoft.Json;
@@ -16,7 +13,6 @@ using System.Linq;
 using System.Net;
 using System.Text;
 using System.Threading.Tasks;
-
 namespace BrokkolyBotFrontend.Controllers
 {
     [Route("api/[controller]/[action]")]
@@ -107,6 +103,8 @@ namespace BrokkolyBotFrontend.Controllers
                         g.botManagerRoleId = servers[index].BotManagerRoleId;
                         g.commandPrefix = servers[index].CommandPrefix;
                         g.twitchChannelId = servers[index].TwitchChannel;
+                        g.twitchLiveRoleId = servers[index].TwitchLiveRoleId;
+                        
                         return true;
                     }
                     return false;
@@ -168,50 +166,13 @@ namespace BrokkolyBotFrontend.Controllers
 
         public async Task<bool> GetUserHasBotManagerRoleForServer(string serverId, string userId)
         {
-            //bool cacheUserHasBotManagerRole = false;
-
             Task<Server> serverFromDb = _context.ServerList.AsNoTracking().FirstAsync(g => g.ServerId == serverId);
-            //var serverFromDbAwaited = await serverFromDb;
-            //Task<IRestGuild
-
             Task<RestGuild> getGuildTask = _client.GetGuildAsync(ulong.Parse(serverId));
-            //var guildAwaited = await guild;
-
-            //if (!((SocketGuild)await guild).IsSynced)
-            //{
-            //    await guild.Result.DownloadUsersAsync();
-            //}
-            //_client.Rest.
             Task<RestGuildUser> getUserTask = (await getGuildTask).GetUserAsync(ulong.Parse(userId));
-            //IGuildUser user2 = ((Discord.WebSocket.SocketGuild)guildAwaited).GetUser(ulong.Parse(userId));
-            //var userAwaited = await user;
             var serverBotManagerRoleId = (await serverFromDb).BotManagerRoleId ?? "0";
             return (await getUserTask).RoleIds.Contains(ulong.Parse(serverBotManagerRoleId));
-
         }
 
-        //public async Task<bool> GetUserHasBotManagerRoleForServer(string serverId, string userId)
-        //{
-        //    //bool cacheUserHasBotManagerRole = false;
-
-        //    Task<Server> serverFromDb = _context.ServerList.AsNoTracking().FirstAsync(g => g.ServerId == serverId);
-        //    //var serverFromDbAwaited = await serverFromDb;
-        //    Task<IGuild> guild = _client.GetGuildAsync(ulong.Parse(serverId), CacheMode.AllowDownload);
-        //    //var guildAwaited = await guild;
-
-        //    if (!((SocketGuild)await guild).IsSynced)
-        //    {
-        //        await guild.Result.DownloadUsersAsync();
-        //    }
-        //    Task<IGuildUser> user = guild.Result.GetUserAsync(ulong.Parse(userId));
-        //    //IGuildUser user2 = ((Discord.WebSocket.SocketGuild)guildAwaited).GetUser(ulong.Parse(userId));
-        //    //var userAwaited = await user;
-        //    var serverBotManagerRoleId = (await serverFromDb).BotManagerRoleId ?? "0";
-        //    return (await user).RoleIds.Contains(ulong.Parse(serverBotManagerRoleId));
-
-        //}
-
-        // GET: api/Servers/5
         [HttpGet("{id}")]
         public async Task<ActionResult<Server>> GetServer(string id)
         {
