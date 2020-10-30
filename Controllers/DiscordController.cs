@@ -1,21 +1,14 @@
-﻿using System;
+﻿using Discord;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Caching.Memory;
+using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
-using System.Configuration;
 using System.IO;
 using System.Linq;
 using System.Net;
 using System.Text;
 using System.Threading.Tasks;
-using BrokkolyBotFrontend.Models;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using Newtonsoft.Json;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Caching.Memory;
-using Microsoft.AspNetCore.Identity;
-using Discord;
-using Discord.WebSocket;
-using System.Collections.ObjectModel;
 
 namespace BrokkolyBotFrontend.Controllers
 {
@@ -23,12 +16,10 @@ namespace BrokkolyBotFrontend.Controllers
     [ApiController]
     public class DiscordController : Controller
     {
-        private readonly IConfiguration _configuration;
         private readonly IMemoryCache _cache;
         private readonly IDiscordClient _client;
-        public DiscordController(IConfiguration configuration, IMemoryCache memoryCache, IDiscordClient client)
+        public DiscordController(IMemoryCache memoryCache, IDiscordClient client)
         {
-            _configuration = configuration;
             _cache = memoryCache;
             _client = client;
         }
@@ -94,7 +85,9 @@ namespace BrokkolyBotFrontend.Controllers
             return await TryGetServerInfoFromCache(token, serverId);
         }
 
+#pragma warning disable IDE0060 // Remove unused parameter
         public async Task<ActionResult<IEnumerable<MyRole>>> TryGetRolesForServerFromCache(string accessToken, string serverId)
+#pragma warning restore IDE0060 // Remove unused parameter
         {
             //TODO: delete when it's time
             List<IRole> roles = new List<IRole>((await _client.GetGuildAsync(ulong.Parse(serverId))).Roles.ToList());
@@ -112,7 +105,9 @@ namespace BrokkolyBotFrontend.Controllers
             }
             return myRoles;
         }
+#pragma warning disable IDE0060 // Remove unused parameter
         public async Task<ActionResult<ServerInfo>> TryGetServerInfoFromCache(string accessToken, string serverId)
+#pragma warning restore IDE0060 // Remove unused parameter
         {
             //TODO: extract to cache function
             IGuild guild = await _client.GetGuildAsync(ulong.Parse(serverId));
@@ -183,6 +178,8 @@ namespace BrokkolyBotFrontend.Controllers
         }
     }
 
+#pragma warning disable IDE1006 // Naming Styles. These are how they are delivered to us or expected by the client
+
     public class MyRole
     {
         public string id { get; set; }
@@ -199,7 +196,7 @@ namespace BrokkolyBotFrontend.Controllers
         public bool owner { get; set; }
         public int permissions { get; set; }
         public string permissions_new { get; set; }
-        public string? timeout_role_id { get; set; }
+        public string timeout_role_id { get; set; }
         public int? timeout_seconds { get; set; }
         public string botManagerRoleId { get; set; }
         public bool canManageServer { get; set; }
@@ -230,3 +227,4 @@ namespace BrokkolyBotFrontend.Controllers
         public bool mute { get; set; }
     }
 }
+#pragma warning restore IDE1006 // Naming Styles

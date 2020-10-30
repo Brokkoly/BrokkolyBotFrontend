@@ -8,6 +8,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using BrokkolyBotFrontend.GeneratedModels;
 using Microsoft.AspNetCore.Http;
+using Microsoft.CodeAnalysis.Host.Mef;
 using Newtonsoft.Json;
 
 namespace BrokkolyBotFrontend
@@ -17,12 +18,14 @@ namespace BrokkolyBotFrontend
         string AccessToken { get; set; }
         string ClientId { get; set; }
         string ClientSecret { get; set; }
-
-        public void CreateTwitchSubscriptions(IEnumerable<TwitchUser> twitchUsers);
+        public void CreateTwitchSubscriptions(IEnumerable<string> usernames);
+        public void RemoveTwitchSubscriptions(IEnumerable<string> usernames);
+        public void CreateTwitchSubscription(string username, string id);
+        public void RemoveTwitchSubscription(string username, string id);
         public List<TwitchUserInfo> GetUserIds(IList<string> usernames);
-        public Task CreateTwitchSubscriptionAsync(string id, string username);
         public void Login();
         public void Login(string TwitchId, string TwitchSecret);
+        public Dictionary<string, StreamStatus> GetStreamStatus(List<string> usernames);
 
     }
 
@@ -40,9 +43,9 @@ namespace BrokkolyBotFrontend
         public string ClientId { get; set; }
         public string ClientSecret { get; set; }
 
-        public void CreateTwitchSubscriptions(IEnumerable<TwitchUser> twitchUsers)
+        public void CreateTwitchSubscriptions(IEnumerable<string> usernames)
         {
-            List<List<string>> usernameChunks = ChunkList<string>(twitchUsers.Select(t => t.ChannelName).ToList(), 100);
+            List<List<string>> usernameChunks = ChunkList<string>(usernames.ToList(), 100);
             for (int i = 0; i < usernameChunks.Count; i++)
             {
                 this.CreateTwitchSubscriptionsForChunk(usernameChunks[i]);
@@ -54,20 +57,25 @@ namespace BrokkolyBotFrontend
             List<TwitchUserInfo> userInfos = GetUserIds(usernames);
             for (int i = 0; i < userInfos.Count; i++)
             {
-                CreateTwitchSubscription(userInfos[i].id, userInfos[i].login);
+                CreateTwitchSubscription(userInfos[i].login, userInfos[i].id);
             }
         }
-        public async void CreateTwitchSubscriptionsForChunkAsync(List<string> usernames)
+
+        public void RemoveTwitchSubscriptions(IEnumerable<string> usernames)
+        {
+            List<List<string>> usernameChunks = ChunkList<string>(usernames.ToList(), 100);
+            for (int i = 0; i < usernameChunks.Count; i++)
+            {
+                this.RemoveTwitchSubscriptionsForChunk(usernameChunks[i]);
+            }
+        }
+
+        public void RemoveTwitchSubscriptionsForChunk(List<string> usernames)
         {
             List<TwitchUserInfo> userInfos = GetUserIds(usernames);
-            List<Task> tasks = new List<Task>();
             for (int i = 0; i < userInfos.Count; i++)
             {
-                tasks.Append(CreateTwitchSubscriptionAsync(userInfos[i].id, userInfos[i].login));
-            }
-            foreach (Task t in tasks)
-            {
-                await t;
+                RemoveTwitchSubscription(userInfos[i].login, userInfos[i].id);
             }
         }
 
@@ -80,7 +88,83 @@ namespace BrokkolyBotFrontend
             public static string Secret { get { return "hub.secret"; } }
         }
 
-        public void CreateTwitchSubscription(string id, string username)
+        public Dictionary<string, StreamStatus> GetStreamStatus(List<string> usernames)
+        {
+            List<List<string>> chunkList = ChunkList<string>(usernames, 100);
+            Dictionary<string, StreamStatus> retDict = new Dictionary<string, StreamStatus>();
+            StreamInfoResponse streamInfoResponse = null;
+            foreach (List<string> chunk in chunkList)
+            {
+                string cursor;
+                if (!String.IsNullOrEmpty(streamInfoResponse?.StreamChangeRequest?.pagination?.cursor))
+                {
+                    cursor = streamInfoResponse.StreamChangeRequest.pagination.cursor;
+                }
+                else
+                {
+                    cursor = "";
+                }
+                streamInfoResponse = DoStreamInfoRequest(chunk, cursor);
+                foreach (StreamStatus streamChangeInfo in streamInfoResponse.StreamChangeRequest.data)
+                {
+                    retDict.Add(streamChangeInfo.user_name.ToLower(), streamChangeInfo);
+                }
+            }
+            return retDict;
+        }
+        public StreamInfoResponse DoStreamInfoRequest(List<string> usernames, string cursor)
+        {
+            string queryString = CreateGetStreamString(ref usernames, cursor);
+            HttpWebRequest webRequest = (HttpWebRequest)WebRequest.Create(queryString);
+            webRequest.Method = "GET";
+            webRequest.ContentType = "application/json";
+            webRequest.Headers.Add(HttpRequestHeader.Authorization, "Bearer " + AccessToken);
+            webRequest.Headers.Add("Client-Id: " + ClientId);
+            var webResponse = webRequest.GetResponse();
+            var responseStream = webResponse.GetResponseStream();
+            if (responseStream != null)
+            {
+
+                var streamReader = new StreamReader(responseStream, Encoding.Default);
+                var json = streamReader.ReadToEnd();
+                StreamStatusJson response = JsonConvert.DeserializeObject<StreamStatusJson>(json);
+                return new StreamInfoResponse()
+                {
+                    StreamChangeRequest = response,
+                    RateLimitRemaining = int.Parse(webResponse.Headers.Get("Ratelimit-Remaining"))
+                };
+            }
+            else
+            {
+                return new StreamInfoResponse()
+                {
+                    StreamChangeRequest = new StreamStatusJson(),
+                    RateLimitRemaining = 800,
+                };
+            }
+
+        }
+
+        private string CreateGetStreamString(ref List<string> usernames, string cursor)
+        {
+            StringBuilder sb = new StringBuilder("https://api.twitch.tv/helix/streams");
+            sb.Append("?first=");
+            sb.Append(usernames.Count.ToString());
+            if (!String.IsNullOrEmpty(cursor))
+            {
+                sb.Append("&after=");
+                sb.Append(cursor);
+            }
+            foreach (string s in usernames)
+            {
+                sb.Append("&user_login=");
+                sb.Append(s);
+            }
+            return sb.ToString();
+
+        }
+
+        public void CreateTwitchSubscription(string username, string id)
         {
             string subscribeString = CreateSubscribeString(id);
             string callbackString = "https://brokkolybot.azurewebsites.com/api/Twitch/StreamChange/" + username;
@@ -103,12 +187,12 @@ namespace BrokkolyBotFrontend
             webRequest.GetResponse();
         }
 
-        public async Task CreateTwitchSubscriptionAsync(string id, string username)
+        public void RemoveTwitchSubscription(string username, string id)
         {
             string subscribeString = CreateSubscribeString(id);
             string callbackString = "https://brokkolybot.azurewebsites.com/api/Twitch/StreamChange/" + username;
-            string topicUrl = "https://api.twitch.tv/helix/streams";
-            HttpWebRequest webRequest = (HttpWebRequest)WebRequest.Create(subscribeString);
+            string fetchUrl = "https://api.twitch.tv/helix/webhooks/hub";
+            HttpWebRequest webRequest = (HttpWebRequest)WebRequest.Create(fetchUrl);
             webRequest.Method = "POST";
             webRequest.ContentType = "application/json";
             webRequest.Headers.Add(HttpRequestHeader.Authorization, "Bearer " + AccessToken);
@@ -117,16 +201,14 @@ namespace BrokkolyBotFrontend
             {
                 string j = "{" + string.Format("\"{0}\":\"{1}\",", Hub.Callback, callbackString) +
                               string.Format("\"{0}\":\"{1}\",", Hub.Mode, "subscribe") +
-                              string.Format("\"{0}\":\"{1}\",", Hub.Topic, topicUrl) +
+                              string.Format("\"{0}\":\"{1}\",", Hub.Topic, subscribeString) +
                               string.Format("\"{0}\":\"{1}\",", Hub.LeaseSeconds, "86400") +
-                              string.Format("\"{0}\":\"{1}\"}", Hub.Secret, ClientSecret);
+                              string.Format("\"{0}\":\"{1}\"", Hub.Secret, ClientSecret) + "}";
 
                 streamWriter.Write(j);
             }
-            await webRequest.GetResponseAsync();
+            webRequest.GetResponse();
         }
-
-
 
         public void Login()
         {
@@ -154,8 +236,7 @@ namespace BrokkolyBotFrontend
 
         public List<TwitchUserInfo> GetUserIds(IList<string> usernames)
         {
-            string getIdsString = "";
-            getIdsString = CreateGetIdString(usernames);
+            string getIdsString = CreateGetIdString(usernames);
             HttpWebRequest webRequest = (HttpWebRequest)WebRequest.Create(getIdsString);
             webRequest.Method = "GET";
             webRequest.ContentType = "application/json";
@@ -202,6 +283,7 @@ namespace BrokkolyBotFrontend
 
     public class TokenResponse
     {
+#pragma warning disable IDE1006 // Naming Styles. These are how they are delivered to us or expected by the client
         public string access_token { get; set; }
         public int expires_in { get; set; }
         public string token_type { get; set; }
@@ -246,13 +328,13 @@ public class TwitchUserInfoResponse
     public List<TwitchUserInfo> data { get; set; }
 }
 
-public class StreamChangeInfo
+public class StreamStatus
 {
     public string id { get; set; }
     public string user_id { get; set; }
     public string user_name { get; set; }
     public string game_id { get; set; }
-    public List<object> community_ids { get; set; }
+    public List<object>? tag_ids { get; set; }
     public string type { get; set; }
     public string title { get; set; }
     public int viewer_count { get; set; }
@@ -260,9 +342,21 @@ public class StreamChangeInfo
     public string language { get; set; }
     public string thumbnail_url { get; set; }
 }
-
-public class StreamChangeRequest
+public class PaginationClass
 {
-    public List<StreamChangeInfo> data { get; set; }
+    public string cursor { get; set; }
 }
+
+public class StreamStatusJson
+{
+    public List<StreamStatus> data { get; set; }
+    public PaginationClass pagination { get; set; }
+
+}
+public class StreamInfoResponse
+{
+    public StreamStatusJson StreamChangeRequest { get; set; }
+    public int RateLimitRemaining { get; set; }
+}
+#pragma warning restore IDE1006 // Naming Styles
 

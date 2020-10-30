@@ -50,7 +50,7 @@ namespace BrokkolyBotFrontend
             {
                 connectionString = ConfigurationManager.ConnectionStrings["BrokkolyBotDatabase"].ConnectionString;
             }
-            catch (Exception e)
+            catch
             {
                 connectionString = Configuration.GetConnectionString("BrokkolyBotDatabase");
             }

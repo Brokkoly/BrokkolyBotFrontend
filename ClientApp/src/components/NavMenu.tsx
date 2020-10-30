@@ -16,7 +16,8 @@ interface NavMenuProps
 export const LogoutButton: React.FunctionComponent = () =>
 {
     let history = useHistory();
-    const [cookies,setCookies,removeCookie]= useCookies();
+    // @ts-ignore ignore value assigned but never used for cookies, setCookies
+    const [cookies, setCookies, removeCookie] = useCookies();
     function logoutClicked()
     {
         history.push('/');
@@ -25,7 +26,7 @@ export const LogoutButton: React.FunctionComponent = () =>
 
     return (
         <Button variant="outline-light" style={{ border: "none" }} onClick={logoutClicked} >Logout</Button>
-        )
+    )
 
 }
 
@@ -63,12 +64,12 @@ class NavMenu extends Component<NavMenuProps, { collapsed: boolean }>{
                         <UserCard userName={user.displayName} avatarUrl={user.avatarUrl} />
                     </NavItem>
                     <NavItem className={"_alignSelfCenter _navLinkUnselected "}>
-                        <LogoutButton/>
+                        <LogoutButton />
                     </NavItem>
                 </>
                 :
                 <NavItem className={"_alignSelfCenter _navLinkUnselected "}>
-                    <Button variant="outline-light"  href={discordAuthLink} >Discord Login</Button>
+                    <Button variant="outline-light" href={discordAuthLink} >Discord Login</Button>
                 </NavItem>
         )
     }

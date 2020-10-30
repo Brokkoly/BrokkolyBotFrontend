@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Net.WebSockets;
 using System.Threading.Tasks;
 using BrokkolyBotFrontend.GeneratedModels;
 using Discord;
@@ -24,7 +25,7 @@ namespace BrokkolyBotFrontend.Controllers
         private readonly DatabaseContext _context;
         private readonly IDiscordClient _client;
         private readonly ITwitchConnection _twitch;
-        private IMemoryCache _cache;
+        private readonly IMemoryCache _cache;
         public TwitchController(DatabaseContext context, IDiscordClient client, ITwitchConnection twitch, IMemoryCache memoryCache)
         {
             _context = context;
@@ -33,13 +34,101 @@ namespace BrokkolyBotFrontend.Controllers
             _cache = memoryCache;
         }
 
+#pragma warning disable IDE0060 // Remove unused parameter
         // GET: api/Twitch/5
         [HttpGet, Route("{username=username}/")]
-        public async Task<ActionResult> StreamChange(string username, [FromQuery(Name = "hub.challenge")] string challenge="", [FromQuery(Name ="hub.reason")]string reason="")
+        public ActionResult StreamChange(string username, [FromQuery(Name = "hub.challenge")] string challenge = "", [FromQuery(Name = "hub.reason")] string reason = "")
+#pragma warning restore IDE0060 // Remove unused parameter
         {
             return Ok(challenge);
         }
 
+
+
+        // POST: api/Twitch/5
+        [HttpPost, Route("{username=username}")]
+        public async Task<ActionResult> StreamChange(string username, [FromBody] StreamStatusJson request)
+        {
+            Task<List<TwitchUser>> twitchUsersTask = _context.TwitchUsers
+                    .AsQueryable()
+                    .Where(t => (t.ChannelName == username))
+                    .ToListAsync();
+            StreamStatus previousStatus = GetStreamStatusFromCache(username);
+            bool previousStatusOk = true;
+            if (previousStatus != null)
+            {
+                previousStatusOk = false;
+            }
+            if (request.data.Any())
+            {
+                //Stream Changed
+                if (previousStatusOk && (request.data[0].id == previousStatus.id))
+                {
+                    //Duplicate Request. This might happen sometimes. No need to add to cache.
+                    return Ok();
+                }
+                else
+                {
+                    //Going Online
+                    //TODO: Don't post messages if the stream was online before.
+                    if (previousStatusOk)
+                    {
+                        //Stream was updated. Handle game changes here
+                    }
+                    else
+                    {
+                        await StreamOnline(await twitchUsersTask, request.data[0]);
+                    }
+                }
+            }
+            else
+            {
+                //Stream Offline
+                await StreamOffline(await twitchUsersTask);
+            }
+            SetStreamInfoInCache(username, request);
+            return Ok();
+        }
+
+        [HttpGet]
+        // GET: api/Twitch/5
+        public async Task<ActionResult> RefreshStreams(string username = "", string serverId = "")
+        {
+            var users = _context.TwitchUsers.AsNoTracking();
+            if (string.IsNullOrEmpty(username) || string.IsNullOrEmpty(serverId))
+            {
+                //Refresh all streams. Maybe cache the time that streams were last refreshed and do a check every hour.
+                var usernames = await users.Select(u => u.ChannelName).Distinct().ToListAsync();
+                var streamStatuses = _twitch.GetStreamStatus(usernames);
+
+                foreach (string name in usernames)
+                {
+                    streamStatuses.TryGetValue(name.ToLower(), out StreamStatus streamStatus);
+                    var userListForUserTask = users.Where(u => u.ChannelName == name).ToListAsync();
+                    SetStreamInfoInCache(name, streamStatus);
+                    await UpdateStreamAcrossServers(await userListForUserTask, streamStatus);
+                }
+                _twitch.RemoveTwitchSubscriptions(usernames);
+                _twitch.CreateTwitchSubscriptions(usernames);
+            }
+            else
+            {
+                //Somebody was just added to the bot. We need to check their status.
+                StreamStatus streamStatus = GetStreamStatusFromCache(username);
+                if (streamStatus == null)
+                {
+                    //We don't have info
+                    var streamStatusesDict = _twitch.GetStreamStatus(new List<string> { username });
+                    streamStatusesDict.TryGetValue(username.ToLower(), out streamStatus);
+                }
+                await UpdateStreamAcrossServers(users.Where(u => u.ChannelName == username).ToList(), streamStatus);
+                _twitch.RemoveTwitchSubscriptions(new List<string> { username });
+                _twitch.CreateTwitchSubscriptions(new List<string> { username });
+            }
+            return StatusCode(200);
+        }
+
+        [NonAction]
         public async Task SendMessage(string message)
         {
             RestGuild guild = (RestGuild)await _client.GetGuildAsync(225374061386006528);
@@ -47,142 +136,167 @@ namespace BrokkolyBotFrontend.Controllers
             await channel.SendMessageAsync(message);
         }
 
-        // POST: api/Twitch/5
-        [HttpPost, Route("{username=username}")]
-        public async Task<ActionResult> StreamChange(string username, [FromBody] StreamChangeRequest request)
+        [NonAction]
+        public StreamStatus GetStreamStatusFromCache(string username)
         {
-            Task<List<TwitchUser>> twitchUsersTask = _context.TwitchUsers
-                    .AsQueryable()
-                    .Where(t => (t.ChannelName == username))
-                    .ToListAsync();
-            StreamChangeRequest previousRequest = GetStreamInfoFromCache(username);
-            if (request.data.Any())
+            if (!_cache.TryGetValue(CacheKeys.TwitchUsername + username, out StreamStatus cacheStatus))
             {
+                return null;
+            }
+            return cacheStatus;
+        }
 
-                //Stream Changed
-                if (previousRequest.data.Any() && (request.data[0].id == previousRequest.data[0].id))
-                {
-                    //Duplicate Request. This might happen sometimes. No need to add to cache.
-                    return Ok();
-                }
-                if (!previousRequest.data.Any())
-                {
-                    //Going Online
-                    List<TwitchUser> twitchUsers = await twitchUsersTask;
-                    foreach (TwitchUser t in twitchUsers)
-                    {
-                        //Really iterating over servers here.
-                        Task<Server> getServerTask = _context.ServerList.AsQueryable().FirstAsync(s => s.ServerId == t.ServerId);
-                        RestGuild guild = (RestGuild)await _client.GetGuildAsync(ulong.Parse(t.ServerId));
-                        Task<RestGuildUser> getUserTask = null;
-                        Task sendMessageTask = null;
-                        if (!string.IsNullOrEmpty(t.DiscordUserId))
-                        {
-                            //We don't need this yet so we'll do this later.
-                            getUserTask = guild.GetUserAsync(ulong.Parse(t.DiscordUserId));
-                        }
-                        string twitchChannelId = (await getServerTask).TwitchChannel;
-
-                        if (!string.IsNullOrEmpty(twitchChannelId))
-                        {
-                            string stringToSend = username + " is now live at https://twitch.tv/" + username;
-
-                            RestTextChannel channel = await guild.GetTextChannelAsync(ulong.Parse(twitchChannelId));
-                            sendMessageTask = channel.SendMessageAsync(stringToSend);
-                        }
-                        if (getUserTask != null && !string.IsNullOrEmpty(getServerTask.Result.TwitchLiveRoleId))
-                        {
-                            IRole twitchLiveRole = guild.GetRole(ulong.Parse(getServerTask.Result.TwitchLiveRoleId));
-                            await (await getUserTask).AddRoleAsync(twitchLiveRole);
-                        }
-
-                        if (sendMessageTask != null)
-                        {
-                            await sendMessageTask;
-                        }
-                    }
-                }
+        [NonAction]
+        public void SetStreamInfoInCache(string username, StreamStatusJson streamChangeInfo)
+        {
+            if (streamChangeInfo.data.Any())
+            {
+                SetStreamInfoInCache(username, streamChangeInfo.data[0]);
             }
             else
             {
-                //Stream Offline
-                List<TwitchUser> twitchUsers = await twitchUsersTask;
-                foreach (TwitchUser t in twitchUsers)
-                {
-                    //Really iterating over servers here.
-                    if (string.IsNullOrEmpty(t.DiscordUserId))
-                    {
-                        continue;
-                    }
-
-                    Task<Server> getServerTask = _context.ServerList.AsQueryable().FirstAsync(s => s.ServerId == t.ServerId);
-                    RestGuild guild = (RestGuild)await _client.GetGuildAsync(ulong.Parse(t.ServerId));
-
-                    if (string.IsNullOrEmpty((await getServerTask).TwitchLiveRoleId))
-                    {
-                        continue;
-                    }
-
-                    Task<RestGuildUser> getUserTask = guild.GetUserAsync(ulong.Parse(t.DiscordUserId));
-                    IRole twitchLiveRole = guild.GetRole(ulong.Parse(getServerTask.Result.TwitchLiveRoleId));
-
-                    if (twitchLiveRole == null || (await getUserTask) == null)
-                    {
-                        continue;
-                    }
-                    await getUserTask.Result.RemoveRoleAsync(twitchLiveRole);
-                }
+                _cache.Remove(CacheKeys.TwitchUsername + username);
             }
-            SetStreamInfoInCache(username, request);
-            return Ok();
         }
 
-        public StreamChangeRequest GetStreamInfoFromCache(string username)
+        [NonAction]
+        public void SetStreamInfoInCache(string username, StreamStatus streamStatus)
         {
-            StreamChangeRequest cacheRequest;
-            if (!_cache.TryGetValue(CacheKeys.TwitchUsername + username, out cacheRequest))
+            if (streamStatus != null)
             {
-                cacheRequest = new StreamChangeRequest()
-                {
-                    data = new List<StreamChangeInfo>()
-                };
                 var cacheEntryOptions = new MemoryCacheEntryOptions().SetAbsoluteExpiration(new TimeSpan(TimeSpan.TicksPerDay));
-                _cache.Set(CacheKeys.TwitchUsername + username, cacheRequest, cacheEntryOptions);
+                _cache.Set(CacheKeys.TwitchUsername + username, streamStatus, cacheEntryOptions);
             }
-            return cacheRequest;
+            else
+            {
+                _cache.Remove(CacheKeys.TwitchUsername + username);
+            }
+
         }
 
-        public void SetStreamInfoInCache(string username, StreamChangeRequest streamChangeInfo)
+        [NonAction]
+        public async Task UpdateStreamAcrossServers(List<TwitchUser> userList, StreamStatus streamStatus = null)
         {
-            var cacheEntryOptions = new MemoryCacheEntryOptions().SetAbsoluteExpiration(new TimeSpan(TimeSpan.TicksPerDay));
-            _cache.Set(CacheKeys.TwitchUsername + username, streamChangeInfo, cacheEntryOptions);
+            if (streamStatus == null)
+            {
+                //offline
+                await StreamOffline(userList);
+            }
+            else
+            {
+                await StreamOnline(userList, streamStatus);
+            }
         }
 
-        // GET: api/Twitch/5
-        public async Task<ActionResult> RefreshStreams(string username="")
+        [NonAction]
+        public async Task StreamOnline(List<TwitchUser> userList, StreamStatus streamStatus)
         {
-            try
+            foreach (TwitchUser t in userList)
             {
-                _twitch.CreateTwitchSubscriptions(_context.TwitchUsers.ToList());
-            }
-            catch (Exception e)
-            {
-                var outString = e.ToString();
-                for (int i = 0; i < outString.Length; i += 2000)
+                //Really iterating over servers here.
+                Task<Server> getServerTask = _context.ServerList.AsQueryable().FirstAsync(s => s.ServerId == t.ServerId);
+                RestGuild guild = (RestGuild)await _client.GetGuildAsync(ulong.Parse(t.ServerId));
+                Task<RestGuildUser> getUserTask = null;
+                if (!string.IsNullOrEmpty(t.DiscordUserId))
                 {
-                    var endLength = outString.Length - i;
-                    if (endLength > 2000)
+                    //We don't need this yet so we'll do this later.
+                    getUserTask = guild.GetUserAsync(ulong.Parse(t.DiscordUserId));
+                }
+                Server server = await getServerTask;
+                string twitchChannelId = server.TwitchChannel;
+
+                var user = await getUserTask;
+
+                if (user != null && !string.IsNullOrEmpty(server?.TwitchLiveRoleId))
+                {
+                    //We need to update the role
+                    IRole twitchLiveRole = guild.GetRole(ulong.Parse(server.TwitchLiveRoleId));
+                    await user.AddRoleAsync(twitchLiveRole);
+                }
+                if (!string.IsNullOrEmpty(twitchChannelId))
+                {
+                    //We post updates to the channel, so now we need to see if we've already posted.
+                    string streamUrl = "https://twitch.tv/" + t.ChannelName;
+                    DateTimeOffset streamStartedUTC = streamStatus.started_at;
+                    RestTextChannel channel = await guild.GetTextChannelAsync(ulong.Parse(twitchChannelId));
+
+                    //Find whether or not we've selected a message
+                    ulong lastMessageId = 0;
+                    bool sendMessage = true;
+                    while (true)
                     {
-                        endLength = 2000;
+                        IAsyncEnumerable<IReadOnlyCollection<RestMessage>> messagesUnflattened =
+                            lastMessageId == 0 ? channel.GetMessagesAsync(100) : channel.GetMessagesAsync(lastMessageId, Direction.Before, 100);
+                        List<RestMessage> messages = (await messagesUnflattened.FlattenAsync()).ToList();
+
+                        var myMessages = messages.Where(m => m.Author.Id == _client.CurrentUser.Id &&
+                        m.Timestamp > streamStartedUTC && m.Content.Contains(streamUrl)).ToList();
+                        if (myMessages.Any())
+                        {
+                            //Already sent message. We don't need to send it again
+                            sendMessage = false;
+                            break;
+                        }
+                        else
+                        {
+                            if (messages.Last().Timestamp < streamStartedUTC)
+                            {
+                                //We're past when the stream started
+                                break;
+                            }
+                        }
+                        lastMessageId = messages.Last().Id;
                     }
-                    if (endLength < 0)
+
+                    if (sendMessage)
                     {
-                        endLength = endLength * -1;
+                        //We still need to send the message
+                        string stringToSend = "";
+                        if (String.IsNullOrEmpty(user?.Nickname))
+                        {
+                            stringToSend += user.Nickname;
+                        }
+                        else
+                        {
+                            stringToSend += t.ChannelName;
+                        }
+                        stringToSend += " is now live at " + streamUrl;
+                        await channel.SendMessageAsync(stringToSend);
                     }
-                    await SendMessage(outString.Substring(i, endLength));
                 }
             }
-            return StatusCode(200);
         }
+
+        [NonAction]
+        public async Task StreamOffline(List<TwitchUser> userList)
+        {
+            foreach (TwitchUser t in userList)
+            {
+                //Really iterating over servers here.
+                if (string.IsNullOrEmpty(t.DiscordUserId))
+                {
+                    continue;
+                }
+
+                Task<Server> getServerTask = _context.ServerList.AsQueryable().FirstAsync(s => s.ServerId == t.ServerId);
+                RestGuild guild = (RestGuild)await _client.GetGuildAsync(ulong.Parse(t.ServerId));
+
+                if (string.IsNullOrEmpty((await getServerTask).TwitchLiveRoleId))
+                {
+                    continue;
+                }
+
+                Task<RestGuildUser> getUserTask = guild.GetUserAsync(ulong.Parse(t.DiscordUserId));
+                IRole twitchLiveRole = guild.GetRole(ulong.Parse(getServerTask.Result.TwitchLiveRoleId));
+
+                if (twitchLiveRole == null || (await getUserTask) == null)
+                {
+                    continue;
+                }
+                await getUserTask.Result.RemoveRoleAsync(twitchLiveRole);
+            }
+        }
+
+
     }
 }

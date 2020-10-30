@@ -14,7 +14,7 @@ namespace BrokkolyBotFrontend.Controllers
     public class CommandsController : Controller
     {
         private readonly DatabaseContext _context;
-        private IMemoryCache _cache;
+        private readonly IMemoryCache _cache;
 
         public CommandsController(DatabaseContext context, IMemoryCache memoryCache)
         {
@@ -182,8 +182,7 @@ namespace BrokkolyBotFrontend.Controllers
 
         public bool TryGetUserHasServerPermissions(string serverId, string token)
         {
-            bool cacheResult;
-            if (!_cache.TryGetValue(CacheKeys.CanEditGuild + token + serverId, out cacheResult))
+            if (!_cache.TryGetValue(CacheKeys.CanEditGuild + token + serverId, out bool cacheResult))
             {
                 cacheResult = DiscordController.UserHasServerPermissions(serverId, token);
                 var cacheEntryOptions = new MemoryCacheEntryOptions().SetSlidingExpiration(System.TimeSpan.FromSeconds(60));
