@@ -167,7 +167,7 @@ namespace BrokkolyBotFrontend
         public void CreateTwitchSubscription(string username, string id)
         {
             string subscribeString = CreateSubscribeString(id);
-            string callbackString = "https://brokkolybot.azurewebsites.com/api/Twitch/StreamChange/" + username;
+            string callbackString = "https://brokkolybot.azurewebsites.net/api/Twitch/StreamChange/" + username;
             string fetchUrl = "https://api.twitch.tv/helix/webhooks/hub";
             HttpWebRequest webRequest = (HttpWebRequest)WebRequest.Create(fetchUrl);
             webRequest.Method = "POST";
@@ -190,7 +190,7 @@ namespace BrokkolyBotFrontend
         public void RemoveTwitchSubscription(string username, string id)
         {
             string subscribeString = CreateSubscribeString(id);
-            string callbackString = "https://brokkolybot.azurewebsites.com/api/Twitch/StreamChange/" + username;
+            string callbackString = "https://brokkolybot.azurewebsites.net/api/Twitch/StreamChange/" + username;
             string fetchUrl = "https://api.twitch.tv/helix/webhooks/hub";
             HttpWebRequest webRequest = (HttpWebRequest)WebRequest.Create(fetchUrl);
             webRequest.Method = "POST";

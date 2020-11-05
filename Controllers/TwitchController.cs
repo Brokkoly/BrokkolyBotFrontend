@@ -37,16 +37,24 @@ namespace BrokkolyBotFrontend.Controllers
 #pragma warning disable IDE0060 // Remove unused parameter
         // GET: api/Twitch/5
         [HttpGet, Route("{username=username}/")]
-        public ActionResult StreamChange(string username, [FromQuery(Name = "hub.challenge")] string challenge = "", [FromQuery(Name = "hub.reason")] string reason = "")
+        public async Task<ActionResult> StreamChange(string username, [FromQuery(Name = "hub.challenge")] string challenge = "", [FromQuery(Name = "hub.reason")] string reason = "")
 #pragma warning restore IDE0060 // Remove unused parameter
         {
+            if (!string.IsNullOrEmpty(reason))
+            {
+                await SendMessage("Sub failure. Reason: " + reason);
+            }
+            if (!string.IsNullOrEmpty(challenge))
+            {
+                //await SendMessage("Challenge for " + username + " was: " + challenge);
+            }
             return Ok(challenge);
         }
 
 
 
         // POST: api/Twitch/5
-        [HttpPost, Route("{username=username}")]
+        [HttpPost, Route("{username=username}/")]
         public async Task<ActionResult> StreamChange(string username, [FromBody] StreamStatusJson request)
         {
             Task<List<TwitchUser>> twitchUsersTask = _context.TwitchUsers
@@ -54,13 +62,15 @@ namespace BrokkolyBotFrontend.Controllers
                     .Where(t => (t.ChannelName == username))
                     .ToListAsync();
             StreamStatus previousStatus = GetStreamStatusFromCache(username);
+            //await SendMessage(username + "'s stream was updated.");
             bool previousStatusOk = true;
-            if (previousStatus != null)
+            if (previousStatus == null)
             {
                 previousStatusOk = false;
             }
             if (request.data.Any())
             {
+
                 //Stream Changed
                 if (previousStatusOk && (request.data[0].id == previousStatus.id))
                 {
@@ -77,6 +87,7 @@ namespace BrokkolyBotFrontend.Controllers
                     }
                     else
                     {
+                        await SendMessage("It went online");
                         await StreamOnline(await twitchUsersTask, request.data[0]);
                     }
                 }
@@ -84,6 +95,7 @@ namespace BrokkolyBotFrontend.Controllers
             else
             {
                 //Stream Offline
+                await SendMessage("It went offline");
                 await StreamOffline(await twitchUsersTask);
             }
             SetStreamInfoInCache(username, request);
@@ -204,8 +216,11 @@ namespace BrokkolyBotFrontend.Controllers
                 }
                 Server server = await getServerTask;
                 string twitchChannelId = server.TwitchChannel;
-
-                var user = await getUserTask;
+                RestGuildUser user = null;
+                if (getUserTask != null)
+                {
+                    user = await getUserTask;
+                }
 
                 if (user != null && !string.IsNullOrEmpty(server?.TwitchLiveRoleId))
                 {
@@ -252,9 +267,9 @@ namespace BrokkolyBotFrontend.Controllers
                     {
                         //We still need to send the message
                         string stringToSend = "";
-                        if (String.IsNullOrEmpty(user?.Nickname))
+                        if (user != null && String.IsNullOrEmpty(user?.Nickname))
                         {
-                            stringToSend += user.Nickname;
+                            stringToSend += !String.IsNullOrEmpty(user.Nickname) ? user.Nickname : user.Username;
                         }
                         else
                         {
