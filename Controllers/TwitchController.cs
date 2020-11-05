@@ -87,7 +87,7 @@ namespace BrokkolyBotFrontend.Controllers
                     }
                     else
                     {
-                        await SendMessage("It went online");
+                        //await SendMessage("It went online");
                         await StreamOnline(await twitchUsersTask, request.data[0]);
                     }
                 }
@@ -95,7 +95,7 @@ namespace BrokkolyBotFrontend.Controllers
             else
             {
                 //Stream Offline
-                await SendMessage("It went offline");
+                //await SendMessage("It went offline");
                 await StreamOffline(await twitchUsersTask);
             }
             SetStreamInfoInCache(username, request);
