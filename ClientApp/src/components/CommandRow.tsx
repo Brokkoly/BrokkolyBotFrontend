@@ -4,6 +4,7 @@ import { Commands, ICommand } from '../backend/Commands';
 import { ErrorLevels, Errors } from '../backend/Error';
 import '../css/CommandRow.css';
 import '../css/Home.css';
+import '../css/Settings.css';
 import { Helpers } from '../helpers';
 import { ICommandRowFunctions } from './ServerSettings';
 
@@ -80,6 +81,17 @@ export const CommandRow: React.FunctionComponent<CommandRowProps> = ({ command, 
     }
 
     /**
+     * Handler for the mod only checkbox
+     * @param event the event that caused the change
+     */
+    function handleChangeModOnly(event: any)
+    {
+        let checked = event.target.checked as boolean;
+        commandRowFunctions.updateCommand({ index: index, newModOnly: checked ? 1 : 0 })
+        setHasBeenUpdated(true)
+    }
+
+    /**
      * Handler for the form's submit. Lets the list know to save this command's changes
      * @param event need to prevent the default behavior
      */
@@ -123,7 +135,12 @@ export const CommandRow: React.FunctionComponent<CommandRowProps> = ({ command, 
                 <div className="flexRow _flexWrap">
                     <span className="_commandPrefix">{commandPrefix}</span>
                     {/*<ValidatedInput error={commandError} type="text" className={"_formInput _commandInput "} value={command.commandString} onChange={handleChangeCommand} disabled={!userCanEdit} />*/}
+
                     <input title={commandErrors.toErrorMessage() || undefined} type="text" className={"_formInput _commandInput " + commandErrors.getCssForError()} value={command.commandString} onChange={handleChangeCommand} disabled={!userCanEdit} />
+                    <label className="_inputText _checkboxLabel">
+                        {"Mods Only"}
+                        <input type="checkbox" className={"_formInput _commandInput "} checked={command.modOnly === 1} onChange={handleChangeModOnly} disabled={!userCanEdit} />
+                    </label>
                 </div>
                 <div className="betweenDiv5" />
                 <div className="flexRow valueDiv" >

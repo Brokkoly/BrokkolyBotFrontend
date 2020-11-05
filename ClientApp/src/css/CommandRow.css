@@ -49,6 +49,7 @@
     margin-left: 4px;
 }
 
+
 .valueDiv {
     /*margin-left: 5px;*/
     justify-content: flex-start;
@@ -142,4 +143,8 @@
 ._commandPrefix {
     font-size: large;
     align-self: center;
+}
+
+._checkboxLabel {
+    margin: auto 0px auto 4px;
 }

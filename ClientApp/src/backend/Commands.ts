@@ -47,6 +47,7 @@ export class Commands
                         ServerId: command.serverId,
                         CommandString: command.commandString,
                         EntryValue: command.entryValue,
+                        ModOnly: command.modOnly
                     },
                     token: token
                 })
@@ -89,6 +90,7 @@ export class Commands
                         ServerId: command.serverId,
                         CommandString: command.commandString,
                         EntryValue: command.entryValue,
+                        ModOnly: command.modOnly
                     },
                     token: token
                 })
@@ -194,6 +196,7 @@ export interface ICommand
     serverId: string;
     commandString: string;
     entryValue: string;
+    modOnly?: number;
 }
 export interface IRestrictedCommand
 {

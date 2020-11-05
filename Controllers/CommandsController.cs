@@ -149,7 +149,8 @@ namespace BrokkolyBotFrontend.Controllers
                 return false;
             }
             bool valueAlreadyThere = _context.CommandList.AsQueryable().Where(
-                cmd => cmd.ServerId == command.ServerId && cmd.CommandString == command.CommandString && cmd.EntryValue == command.EntryValue).Any();
+                cmd => 
+                    cmd.ServerId == command.ServerId && cmd.CommandString == command.CommandString && cmd.EntryValue == command.EntryValue && cmd.ModOnly == command.ModOnly).Any();
             if (valueAlreadyThere)
             {
                 //Todo: more verbose response types so that I can differentiate

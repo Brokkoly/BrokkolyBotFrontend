@@ -22,6 +22,7 @@ interface IUpdateCommandProps
     index: number;
     newCommandString?: string;
     newEntryValue?: string;
+    newModOnly?: number;
 }
 export interface ICommandRowFunctions
 {
@@ -59,7 +60,8 @@ export const ServerSettings: React.FunctionComponent<IServerSettingsProps> = ({
                         id: -1,
                         commandString: "",
                         entryValue: "",
-                        serverId: server.serverId
+                        serverId: server.serverId,
+                        modOnly: 0
                     });
                 }
                 setCommandList(sortListOfCommands(newCommandList));
@@ -108,6 +110,9 @@ export const ServerSettings: React.FunctionComponent<IServerSettingsProps> = ({
             } else if (args.newEntryValue !== undefined) {
                 newList[index].entryValue = args.newEntryValue;
             }
+            else if (args.newModOnly !== undefined) {
+                newList[index].modOnly = args.newModOnly;
+            }
 
             return newList;
         });
@@ -125,7 +130,8 @@ export const ServerSettings: React.FunctionComponent<IServerSettingsProps> = ({
                 id: nextTempId,
                 commandString: "",
                 entryValue: "",
-                serverId: server.serverId
+                serverId: server.serverId,
+                modOnly: 0
             });
             setNextTempId(n => n - 1);
             return newList;
@@ -564,7 +570,7 @@ export const OtherSettingsForm: React.FunctionComponent<{
                         </div>
                         {/*TODO: info hover icon that says what exactly these do*/}
                         <div className="flexRow ">
-                            <label className="_inputText">
+                            <label className="_labelText">
                                 {"Select the role that can manage the bot: "}
                                 <select
                                     className="_formInput _roleSelect"

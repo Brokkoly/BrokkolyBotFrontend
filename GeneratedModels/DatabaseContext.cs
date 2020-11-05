@@ -59,8 +59,14 @@ namespace BrokkolyBotFrontend.GeneratedModels
                     .HasColumnName("entry_value")
                     .HasMaxLength(1000);
 
-                entity.Property(e => e.ServerId).HasColumnName("server_id");
+                entity.Property(e => e.ModOnly).HasColumnName("mod_only");
+
+                entity.Property(e => e.ServerId)
+                    .HasColumnName("server_id")
+                    .HasColumnType("character varying");
             });
+
+            OnModelCreatingPartial(modelBuilder);
 
 
 

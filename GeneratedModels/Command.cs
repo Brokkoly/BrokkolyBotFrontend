@@ -7,11 +7,11 @@ namespace BrokkolyBotFrontend.GeneratedModels
 {
     public partial class Command
     {
-        //[Key]
-        //[DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int Id { get; set; }
         public string ServerId { get; set; }
         public string CommandString { get; set; }
         public string EntryValue { get; set; }
+        public int? ModOnly { get; set; }
+
     }
 }
