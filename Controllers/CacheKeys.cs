@@ -14,5 +14,6 @@ namespace BrokkolyBotFrontend.Controllers
         public static string UserRoles { get { return "_UserRoles"; } }
         public static string UserId { get { return "_UserId"; } }
         public static string TwitchUsername { get { return "_TwitchUsername"; } }
+        public static string TwitchEventId { get { return "_TwitchEventId"; } }
     }
 }

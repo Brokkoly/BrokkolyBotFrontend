@@ -70,7 +70,7 @@ namespace BrokkolyBotFrontend.Controllers
             }
             if (request.data.Any())
             {
-
+                await SendMessage(request.data[0].ToString());
                 //Stream Changed
                 if (previousStatusOk && (request.data[0].id == previousStatus.id))
                 {
@@ -146,6 +146,23 @@ namespace BrokkolyBotFrontend.Controllers
             RestGuild guild = (RestGuild)await _client.GetGuildAsync(225374061386006528);
             RestTextChannel channel = await guild.GetTextChannelAsync(718854497245462588);
             await channel.SendMessageAsync(message);
+        }
+
+        [NonAction]
+        public bool CheckTwitchStreamEventAlreadyReceived(string eventId)
+        {
+            if (!_cache.TryGetValue(CacheKeys.TwitchEventId + eventId, out bool idExists))
+            {
+                return false;
+            }
+            return idExists;
+        }
+
+        [NonAction]
+        public void SetStreamEventAlreadyReceived(string eventId)
+        {
+            var cacheEntryOptions = new MemoryCacheEntryOptions().SetSlidingExpiration(TimeSpan.FromSeconds(60));
+            _cache.Set(CacheKeys.TwitchEventId + eventId, true, cacheEntryOptions);
         }
 
         [NonAction]
