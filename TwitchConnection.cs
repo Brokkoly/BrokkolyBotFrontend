@@ -341,6 +341,26 @@ public class StreamStatus
     public DateTime started_at { get; set; }
     public string language { get; set; }
     public string thumbnail_url { get; set; }
+
+    public override string ToString()
+    {
+        StringBuilder sb = new StringBuilder("StreamStatus:");
+        sb.Append("\nid: ");
+        sb.Append(id);
+        sb.Append("\nuser_id: ");
+        sb.Append(user_id);
+        sb.Append("\nuser_name: ");
+        sb.Append(user_name);
+        sb.Append("\ngame_id: ");
+        sb.Append(game_id);
+        sb.Append("\ntag_ids: ");
+        sb.Append(tag_ids.ToString());
+        sb.Append("\ntype: ");
+        sb.Append(type);
+        sb.Append("\nStarted At: ");
+        sb.Append(started_at.ToLocalTime().ToString());
+        return sb.ToString();
+    }
 }
 public class PaginationClass
 {
