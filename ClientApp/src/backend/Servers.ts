@@ -10,29 +10,36 @@ export class Servers
 
     public static async getUserGuilds(token: string): Promise<IServer[]>
     {
-        //TODO: Response checking. Let the user know if there is an error.
-        const result = await fetch(
-            `/api/Servers/GetServerListForUser?token=${token}`
-        );
-        const text = await result.text();
-        const servers = await JSON.parse(text.replace(/("[^"]*"\s*:\s*)(\d{16,})/g, '$1"$2"'));
-        //TODO: make this better
-        const serversTransformed: IServer[] = servers.map((srv: any) => 
-        {
-            return {
-                serverId: srv.id,
-                name: srv.name,
-                timeoutSeconds: srv.timeout_seconds,
-                timeoutRoleId: srv.timeout_role_id,
-                iconUrl64: Servers.constructUrlsForServerIcon(srv.id, srv.icon),
-                userCanManage: srv.canManageServer,
-                botManagerRoleId: srv.botManagerRoleId,
-                twitchChannelId: srv.twitchChannelId,
-                commandPrefix: srv.commandPrefix,
-                twitchLiveRoleId: srv.twitchLiveRoleId
-            }
-        });
-        return serversTransformed;
+        return fetch(`/api/Servers/GetServerListForUser?token=${token}`)
+            .then(response =>
+            {
+                if (response.status === 204 || response.status === 200) {
+                    return response.text().then(text =>
+                    {
+                        return JSON.parse(text.replace(/("[^"]*"\s*:\s*)(\d{16,})/g, '$1"$2"'));
+                    }).then(servers =>
+                    {
+                        return servers.map((srv: any) => 
+                        {
+                            return {
+                                serverId: srv.id,
+                                name: srv.name,
+                                timeoutSeconds: srv.timeout_seconds,
+                                timeoutRoleId: srv.timeout_role_id,
+                                iconUrl64: Servers.constructUrlsForServerIcon(srv.id, srv.icon),
+                                userCanManage: srv.canManageServer,
+                                botManagerRoleId: srv.botManagerRoleId,
+                                twitchChannelId: srv.twitchChannelId,
+                                commandPrefix: srv.commandPrefix,
+                                twitchLiveRoleId: srv.twitchLiveRoleId
+                            }
+                        });
+                    });
+                }
+                else {
+                    return [];
+                }
+            });
     }
 
     public static async getGuildInfo(token: string, serverId: string): Promise<IServerInfo>

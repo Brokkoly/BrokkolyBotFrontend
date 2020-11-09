@@ -53,6 +53,7 @@
 		<None Remove="ClientApp\src\backend\User.ts" />
 		<None Remove="ClientApp\src\components\About.tsx" />
 		<None Remove="ClientApp\src\components\AcceptCancelDelete.tsx" />
+		<None Remove="ClientApp\src\components\CommandGroup.tsx" />
 		<None Remove="ClientApp\src\components\CommandRow.tsx" />
 		<None Remove="ClientApp\src\components\file.tsx" />
 		<None Remove="ClientApp\src\components\Help.tsx" />

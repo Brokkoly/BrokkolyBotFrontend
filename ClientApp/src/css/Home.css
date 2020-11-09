@@ -280,18 +280,18 @@
     margin-left: 10px;
 }
 
-._maxWidth1000px{
+._maxWidth1000px {
     max-width: 1000px;
 }
 
-._maxWidth900px{
+._maxWidth900px {
     max-width: 900px;
 }
 
-._maxWidth500px{
+._maxWidth500px {
     max-width: 500px;
 }
 
-._textOverflowEllipsis{
+._textOverflowEllipsis {
     text-overflow: ellipsis;
 }

@@ -5,6 +5,8 @@ using Microsoft.Extensions.Caching.Memory;
 using Newtonsoft.Json.Linq;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Cryptography;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace BrokkolyBotFrontend.Controllers
@@ -34,6 +36,25 @@ namespace BrokkolyBotFrontend.Controllers
         public async Task<ActionResult<IEnumerable<Command>>> GetCommandsForServer(string serverId)
         {
             return await _context.CommandList.AsQueryable().Where(c => c.ServerId == serverId).ToListAsync();
+        }
+
+        // GET: api/Commands/GetCommandsForServerDict?serverId=5
+        [HttpGet]
+        public ActionResult<Dictionary<string, CommandGroup>> GetCommandsForServerDict(string serverId)
+        {
+            var commandList = _context.CommandList.AsQueryable().Where(c => c.ServerId == serverId)
+                .AsEnumerable()
+                .GroupBy(command => command.CommandString)
+                .ToDictionary(group => group.Key, group =>
+                {
+                    var cmd = new CommandGroup()
+                    {
+                        commands = group.ToList(),
+                    };
+                    cmd.command = cmd.commands[0].CommandString;
+                    return cmd;
+                });
+            return commandList;
         }
 
 
@@ -149,7 +170,7 @@ namespace BrokkolyBotFrontend.Controllers
                 return false;
             }
             bool valueAlreadyThere = _context.CommandList.AsQueryable().Where(
-                cmd => 
+                cmd =>
                     cmd.ServerId == command.ServerId && cmd.CommandString == command.CommandString && cmd.EntryValue == command.EntryValue && cmd.ModOnly == command.ModOnly).Any();
             if (valueAlreadyThere)
             {
@@ -192,4 +213,10 @@ namespace BrokkolyBotFrontend.Controllers
             return cacheResult;
         }
     }
+}
+
+public class CommandGroup
+{
+    public string command { get; set; }
+    public List<Command> commands { get; set; }
 }

@@ -69,7 +69,11 @@ class NavMenu extends Component<NavMenuProps, { collapsed: boolean }>{
                 </>
                 :
                 <NavItem className={"_alignSelfCenter _navLinkUnselected "}>
-                    <Button variant="outline-light" href={discordAuthLink} >Discord Login</Button>
+                    <a className={"_linkHover nav-link"} style={{ color: "#dcddde" }} href={discordAuthLink} >Discord Login</a>
+                    {/*<NavLink tag={Link} href={discordAuthLink} style={{ color: "#dcddde" }} className="_linkHover">
+                        Discord Login
+                    </NavLink>*/}
+                    {/*<Button variant="outline-light" href={discordAuthLink} >Discord Login</Button>*/}
                 </NavItem>
         )
     }

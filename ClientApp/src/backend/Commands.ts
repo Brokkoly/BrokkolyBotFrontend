@@ -1,4 +1,6 @@
-﻿import { CommandValidationError, Errors, IError, ValueValidationError } from "./Error";
+﻿import { promises } from "dns";
+import { ICommandGroup } from "../components/CommandGroup";
+import { CommandValidationError, Errors, IError, ValueValidationError } from "./Error";
 import { Servers } from "./Servers";
 
 export class Commands
@@ -25,6 +27,26 @@ export class Commands
         var commands = await JSON.parse(text.replace(/("[^"]*"\s*:\s*)(\d{16,})/g, '$1"$2"'));
         return commands;
     }
+
+    public static async fetchCommandsAsMap(serverId: string): Promise<Map<string, ICommandGroup>>
+    {
+        let fetchUrl = '/api/Commands/GetCommandsForServerDict?serverId=' + serverId;
+        return fetch(fetchUrl)
+            .then(response =>
+            {
+                return response.json();
+            })
+            .then(data =>
+            {
+                var retMap = new Map<string, ICommandGroup>();
+                for (let key in data) {
+                    retMap.set(key, data[key]);
+                }
+                return retMap;
+            });
+
+    }
+
     /**
      * Sends a put command for the particular command.
      * @param token the user's access token, for validation
@@ -197,6 +219,7 @@ export interface ICommand
     commandString: string;
     entryValue: string;
     modOnly?: number;
+    updated?: boolean;
 }
 export interface IRestrictedCommand
 {

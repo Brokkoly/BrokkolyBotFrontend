@@ -51,13 +51,18 @@ export const ServerList: React.FunctionComponent<{ user: User }> = ({ user }) =>
                     setServers(result);
                 }
                 else {
-                    toast('An error ocurred when loading servers. If This persists, consider refreshing', {
-                        autoClose: 10000,
+                    toast('An error ocurred when loading servers. Try refreshing, or send a support email.', {
+                        autoClose: 30000,
                     });
                 }
             }).then(() =>
             {
                 setServerLoading(false);
+            }).catch(error =>
+            {
+                toast('An error ocurred when loading servers. Try refreshing, or send a support email.', {
+                    autoClose: 30000,
+                });
             });
             Commands.getRestrictedCommands().then(result =>
             {

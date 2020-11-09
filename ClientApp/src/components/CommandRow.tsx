@@ -148,9 +148,10 @@ export const CommandRow: React.FunctionComponent<CommandRowProps> = ({ command, 
                 </div>
                 <div className="betweenDiv5" />
                 <div className="_buttonDiv">
-                    <button onClick={handleDelete} className={"_formButton _deleteButton " + Helpers.nodispIf((!userCanEdit) || (command.id < 0))}>Delete</button>
-                    <button onClick={handleCancel} className={"_formButton _cancelButton " + Helpers.nodispIf(!hasBeenUpdated)}>Revert</button>
-                    <input type="submit" value="Accept" className={"_formButton _acceptButton " + Helpers.nodispIf(!hasBeenUpdated)} disabled={disableAccept} />
+                    <button onClick={handleDelete} className={"_formButton _deleteButton "} disabled={(!userCanEdit) || (command.id < 0)}>Delete</button>
+                    <button onClick={handleCancel} className={"_formButton _cancelButton "} disabled={!command.updated}>Revert</button>
+                    {/*<button className={"_formButton _acceptButton " + Helpers.nodispIf(!hasBeenUpdated) + Helpers.stringIf("_buttonDisabled ", disableAccept)} disabled={disableAccept}>Accept</button>*/}
+                    <button className={"_formButton _acceptButton "} disabled={!command.updated}>Accept</button>
                 </div>
                 <div className="betweenDiv20" />
 

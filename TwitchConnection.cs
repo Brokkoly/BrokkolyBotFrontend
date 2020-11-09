@@ -354,7 +354,15 @@ public class StreamStatus
         sb.Append("\ngame_id: ");
         sb.Append(game_id);
         sb.Append("\ntag_ids: ");
-        sb.Append(tag_ids.ToString());
+        if (tag_ids != null)
+        {
+            sb.Append(tag_ids.ToString());
+
+        }
+        else
+        {
+            sb.Append("null");
+        }
         sb.Append("\ntype: ");
         sb.Append(type);
         sb.Append("\nStarted At: ");

@@ -65,64 +65,71 @@
 
 ._formButton {
     font-size: 16px;
-    border-radius: 20%;
+    border-radius: 10%;
     transition-duration: .4s;
     margin: 0px 8px 0px 8px;
+    background-color: var(--discord-dark);
+    color: var(--discord-fullwhite);
 }
 
-    ._formButton:hover {
-        border-radius: 10%;
+    ._formButton:hover:enabled {
+        /*border-radius: 10%;*/
+        color: var(--discord-dark);
     }
 
-    ._formButton:focus {
+    ._formButton:focus:enabled {
+        color: var(--discord-dark);
         /*outline: none;*/
     }
 
+    ._formButton:disabled {
+        opacity: .25;
+    }
+
 ._acceptButton {
-    background-color: var(--discord-dark);
-    color: var(--discord-fullwhite);
+    /*background-color: var(--discord-dark);*/
+    /*color: var(--discord-fullwhite);*/
     border: 2px solid #4CAF50; /* Green */
+    background-color: #4CAF50;
+    color: var(--discord-dark);
 }
 
-    ._acceptButton:hover {
-        background-color: #4CAF50;
-        color: var(--discord-dark);
+    ._acceptButton:hover:enabled {
+        background-color: var(--discord-dark);
+        color: #4CAF50;
+        /*color: var(--discord-dark);*/
     }
 
-    ._acceptButton:focus {
+    ._acceptButton:focus:enabled {
         outline-color: #4CAF50;
-        background-color: #4CAF50;
-        color: var(--discord-dark);
+        /*color: var(--discord-dark);*/
     }
+
 
 
 ._cancelButton {
-    background-color: var(--discord-dark);
-    color: var(--discord-fullwhite);
     border: 2px solid #e7e7e7; /* Grey */
+    background-color: #e7e7e7;
+    color: var(--discord-dark);
 }
 
-    ._cancelButton:hover {
-        background-color: #e7e7e7;
-        color: var(--discord-dark);
+    ._cancelButton:hover:enabled {
     }
 
-    ._cancelButton:focus {
+    ._cancelButton:focus:enabled {
         outline-color: #e7e7e7;
     }
 
 ._deleteButton {
-    background-color: var(--discord-dark);
-    color: var(--discord-fullwhite);
     border: 2px solid #f44336; /* Red */
+    background-color: #f44336;
+    color: var(--discord-dark);
 }
 
-    ._deleteButton:hover {
-        background-color: #f44336;
-        color: var(--discord-notquiteblack);
+    ._deleteButton:hover:enabled {
     }
 
-    ._deleteButton:focus {
+    ._deleteButton:focus:enabled {
         outline-color: #f44336;
     }
 
@@ -148,3 +155,48 @@
 ._checkboxLabel {
     margin: auto 0px auto 4px;
 }
+
+
+
+._collapsible {
+    background-color: var(--discord-greyple);
+    color: #dcddde;
+    cursor: pointer;
+    padding: 18px;
+    width: 100%;
+    border: none;
+    text-align: left;
+    outline: none;
+    font-size: 15px;
+}
+
+._collapsed {
+    padding: 0 18px;
+    display: none;
+    overflow: hidden;
+    background-color: #f1f1f1;
+}
+
+._responseRow {
+    height: auto;
+    min-height: 32px;
+    box-shadow: var(--discord-dark) 2px 2px inset;
+    text-align: left;
+    padding: 1px 0px 1px 0px;
+}
+
+._modOnlyButton {
+    background-color: var(--discord-dark);
+    border: 0px;
+    padding: 0px;
+}
+
+._modOnlyIcon {
+    width: 32px;
+    height: 32px;
+}
+
+    ._modOnlyIcon:hover {
+        filter: grayscale(100%);
+        opacity: .4;
+    }

@@ -6,6 +6,7 @@ import { IChannel, IRole, IServer, IServerInfo, Servers } from "../backend/Serve
 import '../css/CommandRow.css';
 import '../css/Settings.css';
 import { Helpers } from "../helpers";
+import { CommandGroup, CommandGroupList, ICommandGroup } from "./CommandGroup";
 import { CommandRow } from "./CommandRow";
 import { IServerFunctions, LoadingMessage } from "./ServerList";
 
@@ -31,6 +32,12 @@ export interface ICommandRowFunctions
     deleteCommand(index: number): void;
     acceptCommand(index: number, editCallback: Function): void;
 }
+export interface IExpandGroupArgs
+{
+    expanded: boolean;
+    commands?: string[];
+    command?: string;
+}
 
 export const ServerSettings: React.FunctionComponent<IServerSettingsProps> = ({
     server,
@@ -41,6 +48,7 @@ export const ServerSettings: React.FunctionComponent<IServerSettingsProps> = ({
 }) =>
 {
     const [commandList, setCommandList] = useState<ICommand[]>([]);
+    const [commandMap, setCommandMap] = useState<Map<string, ICommandGroup>>(new Map<string, ICommandGroup>());
     const [oldCommands, setOldCommands] = useState<Map<number, ICommand>>(
         new Map<number, ICommand>()
     );
@@ -48,13 +56,17 @@ export const ServerSettings: React.FunctionComponent<IServerSettingsProps> = ({
     const [serverChannels, setServerChannels] = useState<IChannel[]>([]);
     const [loading, setLoading] = useState(true);
     const [nextTempId, setNextTempId] = useState(-2);
+    const [showCommandGroups, setShowCommandGroups] = useState<boolean>(true);
 
     useEffect(
         () =>
         {
             async function fetchData(serverId: string)
             {
-                let newCommandList = await Commands.fetchCommands(serverId);
+                let newCommandListTask = Commands.fetchCommands(serverId);
+                let newCommandMapTask = Commands.fetchCommandsAsMap(serverId);
+                let newCommandList = await newCommandListTask;
+                let newCommandMap = await newCommandMapTask;
                 if (server.userCanManage) {
                     newCommandList.push({
                         id: -1,
@@ -65,6 +77,7 @@ export const ServerSettings: React.FunctionComponent<IServerSettingsProps> = ({
                     });
                 }
                 setCommandList(sortListOfCommands(newCommandList));
+                setCommandMap(newCommandMap);
                 const serverInfo: IServerInfo = await Servers.getGuildInfo(token, serverId);
                 setServerRoles(serverInfo.roles);
                 setServerChannels(serverInfo.channels);
@@ -76,13 +89,14 @@ export const ServerSettings: React.FunctionComponent<IServerSettingsProps> = ({
         [server.serverId, server.userCanManage, token]
     );
 
+
     /**
      * Handles updates to a command. If the command has not yet been modified, 
      * saves its old value to oldCommands in case changes need to be reverted.
      * updates the state with whichever value in args is not undefined
      * @param args
      */
-    function handleCommandUpdate(
+    async function handleCommandUpdate(
         args: IUpdateCommandProps
     )
     {
@@ -95,7 +109,7 @@ export const ServerSettings: React.FunctionComponent<IServerSettingsProps> = ({
             let original = {
                 ...commandList[index]
             };
-            setOldCommands(oldCommands =>
+            await setOldCommands(oldCommands =>
             {
                 let newOldCommands = new Map(oldCommands);
                 newOldCommands.set(id, original);
@@ -114,8 +128,28 @@ export const ServerSettings: React.FunctionComponent<IServerSettingsProps> = ({
                 newList[index].modOnly = args.newModOnly;
             }
 
+            if (oldCommands.has(id)) {
+                var oldCommand: ICommand | undefined = oldCommands.get(id);
+                if (oldCommand && areCommandsEqual(oldCommand, newList[index])) {
+                    newList[index].updated = false;
+                }
+                else {
+                    newList[index].updated = true;
+                }
+            }
+
             return newList;
         });
+    }
+
+    function areCommandsEqual(cmd1: ICommand, cmd2: ICommand): boolean
+    {
+        if (cmd1.commandString === cmd2.commandString &&
+            cmd1.entryValue === cmd2.entryValue &&
+            cmd1.modOnly === cmd2.modOnly) {
+            return true;
+        }
+        return false
     }
 
     /**
@@ -162,6 +196,30 @@ export const ServerSettings: React.FunctionComponent<IServerSettingsProps> = ({
             }
         });
         return newList;
+    }
+
+
+    function expandGroup(args: IExpandGroupArgs)
+    {
+        if (args.command) {
+            args.commands = [args.command];
+        }
+        else if (!args.commands) {
+            return;
+        }
+        setCommandMap(commandMap =>
+        {
+            var newCommandMap = new Map(commandMap);
+            args.commands?.forEach(cmd =>
+            {
+                var group = newCommandMap.get(cmd);
+                if (group) {
+                    group.expanded = args.expanded;
+                    newCommandMap.set(cmd, group);
+                }
+            });
+            return newCommandMap;
+        });
     }
 
     /**
@@ -357,6 +415,12 @@ export const ServerSettings: React.FunctionComponent<IServerSettingsProps> = ({
         return true;
     }
 
+    function toggleCommandGroup(e: any)
+    {
+        let checked = e.target.checked as boolean;
+        setShowCommandGroups(checked);
+    }
+
     return (
         <LoadingMessage loading={loading}>
 
@@ -373,13 +437,21 @@ export const ServerSettings: React.FunctionComponent<IServerSettingsProps> = ({
                 serverFunctions={serverFunctions}
             />
             <div className="betweenDiv20" />
-            <CommandList
-                commands={commandList}
-                commandRowFunctions={{ updateCommand: handleCommandUpdate, acceptCommand: acceptCommand, cancelCommand: cancelCommand, deleteCommand: deleteCommand }}
-                userCanEdit={server.userCanManage}
-                restrictedCommands={restrictedCommands}
-                commandPrefix={server.commandPrefix || "!"}
-            />
+            <form>
+                <label className="_inputText _checkboxLabel">
+                    {"Show Command Group"}
+                    <input type="checkbox" className={"_formInput _commandInput "} checked={showCommandGroups} onChange={toggleCommandGroup} />
+                </label>
+            </form>
+            {showCommandGroups ? <CommandGroupList commandMap={commandMap} commandGroupFunctions={{ expandGroup: expandGroup }} commandPrefix={server.commandPrefix || "!"} /> :
+                <CommandList
+                    commands={commandList}
+                    commandRowFunctions={{ updateCommand: handleCommandUpdate, acceptCommand: acceptCommand, cancelCommand: cancelCommand, deleteCommand: deleteCommand }}
+                    userCanEdit={server.userCanManage}
+                    restrictedCommands={restrictedCommands}
+                    commandPrefix={server.commandPrefix || "!"}
+                />}
+
         </LoadingMessage >
     );
 };
@@ -419,6 +491,7 @@ export const CommandList: React.FunctionComponent<CommandListProps> = ({
         </div>
     );
 };
+
 
 export const OtherSettingsForm: React.FunctionComponent<{
     server: IServer;
