@@ -1,6 +1,6 @@
 ﻿import React, { CSSProperties, useEffect, useState } from "react";
 import { toast } from "react-toastify";
-import { Commands, ICommand } from "../backend/Commands";
+import { Commands, ICommand, IResponseGroup, ResponseGroup } from "../backend/Commands";
 import { ErrorLevels, Errors } from "../backend/Error";
 import { IChannel, IRole, IServer, IServerInfo, Servers } from "../backend/Servers";
 import '../css/CommandRow.css';
@@ -25,6 +25,30 @@ interface IUpdateCommandProps
     newEntryValue?: string;
     newModOnly?: number;
 }
+interface IUpdateCommandPropsMap
+{
+    oldCommandString: string;
+    index?: number;
+    newCommandString?: string;
+    newEntryValue?: string;
+    newModOnly?: number;
+}
+
+interface IUpdateResponseGroupProps
+{
+    command: string;
+    newCommand?: string;
+    newResponse?: string;
+    newModOnly?: number; //todo: delete if unnecessary
+}
+interface IUpdateResponseProps
+{
+    command: string;
+    id: number;
+    newResponse?: string;
+    newModOnlyValue?: number;
+}
+
 export interface ICommandRowFunctions
 {
     updateCommand(args: IUpdateCommandProps): void;
@@ -49,6 +73,9 @@ export const ServerSettings: React.FunctionComponent<IServerSettingsProps> = ({
 {
     const [commandList, setCommandList] = useState<ICommand[]>([]);
     const [commandMap, setCommandMap] = useState<Map<string, ICommandGroup>>(new Map<string, ICommandGroup>());
+    const [responseGroupList, setResponseGroupList] = useState<IResponseGroup[]>([]);
+    const [originalGroups, setOriginalGroups] = useState<Map<string, IResponseGroup>>(new Map<string, IResponseGroup>());
+
     const [oldCommands, setOldCommands] = useState<Map<number, ICommand>>(
         new Map<number, ICommand>()
     );
@@ -65,8 +92,11 @@ export const ServerSettings: React.FunctionComponent<IServerSettingsProps> = ({
             {
                 let newCommandListTask = Commands.fetchCommands(serverId);
                 let newCommandMapTask = Commands.fetchCommandsAsMap(serverId);
+                let newResponseGroupTask = Commands.fetchResponseGroups(serverId);
+                let getGuildInfoTask = Servers.getGuildInfo(token, serverId);
                 let newCommandList = await newCommandListTask;
                 let newCommandMap = await newCommandMapTask;
+                let newResponseGroupList = await newResponseGroupTask;
                 if (server.userCanManage) {
                     newCommandList.push({
                         id: -1,
@@ -78,7 +108,8 @@ export const ServerSettings: React.FunctionComponent<IServerSettingsProps> = ({
                 }
                 setCommandList(sortListOfCommands(newCommandList));
                 setCommandMap(newCommandMap);
-                const serverInfo: IServerInfo = await Servers.getGuildInfo(token, serverId);
+                setResponseGroupList(newResponseGroupList);
+                const serverInfo: IServerInfo = await getGuildInfoTask;
                 setServerRoles(serverInfo.roles);
                 setServerChannels(serverInfo.channels);
                 setLoading(false);
@@ -141,6 +172,139 @@ export const ServerSettings: React.FunctionComponent<IServerSettingsProps> = ({
             return newList;
         });
     }
+
+    //async function handleCommandUpdateMap(args: IUpdateCommandPropsMap)
+    //{
+    //    let index = args.index;
+    //    let oldCommandString = args.oldCommandString;
+    //    //Check if the old 
+
+
+
+
+    //    if (args.newCommandString !== undefined && args.oldCommandString !== undefined) {
+    //        //changing the command string for everything.
+    //        setCommandMap(oldCommands =>
+    //        {
+    //            let newCommandMap = new Map(oldCommands);
+    //            if (!newCommandMap.has(args.newCommandString!) && newCommandMap.has(args.oldCommandString!)) {
+    //                let oldGroup: ICommandGroup = newCommandMap.get(args.newCommandString!)!;
+    //                //Create a new group
+    //                newCommandMap.set(args.newCommandString!, { command: args.newCommandString!, commands: [], expanded: oldGroup.expanded });
+    //            }
+
+
+
+    //            return newCommandMap;
+    //        })
+    //    }
+    //    if (index !== undefined) {
+    //        //modifying a single command
+    //    }
+    //}
+
+    async function handleResponseGroupUpdate(args: IUpdateResponseGroupProps)
+    {
+
+    }
+
+    async function handleResponseUpdate(args: IUpdateResponseProps)
+    {
+        let groupIndex = findResponseGroupIndex(args.command);
+        let responseIndex = findResponseIndexById({ id: args.id, responseGroupIndex: groupIndex });
+
+        if (!originalGroups.has(args.command)) {
+            //update original groups state
+            setOriginalGroups(origGroups =>
+            {
+                let newOrigGroups = new Map(origGroups);
+                let original = new ResponseGroup(
+                    responseGroupList[responseIndex].command,
+                    Array.from(responseGroupList[responseIndex].responses));
+                newOrigGroups.set(args.command, original);
+                return newOrigGroups;
+            });
+
+        }
+
+
+
+        if (responseIndex === responseGroupList[groupIndex].responses.length - 1 && groupNeedsEmptyResponse(groupIndex)) {
+            //add an empty response to the end
+        }
+        setResponseGroupList(rgl =>
+        {
+            //TODO: should probably find groupIndex and responseIndex in here instead of from state because it's not synchronous
+            let len = rgl[groupIndex].responses.length;
+            if (responseIndex === len - 1 && rgl[groupIndex].responses[responseIndex].response !== "") {
+
+            }
+            //let newList = [...commandList];
+            //if (args.newCommandString !== undefined) {
+            //    newList[index].commandString = args.newCommandString;
+            //} else if (args.newEntryValue !== undefined) {
+            //    newList[index].entryValue = args.newEntryValue;
+            //}
+            //else if (args.newModOnly !== undefined) {
+            //    newList[index].modOnly = args.newModOnly;
+            //}
+
+            //if (oldCommands.has(id)) {
+            //    var oldCommand: ICommand | undefined = oldCommands.get(id);
+            //    if (oldCommand && areCommandsEqual(oldCommand, newList[index])) {
+            //        newList[index].updated = false;
+            //    }
+            //    else {
+            //        newList[index].updated = true;
+            //    }
+            //}
+
+            //return newList;
+        });
+    }
+
+    function groupNeedsEmptyResponse(groupIndex: number)
+    {
+        let len = responseGroupList[groupIndex].responses.length
+        if (len === 0 ||
+            responseGroupList[groupIndex].responses[len - 1].response === ""
+        ) {
+            return true;
+        }
+        return false;
+    }
+
+    function findResponseGroupIndex(originalCommand: string): number
+    {
+        return responseGroupList.findIndex(grp => grp.originalCommand === originalCommand);
+    }
+
+    interface IFindResponseIndexArgs
+    {
+        id: number;
+        command?: string;
+        responseGroupIndex?: number;
+    }
+
+    function findResponseIndexById(args: IFindResponseIndexArgs): number
+    {
+        let responseGroupIndex: number;
+        if (args.responseGroupIndex === undefined) {
+            responseGroupIndex = args.responseGroupIndex!;
+        }
+        else if (args.command !== undefined) {
+            responseGroupIndex = findResponseGroupIndex(args.command);
+        }
+        else {
+            return -1;
+        }
+        if (responseGroupIndex === -1) {
+            return -1;
+        }
+        return responseGroupList[responseGroupIndex].responses.findIndex(resp => resp.id === args.id);
+
+    }
+
 
     function areCommandsEqual(cmd1: ICommand, cmd2: ICommand): boolean
     {

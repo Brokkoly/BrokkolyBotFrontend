@@ -182,21 +182,30 @@
     min-height: 32px;
     box-shadow: var(--discord-dark) 2px 2px inset;
     text-align: left;
-    padding: 1px 0px 1px 0px;
+    margin-bottom: 3px;
+    align-content: center;
 }
 
 ._modOnlyButton {
     background-color: var(--discord-dark);
     border: 0px;
     padding: 0px;
+    width: 32px;
+    height: 32px;
 }
+
+    ._modOnlyButton:hover {
+        background-color: var(--discord-greyple);
+        transition: .3s;
+    }
 
 ._modOnlyIcon {
     width: 32px;
     height: 32px;
 }
 
-    ._modOnlyIcon:hover {
-        filter: grayscale(100%);
-        opacity: .4;
-    }
+
+._notModOnly {
+    filter: grayscale(100%);
+    opacity: .4;
+}

@@ -1,6 +1,6 @@
 ﻿import * as React from 'react';
 import { useState } from 'react';
-import { Commands, ICommand } from '../backend/Commands';
+import { Commands, ICommand, IResponse, IResponseGroup } from '../backend/Commands';
 import { Helpers } from '../helpers';
 import { ICommandRowFunctions, IExpandGroupArgs } from './ServerSettings';
 import ModOnly from "../Images/modOnly.png";
@@ -25,6 +25,13 @@ interface ICommandGroupFunctions
 
 }
 
+interface IResponseGroupFunctions extends ICommandGroupFunctions
+{
+
+}
+
+
+
 export const CommandGroup: React.FunctionComponent<ICommandGroupProps> = ({ commandGroup, prefix, commandGroupFunctions }) =>
 {
     const [inEditMode, setInEditMode] = useState(false);
@@ -45,7 +52,7 @@ export const CommandGroup: React.FunctionComponent<ICommandGroupProps> = ({ comm
                         return (
                             <>
                                 {index !== 0 ? <div style={{ borderTop: "solid black 1px" }} /> : null}
-                                <ResponseRow key={cmd.id} command={cmd} inEditMode={inEditMode} />
+                                <ResponseRow key={cmd.id} command={cmd} inEditMode={inEditMode} commandGroupFunctions={commandGroupFunctions} />
                             </>
                         )
                     }
@@ -58,28 +65,29 @@ export const CommandGroup: React.FunctionComponent<ICommandGroupProps> = ({ comm
 
 
 export const ResponseRow: React.FunctionComponent<{
-    command: ICommand, inEditMode: boolean, commandGroupFunctions?: ICommandGroupFunctions
+    command: ICommand, inEditMode: boolean, commandGroupFunctions: ICommandGroupFunctions
 }> = ({ command, inEditMode, commandGroupFunctions }) =>
     {
         return (
             <div className="_flexRow _responseRow">
-                {
-                    <button className="_modOnlyButton"><img className="_modOnlyIcon" src={ModOnly} alt="Mod Only" /></button>}
+                <ResponseRowButtons commandGroupFunctions={commandGroupFunctions} inEditMode={inEditMode} command={command} />
                 <span className="_inputText">
                     {command.entryValue}
                 </span>
                 {/*Edit mode goes here*/}
-            </div>)
+            </div >)
     }
 
 
 
 export const ResponseRowButtons: React.FunctionComponent<{
-    commandGroupFunctions: ICommandGroupFunctions
-}> = ({ commandGroupFunctions }) =>
+    commandGroupFunctions: ICommandGroupFunctions, inEditMode: boolean, command: ICommand
+}> = ({ commandGroupFunctions, inEditMode, command }) =>
     {
         return (
             <>
+                <button className={"_modOnlyButton " + Helpers.stringIf("_notModOnly ", !command.modOnly)}><img className="_modOnlyIcon" src={ModOnly} alt="Mod Only" />
+                </button>
 
             </>
         );
@@ -118,3 +126,30 @@ export const CommandGroupList: React.FunctionComponent<{ commandMap: Map<string,
         </div>
     );
 };
+
+
+//export const CommandListGrouped: React.FunctionComponent<{ commandList: ICommand[] }> = ({ commandList }) =>
+//{
+//    const [commandMap, setCommandMap] = useState<Map<string, ICommand[]>>(new Map<string, ICommand[]>());
+
+//}
+
+export const ResponseGroup: React.FunctionComponent<{
+    responseGroup: IResponseGroup,
+    callbackFunctions: IResponseGroupFunctions
+}> = ({ responseGroup, callbackFunctions }) =>
+{
+    return (<></>);
+}
+
+
+export const ResponseGroupList: React.FunctionComponent<{
+    responseGroupList: IResponseGroup[],
+    callbackFunctions: IResponseGroupFunctions
+}> = ({ responseGroupList, callbackFunctions }) =>
+{
+    return (<>
+
+
+    </>);
+}

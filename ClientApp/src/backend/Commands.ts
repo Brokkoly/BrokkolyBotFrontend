@@ -1,5 +1,5 @@
 ﻿import { promises } from "dns";
-import { ICommandGroup } from "../components/CommandGroup";
+import { ICommandGroup, IResponseGroup } from "../components/CommandGroup";
 import { CommandValidationError, Errors, IError, ValueValidationError } from "./Error";
 import { Servers } from "./Servers";
 
@@ -45,6 +45,24 @@ export class Commands
                 return retMap;
             });
 
+    }
+
+    public static async fetchResponseGroups(serverId: string): Promise<IResponseGroup[]>
+    {
+        let fetchUrl = '/api/Commands/GetCommandGroupsForServer?serverId=' + serverId;
+        return fetch(fetchUrl)
+            .then(response =>
+            {
+                return response.json();
+            })
+            .then(data =>
+            {
+                var retList: IResponseGroup[] = [];
+                for (let key in data) {
+                    retList.push(new ResponseGroup(data[key].command, data[key].responses));
+                }
+                return retList;
+            });
     }
 
     /**
@@ -221,8 +239,47 @@ export interface ICommand
     modOnly?: number;
     updated?: boolean;
 }
+export interface ICommandWithIndex extends ICommand
+{
+    index: number;
+}
 export interface IRestrictedCommand
 {
     id: number;
     command: string;
+}
+
+export interface IResponse
+{
+    id: number;
+    modOnly: number;
+    response: string;
+    errors?: IError[];
+}
+
+
+export interface IResponseGroup
+{
+    command: string;
+    originalCommand: string;
+    responses: IResponse[];
+    expanded: boolean;
+    deleted: boolean;
+
+}
+
+export class ResponseGroup implements IResponseGroup
+{
+    expanded: boolean = false;
+    originalCommand=""
+    responses: IResponse[] = [];
+    command = "";
+    deleted = false;
+
+    constructor(command: string, responses: IResponse[])
+    {
+        this.command = command;
+        this.originalCommand = command;
+        this.responses = responses;
+    }
 }

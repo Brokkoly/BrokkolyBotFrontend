@@ -8,6 +8,8 @@ using System.Linq;
 using System.Security.Cryptography;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using System.Threading.Tasks.Dataflow;
+using System.Windows.Input;
 
 namespace BrokkolyBotFrontend.Controllers
 {
@@ -40,14 +42,14 @@ namespace BrokkolyBotFrontend.Controllers
 
         // GET: api/Commands/GetCommandsForServerDict?serverId=5
         [HttpGet]
-        public ActionResult<Dictionary<string, CommandGroup>> GetCommandsForServerDict(string serverId)
+        public ActionResult<Dictionary<string, CommandGroupToDelete>> GetCommandsForServerDict(string serverId)
         {
             var commandList = _context.CommandList.AsQueryable().Where(c => c.ServerId == serverId)
                 .AsEnumerable()
                 .GroupBy(command => command.CommandString)
                 .ToDictionary(group => group.Key, group =>
                 {
-                    var cmd = new CommandGroup()
+                    var cmd = new CommandGroupToDelete()
                     {
                         commands = group.ToList(),
                     };
@@ -55,6 +57,35 @@ namespace BrokkolyBotFrontend.Controllers
                     return cmd;
                 });
             return commandList;
+        }
+
+        [HttpGet]
+        public ActionResult<List<CommandGroup>> GetCommandGroupsForServer(string serverId)
+        {
+            var commandGroups = _context.CommandList.AsQueryable().Where(c => c.ServerId == serverId)
+                .AsEnumerable()
+                .GroupBy(command => command.CommandString);
+            var commandGroupList = new List<CommandGroup>(commandGroups.Count());
+            foreach (IGrouping<string, Command> group in commandGroups)
+            {
+                var newGroup = new CommandGroup()
+                {
+                    command = group.Key,
+                    responses = new List<Response>()
+                };
+
+                foreach (Command command in group)
+                {
+                    newGroup.responses.Add(new Response()
+                    {
+                        id = command.Id,
+                        response = command.EntryValue,
+                        modOnly =  command.ModOnly ?? 0,
+                    });
+                }
+                commandGroupList.Add(newGroup);
+            }
+            return Ok(commandGroupList);
         }
 
 
@@ -215,8 +246,21 @@ namespace BrokkolyBotFrontend.Controllers
     }
 }
 
-public class CommandGroup
+public class CommandGroupToDelete
 {
     public string command { get; set; }
     public List<Command> commands { get; set; }
+}
+
+public class CommandGroup
+{
+    public string command { get; set; }
+    public List<Response> responses { get; set; }
+}
+
+public class Response
+{
+    public int id { get; set; }
+    public string response { get; set; }
+    public int modOnly { get; set; }
 }
