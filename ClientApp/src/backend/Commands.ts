@@ -1,5 +1,5 @@
 ﻿import { promises } from "dns";
-import { ICommandGroup, IResponseGroup } from "../components/CommandGroup";
+import { ICommandGroup } from "../components/CommandGroup";
 import { CommandValidationError, Errors, IError, ValueValidationError } from "./Error";
 import { Servers } from "./Servers";
 
@@ -257,6 +257,21 @@ export interface IResponse
     errors?: IError[];
 }
 
+export class Response
+{
+    id: number;
+    modOnly = 0;
+    response = "";
+    constructor(id: number, response: string, modOnly?: number)
+    {
+        this.id = id;
+        this.response = response;
+        if (modOnly !== undefined) {
+            this.modOnly = modOnly;
+        }
+    }
+}
+
 
 export interface IResponseGroup
 {
@@ -265,13 +280,13 @@ export interface IResponseGroup
     responses: IResponse[];
     expanded: boolean;
     deleted: boolean;
-
+    copy(): IResponseGroup;
 }
 
 export class ResponseGroup implements IResponseGroup
 {
     expanded: boolean = false;
-    originalCommand=""
+    originalCommand = ""
     responses: IResponse[] = [];
     command = "";
     deleted = false;
@@ -281,5 +296,17 @@ export class ResponseGroup implements IResponseGroup
         this.command = command;
         this.originalCommand = command;
         this.responses = responses;
+    }
+
+    copy(): IResponseGroup
+    {
+        let retGrp = new ResponseGroup(this.command, []);
+        retGrp.expanded = this.expanded;
+        retGrp.deleted = this.deleted;
+        this.responses.forEach(rsp =>
+        {
+            retGrp.responses.push({ ...rsp });
+        });
+        return retGrp;
     }
 }

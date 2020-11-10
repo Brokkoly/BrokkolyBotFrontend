@@ -205,7 +205,7 @@ export const ServerSettings: React.FunctionComponent<IServerSettingsProps> = ({
 
     async function handleResponseGroupUpdate(args: IUpdateResponseGroupProps)
     {
-
+        //Todo: handle this
     }
 
     async function handleResponseUpdate(args: IUpdateResponseProps)
@@ -226,52 +226,31 @@ export const ServerSettings: React.FunctionComponent<IServerSettingsProps> = ({
             });
 
         }
-
-
-
-        if (responseIndex === responseGroupList[groupIndex].responses.length - 1 && groupNeedsEmptyResponse(groupIndex)) {
-            //add an empty response to the end
-        }
         setResponseGroupList(rgl =>
         {
             //TODO: should probably find groupIndex and responseIndex in here instead of from state because it's not synchronous
+            //todo: do validation here, if it fails, add errors to state
+
+            let retGrpLst: IResponseGroup[] = [];
             let len = rgl[groupIndex].responses.length;
+            rgl.forEach(rg =>
+            {
+                retGrpLst.push(rg.copy());
+            });
             if (responseIndex === len - 1 && rgl[groupIndex].responses[responseIndex].response !== "") {
-
+                let newId = nextTempId;
+                setNextTempId(id => id--);
+                retGrpLst[groupIndex].responses.push({ id: newId, modOnly: 0, response: "" });
             }
-            //let newList = [...commandList];
-            //if (args.newCommandString !== undefined) {
-            //    newList[index].commandString = args.newCommandString;
-            //} else if (args.newEntryValue !== undefined) {
-            //    newList[index].entryValue = args.newEntryValue;
-            //}
-            //else if (args.newModOnly !== undefined) {
-            //    newList[index].modOnly = args.newModOnly;
-            //}
+            if (args.newModOnlyValue !== undefined) {
+                retGrpLst[groupIndex].responses[responseIndex].modOnly = args.newModOnlyValue;
+            }
+            else if (args.newResponse !== undefined) {
+                retGrpLst[groupIndex].responses[responseIndex].response = args.newResponse;
+            }
 
-            //if (oldCommands.has(id)) {
-            //    var oldCommand: ICommand | undefined = oldCommands.get(id);
-            //    if (oldCommand && areCommandsEqual(oldCommand, newList[index])) {
-            //        newList[index].updated = false;
-            //    }
-            //    else {
-            //        newList[index].updated = true;
-            //    }
-            //}
-
-            //return newList;
+            return retGrpLst;
         });
-    }
-
-    function groupNeedsEmptyResponse(groupIndex: number)
-    {
-        let len = responseGroupList[groupIndex].responses.length
-        if (len === 0 ||
-            responseGroupList[groupIndex].responses[len - 1].response === ""
-        ) {
-            return true;
-        }
-        return false;
     }
 
     function findResponseGroupIndex(originalCommand: string): number
