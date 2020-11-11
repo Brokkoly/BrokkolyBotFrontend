@@ -1,5 +1,4 @@
-﻿import { promises } from "dns";
-import { ICommandGroup } from "../components/CommandGroup";
+﻿import { ICommandGroup } from "../components/CommandGroup";
 import { CommandValidationError, Errors, IError, ValueValidationError } from "./Error";
 import { Servers } from "./Servers";
 
@@ -211,19 +210,19 @@ export class Commands
 
     /**
      * Checks if the entry value is valid
-     * @param value the value to check
+     * @param response the value to check
      * @returns an Errors object with the errors accumulated during the check.
      */
-    public static checkValueValidity(value: string): Errors
+    public static checkResponseValidity(response: string): Errors
     {
         let errors: IError[] = [];
-        if (value.length === 0) {
+        if (response.length === 0) {
             errors.push(new ValueValidationError("Value must not have a length of 0"));
         }
-        if (value.length > 500) {
+        if (response.length > 500) {
             errors.push(new ValueValidationError("Value length cannot be more than 500"));
         }
-        if (value.match("^<@[&!]?[0-9]+>")) {
+        if (response.match("<@[&!]?[0-9]+>")) {
             errors.push(new ValueValidationError("You're not allowed to mention people or roles"));
         }
         return new Errors(errors);

@@ -49,7 +49,7 @@ export const CommandRow: React.FunctionComponent<CommandRowProps> = ({ command, 
             setValueErrors(new Errors());
             return;
         }
-        setValueErrors(Commands.checkValueValidity(command.entryValue));
+        setValueErrors(Commands.checkResponseValidity(command.entryValue));
     }, [command.entryValue, hasBeenUpdated])
 
     /**

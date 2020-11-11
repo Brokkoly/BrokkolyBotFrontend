@@ -388,7 +388,7 @@ export const ServerSettings: React.FunctionComponent<IServerSettingsProps> = ({
     async function acceptCommand(index: number, editCallback: Function)
     {
         if (Commands.checkCommandValidity(commandList[index].commandString, restrictedCommands).getHighestErrorLevel() < ErrorLevels.Warning
-            && Commands.checkValueValidity(commandList[index].entryValue).getHighestErrorLevel() < ErrorLevels.Warning
+            && Commands.checkResponseValidity(commandList[index].entryValue).getHighestErrorLevel() < ErrorLevels.Warning
             && isNotDuplicatedInList(index)) {
 
             if (commandList[index].id >= 0) {

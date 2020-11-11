@@ -8,6 +8,7 @@
 
 export enum ErrorLevels
 {
+    None = 0,
     Warning = 1,
     Critical = 2,
 }
@@ -47,7 +48,7 @@ export class Errors
     {
         if (input) {
             if (input.constructor === Array) {
-                this.errors=input;
+                this.errors = input;
             }
             else {
                 this.errors.push(input as IError);
