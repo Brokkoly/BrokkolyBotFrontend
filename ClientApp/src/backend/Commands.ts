@@ -1,4 +1,5 @@
-﻿import { ICommandGroup } from "../components/CommandGroup";
+﻿import { group } from "console";
+import { ICommandGroup } from "../components/CommandGroup";
 import { CommandValidationError, Errors, IError, ValueValidationError } from "./Error";
 import { Servers } from "./Servers";
 
@@ -227,6 +228,62 @@ export class Commands
         }
         return new Errors(errors);
     }
+
+
+
+    public static findResponseIndex(args: IFindResponseIndexArgs, groupListToSearch: ResponseGroup[]): number
+    {
+        if (!args.command && args.responseGroupIndex === undefined) {
+            return -1;
+        }
+        let groupIndex = args.responseGroupIndex ?? this.findResponseGroupIndex(args.command!, groupListToSearch);
+
+        if (groupIndex === -1) {
+            return -1;
+        }
+        return groupListToSearch[groupIndex].responses.findIndex(response => response.id === args.id);
+    }
+
+    public static findResponseGroupIndex(command: string, groupListToSearch: ResponseGroup[]): number
+    {
+        return groupListToSearch.findIndex(grp => grp.originalCommand === command);
+    }
+
+    public static deepCopyResponseList(groups: IResponseGroup[]): IResponseGroup[]
+    {
+        let retGrpLst: IResponseGroup[] = [];
+        groups.forEach(group =>
+        {
+            retGrpLst.push(group.copy());
+        });
+        return retGrpLst;
+    }
+
+
+    public static handleResponseUpdate(args: IUpdateResponseProps, groupsToUpdate: IResponseGroup[], tempId: number): IResponseGroup[]
+    {
+        let groupIndex = Commands.findResponseGroupIndex(args.command, groupsToUpdate);
+        let responseIndex = Commands.findResponseIndex({ id: args.id, responseGroupIndex: groupIndex }, groupsToUpdate);
+        let len = groupsToUpdate[groupIndex].responses.length;
+        let retGrpLst = Commands.deepCopyResponseList(groupsToUpdate);
+
+        if (responseIndex === len - 1 && groupsToUpdate[groupIndex].responses[responseIndex].response !== "") {
+            retGrpLst[groupIndex].responses.push({ id: tempId, modOnly: 0, response: "" });
+        }
+        if (args.newModOnlyValue !== undefined) {
+            retGrpLst[groupIndex].responses[responseIndex].modOnly = args.newModOnlyValue;
+        }
+        else if (args.newResponse !== undefined) {
+            retGrpLst[groupIndex].responses[responseIndex].response = args.newResponse;
+        }
+
+        return retGrpLst;
+    }
+
+    public static handleResponseGroupUpdate(args: IUpdateResponseGroupProps)
+    {
+
+    }
 }
 
 export interface ICommand
@@ -256,6 +313,14 @@ export interface IResponse
     errors?: IError[];
 }
 
+export interface IUpdateResponseProps
+{
+    command: string;
+    id: number;
+    newResponse?: string;
+    newModOnlyValue?: number;
+}
+
 export class Response
 {
     id: number;
@@ -269,6 +334,23 @@ export class Response
             this.modOnly = modOnly;
         }
     }
+}
+
+export interface IFindResponseIndexArgs
+{
+    id: number;
+    command?: string;
+    responseGroupIndex?: number;
+}
+
+export interface IUpdateResponseGroupProps
+{
+    command: string;
+    newCommand?: string;
+    newResponse?: string;
+    newResponses?: IResponse[];
+    newModOnly?: number; //todo: delete if unnecessary
+    deleted?: boolean;
 }
 
 

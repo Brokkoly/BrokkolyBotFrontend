@@ -136,20 +136,27 @@ export const CommandGroupList: React.FunctionComponent<{ commandMap: Map<string,
 
 export const ResponseGroup: React.FunctionComponent<{
     responseGroup: IResponseGroup,
-    callbackFunctions: IResponseGroupFunctions
-}> = ({ responseGroup, callbackFunctions }) =>
-{
-    return (<></>);
-}
+    callbackFunctions?: IResponseGroupFunctions,
+    commandPrefix: string
+}> = ({ responseGroup, callbackFunctions, commandPrefix }) =>
+    {
+        return (<></>);
+    }
 
 
 export const ResponseGroupList: React.FunctionComponent<{
     responseGroupList: IResponseGroup[],
-    callbackFunctions: IResponseGroupFunctions
-}> = ({ responseGroupList, callbackFunctions }) =>
-{
-    return (<>
-
-
-    </>);
-}
+    callbackFunctions?: IResponseGroupFunctions,
+    commandPrefix: string
+}> = ({ responseGroupList, callbackFunctions, commandPrefix }) =>
+    {
+        return (
+            <ul>
+                {responseGroupList.map(group =>
+                {
+                    <ResponseGroup key={group.originalCommand} responseGroup={group} commandPrefix={commandPrefix} callbackFunctions={callbackFunctions} />
+                })
+                }
+            </ul>
+        );
+    }

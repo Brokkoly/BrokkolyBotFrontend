@@ -1,12 +1,13 @@
 ﻿import React, { CSSProperties, useEffect, useState } from "react";
+import { Next } from "react-bootstrap/lib/Pagination";
 import { toast } from "react-toastify";
-import { Commands, ICommand, IResponseGroup, ResponseGroup } from "../backend/Commands";
+import { Commands, ICommand, IResponseGroup, ResponseGroup, IUpdateResponseProps, IUpdateResponseGroupProps } from "../backend/Commands";
 import { ErrorLevels, Errors } from "../backend/Error";
 import { IChannel, IRole, IServer, IServerInfo, Servers } from "../backend/Servers";
 import '../css/CommandRow.css';
 import '../css/Settings.css';
 import { Helpers } from "../helpers";
-import { CommandGroup, CommandGroupList, ICommandGroup } from "./CommandGroup";
+import { CommandGroup, CommandGroupList, ICommandGroup, ResponseGroupList } from "./CommandGroup";
 import { CommandRow } from "./CommandRow";
 import { IServerFunctions, LoadingMessage } from "./ServerList";
 
@@ -17,6 +18,7 @@ interface IServerSettingsProps
     server: IServer;
     restrictedCommands: string[];
     serverFunctions: IServerFunctions;
+
 }
 interface IUpdateCommandProps
 {
@@ -24,29 +26,6 @@ interface IUpdateCommandProps
     newCommandString?: string;
     newEntryValue?: string;
     newModOnly?: number;
-}
-interface IUpdateCommandPropsMap
-{
-    oldCommandString: string;
-    index?: number;
-    newCommandString?: string;
-    newEntryValue?: string;
-    newModOnly?: number;
-}
-
-interface IUpdateResponseGroupProps
-{
-    command: string;
-    newCommand?: string;
-    newResponse?: string;
-    newModOnly?: number; //todo: delete if unnecessary
-}
-interface IUpdateResponseProps
-{
-    command: string;
-    id: number;
-    newResponse?: string;
-    newModOnlyValue?: number;
 }
 
 export interface ICommandRowFunctions
@@ -72,7 +51,6 @@ export const ServerSettings: React.FunctionComponent<IServerSettingsProps> = ({
 }) =>
 {
     const [commandList, setCommandList] = useState<ICommand[]>([]);
-    const [commandMap, setCommandMap] = useState<Map<string, ICommandGroup>>(new Map<string, ICommandGroup>());
     const [responseGroupList, setResponseGroupList] = useState<IResponseGroup[]>([]);
     const [originalGroups, setOriginalGroups] = useState<Map<string, IResponseGroup>>(new Map<string, IResponseGroup>());
 
@@ -91,11 +69,9 @@ export const ServerSettings: React.FunctionComponent<IServerSettingsProps> = ({
             async function fetchData(serverId: string)
             {
                 let newCommandListTask = Commands.fetchCommands(serverId);
-                let newCommandMapTask = Commands.fetchCommandsAsMap(serverId);
                 let newResponseGroupTask = Commands.fetchResponseGroups(serverId);
                 let getGuildInfoTask = Servers.getGuildInfo(token, serverId);
                 let newCommandList = await newCommandListTask;
-                let newCommandMap = await newCommandMapTask;
                 let newResponseGroupList = await newResponseGroupTask;
                 if (server.userCanManage) {
                     newCommandList.push({
@@ -107,7 +83,6 @@ export const ServerSettings: React.FunctionComponent<IServerSettingsProps> = ({
                     });
                 }
                 setCommandList(sortListOfCommands(newCommandList));
-                setCommandMap(newCommandMap);
                 setResponseGroupList(newResponseGroupList);
                 const serverInfo: IServerInfo = await getGuildInfoTask;
                 setServerRoles(serverInfo.roles);
@@ -210,78 +185,30 @@ export const ServerSettings: React.FunctionComponent<IServerSettingsProps> = ({
 
     async function handleResponseUpdate(args: IUpdateResponseProps)
     {
-        let groupIndex = findResponseGroupIndex(args.command);
-        let responseIndex = findResponseIndexById({ id: args.id, responseGroupIndex: groupIndex });
-
-        if (!originalGroups.has(args.command)) {
-            //update original groups state
-            setOriginalGroups(origGroups =>
-            {
-                let newOrigGroups = new Map(origGroups);
-                let original = new ResponseGroup(
-                    responseGroupList[responseIndex].command,
-                    Array.from(responseGroupList[responseIndex].responses));
+        let tempId = nextTempId;
+        setNextTempId(nti =>
+        {
+            return nti--;
+        });
+        await setOriginalGroups(origGrp =>
+        {
+            let groupIndex = Commands.findResponseGroupIndex(args.command, responseGroupList);
+            if (!origGrp.has(args.command)) {
+                //update original groups state
+                let newOrigGroups = new Map(origGrp);
+                let original = responseGroupList[groupIndex].copy();
                 newOrigGroups.set(args.command, original);
                 return newOrigGroups;
-            });
-
-        }
+            }
+            else {
+                return origGrp;;
+            }
+        });
         setResponseGroupList(rgl =>
         {
-            //TODO: should probably find groupIndex and responseIndex in here instead of from state because it's not synchronous
-            //todo: do validation here, if it fails, add errors to state
-
-            let retGrpLst: IResponseGroup[] = [];
-            let len = rgl[groupIndex].responses.length;
-            rgl.forEach(rg =>
-            {
-                retGrpLst.push(rg.copy());
-            });
-            if (responseIndex === len - 1 && rgl[groupIndex].responses[responseIndex].response !== "") {
-                let newId = nextTempId;
-                setNextTempId(id => id--);
-                retGrpLst[groupIndex].responses.push({ id: newId, modOnly: 0, response: "" });
-            }
-            if (args.newModOnlyValue !== undefined) {
-                retGrpLst[groupIndex].responses[responseIndex].modOnly = args.newModOnlyValue;
-            }
-            else if (args.newResponse !== undefined) {
-                retGrpLst[groupIndex].responses[responseIndex].response = args.newResponse;
-            }
-
-            return retGrpLst;
+            Commands.handleResponseUpdate(args, rgl, tempId);
+            return rgl;
         });
-    }
-
-    function findResponseGroupIndex(originalCommand: string): number
-    {
-        return responseGroupList.findIndex(grp => grp.originalCommand === originalCommand);
-    }
-
-    interface IFindResponseIndexArgs
-    {
-        id: number;
-        command?: string;
-        responseGroupIndex?: number;
-    }
-
-    function findResponseIndexById(args: IFindResponseIndexArgs): number
-    {
-        let responseGroupIndex: number;
-        if (args.responseGroupIndex === undefined) {
-            responseGroupIndex = args.responseGroupIndex!;
-        }
-        else if (args.command !== undefined) {
-            responseGroupIndex = findResponseGroupIndex(args.command);
-        }
-        else {
-            return -1;
-        }
-        if (responseGroupIndex === -1) {
-            return -1;
-        }
-        return responseGroupList[responseGroupIndex].responses.findIndex(resp => resp.id === args.id);
-
     }
 
 
@@ -342,28 +269,28 @@ export const ServerSettings: React.FunctionComponent<IServerSettingsProps> = ({
     }
 
 
-    function expandGroup(args: IExpandGroupArgs)
-    {
-        if (args.command) {
-            args.commands = [args.command];
-        }
-        else if (!args.commands) {
-            return;
-        }
-        setCommandMap(commandMap =>
-        {
-            var newCommandMap = new Map(commandMap);
-            args.commands?.forEach(cmd =>
-            {
-                var group = newCommandMap.get(cmd);
-                if (group) {
-                    group.expanded = args.expanded;
-                    newCommandMap.set(cmd, group);
-                }
-            });
-            return newCommandMap;
-        });
-    }
+    //function expandGroup(args: IExpandGroupArgs)
+    //{
+    //    if (args.command) {
+    //        args.commands = [args.command];
+    //    }
+    //    else if (!args.commands) {
+    //        return;
+    //    }
+    //    setCommandMap(commandMap =>
+    //    {
+    //        var newCommandMap = new Map(commandMap);
+    //        args.commands?.forEach(cmd =>
+    //        {
+    //            var group = newCommandMap.get(cmd);
+    //            if (group) {
+    //                group.expanded = args.expanded;
+    //                newCommandMap.set(cmd, group);
+    //            }
+    //        });
+    //        return newCommandMap;
+    //    });
+    //}
 
     /**
      * Checks if commandList needs a new empty command at the end of the list
@@ -586,7 +513,7 @@ export const ServerSettings: React.FunctionComponent<IServerSettingsProps> = ({
                     <input type="checkbox" className={"_formInput _commandInput "} checked={showCommandGroups} onChange={toggleCommandGroup} />
                 </label>
             </form>
-            {showCommandGroups ? <CommandGroupList commandMap={commandMap} commandGroupFunctions={{ expandGroup: expandGroup }} commandPrefix={server.commandPrefix || "!"} /> :
+            {showCommandGroups ? <ResponseGroupList responseGroupList={responseGroupList} commandPrefix={server.commandPrefix || "!"} /> :
                 <CommandList
                     commands={commandList}
                     commandRowFunctions={{ updateCommand: handleCommandUpdate, acceptCommand: acceptCommand, cancelCommand: cancelCommand, deleteCommand: deleteCommand }}
