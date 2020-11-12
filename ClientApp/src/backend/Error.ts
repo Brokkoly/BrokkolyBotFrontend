@@ -58,6 +58,21 @@ export class Errors
         }
     }
 
+    addErrors(input?: IError | IError[] | Errors)
+    {
+        if (input) {
+            if (input.constructor === Errors) {
+                this.errors.concat(input.errors);
+            }
+            if (input.constructor === Array) {
+                this.errors.concat(input);
+            }
+            else {
+                this.errors.push(input as IError);
+            }
+        }
+    }
+
     getHighestErrorLevel(): number
     {
         let highest = 0;

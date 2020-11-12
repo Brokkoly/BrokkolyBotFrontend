@@ -66,10 +66,12 @@ namespace BrokkolyBotFrontend.Controllers
                 .AsEnumerable()
                 .GroupBy(command => command.CommandString);
             var commandGroupList = new List<CommandGroup>(commandGroups.Count());
+            int nextId = 0;
             foreach (IGrouping<string, Command> group in commandGroups)
             {
                 var newGroup = new CommandGroup()
                 {
+                    id = nextId++,
                     command = group.Key,
                     responses = new List<Response>()
                 };
@@ -254,6 +256,7 @@ public class CommandGroupToDelete
 
 public class CommandGroup
 {
+    public int id { get; set; }
     public string command { get; set; }
     public List<Response> responses { get; set; }
 }

@@ -41,7 +41,7 @@ export const CommandRow: React.FunctionComponent<CommandRowProps> = ({ command, 
             setCommandErrors(new Errors());
             return;
         }
-        setCommandErrors(Commands.checkCommandValidity(command.commandString, restrictedCommands));
+        setCommandErrors(Commands.checkCommandValidity(command.commandString));
     }, [command.commandString, restrictedCommands, hasBeenUpdated])
     React.useEffect(() =>
     {
