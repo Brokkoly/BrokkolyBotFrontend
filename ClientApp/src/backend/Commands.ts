@@ -330,6 +330,7 @@ export class Commands
         if (response.match("<@[&!]?[0-9]+>")) {
             errors.push(new ValueValidationError("You're not allowed to mention people or roles"));
         }
+
         return new Errors(errors);
     }
 
@@ -365,7 +366,6 @@ export class Commands
         let groupToUpdate = groupsToUpdate[groupIndex];
         let responseToUpdate = groupToUpdate.responses[responseIndex];
 
-
         if (args.newModOnlyValue !== undefined) {
             responseToUpdate.modOnly = args.newModOnlyValue;
             responseToUpdate.edited = true;
@@ -373,6 +373,7 @@ export class Commands
         if (args.newResponse !== undefined) {
             responseToUpdate.response = args.newResponse;
             responseToUpdate.edited = true;
+            responseToUpdate.validate(groupToUpdate.responses);
         }
         if (args.deleted !== undefined) {
             responseToUpdate.deleted = args.deleted;
@@ -409,9 +410,13 @@ export class Commands
             if (args.newEditModeStatus !== undefined) {
                 groupToUpdate.setEditMode(args.newEditModeStatus);
             }
-
             if (groupToUpdate.inEditMode && groupToUpdate.expanded && groupToUpdate.needsEmptyEntry()) {
                 groupToUpdate.insertNewResponseAtEnd(tempId);
+            }
+            if (newGroups[newGroups.length - 1].command !== "") {
+                let newRespGroup = new ResponseGroup(tempId - 1, "", [], true);
+                newRespGroup.insertNewResponseAtEnd(tempId - 2);
+                newGroups.push(newRespGroup);
             }
         }
 
@@ -470,7 +475,7 @@ export interface IResponse extends IResponseConstructorArgs
     errors: Errors;
     copy(): IResponse;
     update(args: IUpdateResponseProps): void
-    validate(): Errors;
+    validate(otherResponses: IResponse[]): Errors;
 
 }
 
@@ -492,11 +497,17 @@ export class Response implements IResponse
         this.edited = false;
     }
 
-    validate(): Errors
+    validate(allResponses: IResponse[]): Errors
     {
         this.errors = Commands.checkResponseValidity(this.response);
+
+        if (allResponses.find(resp => resp.id !== this.id && resp.response === this.response)) {
+            this.errors.addErrors(new ValueValidationError("Duplicate responses are not allowed"));
+        }
         return this.errors;
     }
+
+
 
     update(args: IUpdateResponseProps)
     {
@@ -547,6 +558,7 @@ export interface IResponseGroup
     commandErrors: Errors;
     groupErrors: Errors[];
 
+
     copy(): IResponseGroup;
     findResponse(args: IFindResponseArgs): IResponseReturn;
     needsEmptyEntry(): boolean;
@@ -558,6 +570,7 @@ export interface IResponseGroup
     getGroupValidity(): Errors[];
     checkGroupValidity(): Errors[];
     updateCommand(newCommand: string): void;
+    checkHighestErrorLevel(): number;
 }
 
 export interface IResponseReturn
@@ -584,7 +597,7 @@ export class ResponseGroup implements IResponseGroup
     commandErrors: Errors;
     groupErrors: Errors[];
 
-    constructor(id: number, command: string, responses: IResponse[])
+    constructor(id: number, command: string, responses: IResponse[], newEmptyGroup?: boolean)
     {
         this.id = id;
         this.command = command;
@@ -592,8 +605,15 @@ export class ResponseGroup implements IResponseGroup
         this.responses = responses || [];
         this.commandErrors = new Errors();
         this.groupErrors = this.checkGroupValidity();
-        this.inEditMode = false;
-        this.expanded = false;
+        if (newEmptyGroup) {
+            this.inEditMode = true;
+            this.expanded = true;
+        }
+        else {
+
+            this.expanded = false;
+            this.inEditMode = false;
+        }
 
     }
 
@@ -640,10 +660,28 @@ export class ResponseGroup implements IResponseGroup
             if (!markLastEmptyTempInvalid && index === this.responses.length - 1 && resp.id < 0 && resp.response === "") {
                 return;
             }
-            retErrors[index] = (resp as Response).validate();
+            retErrors[index] = (resp as Response).validate(this.responses);
         })
         this.groupErrors = retErrors;
         return retErrors;
+    }
+
+    checkHighestErrorLevel(): number
+    {
+        let highestErrorLevel = 0;
+        this.checkGroupValidity(false).forEach(errors =>
+        {
+            let level = errors.getHighestErrorLevel();
+            if (level > highestErrorLevel) {
+                highestErrorLevel = level;
+            }
+
+        });
+        let level = this.getCommandValidity().getHighestErrorLevel();
+        if (level > highestErrorLevel) {
+            highestErrorLevel = level;
+        }
+        return highestErrorLevel;
     }
 
     /**
@@ -651,7 +689,7 @@ export class ResponseGroup implements IResponseGroup
      */
     needsEmptyEntry(): boolean
     {
-        return (this.responses[this.responses.length - 1].response !== "") || (this.responses[this.responses.length - 1].id >= 0);
+        return this.responses.length === 0 || (this.responses[this.responses.length - 1].response !== "") || (this.responses[this.responses.length - 1].id >= 0);
     }
 
     setExpanded(expanded: boolean)

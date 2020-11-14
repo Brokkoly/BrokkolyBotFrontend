@@ -32,16 +32,15 @@ export const ResponseRow: React.FunctionComponent<{
                     inEditMode && !response.deleted ?
                         <textarea
                             title={response.errors.toErrorMessage() || undefined}
-                            className={"_formInput _valueInput " + response.errors.getCssForError()}
+                            className={"_formInput _valueInput _responseText " + response.errors.getCssForError()}
                             value={response.response}
                             onChange={onResponseChange}
                         />
                         :
-                        <span className={"_inputText " + Helpers.stringIf("_deletedText ", response.deleted)}>
+                        <span className={"_responseText " + Helpers.stringIf("_deletedText ", response.deleted)}>
                             {response.response}
                         </span>
                 }
-                {/*Edit mode goes here*/}
                 <ResponseRowButtons handleChangeResponse={handleChangeResponse} inEditMode={inEditMode} response={response} />
             </div >)
     }
@@ -71,7 +70,7 @@ export const ResponseRowButtons: React.FunctionComponent<{
             handleChangeResponse({ id: response.id, deleted: false });
         }
         return (
-            <>
+            <div className="_flexRow _responseRowButtons">
                 <button className={"_modOnlyButton " + Helpers.stringIf("_notModOnly ", !response.modOnly)} onClick={handleChangeModOnly} disabled={!inEditMode || response.deleted}>
                     <img className="_modOnlyIcon" src={ModOnly} title="Mod Only" alt="Mod Only" />
                 </button>
@@ -81,7 +80,7 @@ export const ResponseRowButtons: React.FunctionComponent<{
                     {response.deleted ? "Undo" : "Delete"}
                 </button>
 
-            </>
+            </div>
         );
     }
 
@@ -150,7 +149,7 @@ export const ResponseGroup: React.FunctionComponent<{
         }
 
         return (
-            <form>
+            <form className="_maxWidth">
                 <div className="_collapsible _commandPrefix" onClick={handleExpandClicked}>
                     <div>
                         {
@@ -164,6 +163,7 @@ export const ResponseGroup: React.FunctionComponent<{
                                         type="text"
                                         className={"_formInput _commandInput " + responseGroup.commandErrors.getCssForError()}
                                         value={responseGroup.command}
+                                        placeholder="Enter Command Here"
                                         onChange={handleChangeCommand}
                                         onClick={handleCommandAreaClicked}
                                     />

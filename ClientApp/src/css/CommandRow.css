@@ -168,6 +168,7 @@
     cursor: pointer;
     padding: 18px;
     width: 100%;
+    max-width: 1200px;
     border: none;
     text-align: left;
     outline: none;
@@ -190,24 +191,46 @@
     background-color: #f1f1f1;
 }
 
+._maxWidth{
+    max-width: 1200px;
+}
+
 ._responseRow {
     height: auto;
     min-height: 32px;
+    width: 100%;
     box-shadow: var(--discord-dark) 2px 2px inset;
     text-align: left;
     margin-bottom: 3px;
-    align-content: center;
     padding-right: 6px;
     padding-left: 6px;
     display: inline-flex;
+    justify-content: space-between;
     flex-direction: row;
+    align-items: center;
+}
+._responseText {
+    height: auto;
+    font-size: medium;
     text-align: left;
+    flex-grow: 1;
+    max-width: none;
+}
+
+._responseRowButtons{
+    width: 150px;
+    height: 40px;
+    margin-left: 5px;
+    display: inline-flex;
+    flex-direction: row;
+    justify-content: flex-end;
+    align-content: center;
 }
 
 ._modOnlyButton {
     background-color: var(--discord-dark);
     border: 0px;
-    padding: 0px;
+    padding: 4px;
     width: 32px;
     height: 32px;
     cursor: pointer;
@@ -236,3 +259,4 @@
 ._deletedText{
     text-decoration: line-through;
 }
+

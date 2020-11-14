@@ -51,47 +51,32 @@ export const ServerSettings: React.FunctionComponent<IServerSettingsProps> = ({
     serverIndex
 }) =>
 {
-    const [commandList, setCommandList] = useState<ICommand[]>([]);
     const [responseGroupList, setResponseGroupList] = useState<IResponseGroup[]>([]);
     const [originalGroups, setOriginalGroups] = useState<Map<number, IResponseGroup>>(new Map<number, IResponseGroup>());
 
-    const [oldCommands, setOldCommands] = useState<Map<number, ICommand>>(
-        new Map<number, ICommand>()
-    );
     const [serverRoles, setServerRoles] = useState<IRole[]>([]);
     const [serverChannels, setServerChannels] = useState<IChannel[]>([]);
     const [loading, setLoading] = useState(true);
     const [nextTempId, setNextTempId] = useState(-2);
-    const [showCommandGroups, setShowCommandGroups] = useState<boolean>(true);
 
     useEffect(
         () =>
         {
             async function fetchData(serverId: string)
             {
-                let newCommandListTask = Commands.fetchCommands(serverId);
                 let newResponseGroupTask = Commands.fetchResponseGroups(serverId);
                 let getGuildInfoTask = Servers.getGuildInfo(token, serverId);
-                let newCommandList = await newCommandListTask;
-                if (server.userCanManage) {
-                    newCommandList.push({
-                        id: -1,
-                        commandString: "",
-                        entryValue: "",
-                        serverId: server.serverId,
-                        modOnly: 0
-                    });
-                }
-                setCommandList(sortListOfCommands(newCommandList));
+                
                 let newResponseGroupList = await newResponseGroupTask;
-                //if (server.userCanManage) {
-                //    newResponseGroupList.forEach(async (grp) =>
-                //    {
-                //        let temp = nextTempId;
-                //        grp.insertNewResponseAtEnd(temp);
-                //        setNextTempId(tmp => tmp++);
-                //    });
-                //}
+                if (server.userCanManage) {
+                    let nextId = nextTempId;
+                    let nextRespId = nextTempId - 1;
+                    setNextTempId(nextTempId - 2);
+                    let newRespGroup = new ResponseGroup(nextId, "", [], true);
+                    newRespGroup.insertNewResponseAtEnd(nextRespId);
+                    newResponseGroupList.push(newRespGroup);
+
+                }
                 setResponseGroupList(newResponseGroupList);
                 const serverInfo: IServerInfo = await getGuildInfoTask;
                 setServerRoles(serverInfo.roles);
@@ -100,70 +85,22 @@ export const ServerSettings: React.FunctionComponent<IServerSettingsProps> = ({
             }
             setLoading(true);
             fetchData(server.serverId);
+
         },
         [server.serverId, server.userCanManage, token]
     );
 
-
-    /**
-     * Handles updates to a command. If the command has not yet been modified, 
-     * saves its old value to oldCommands in case changes need to be reverted.
-     * updates the state with whichever value in args is not undefined
-     * @param args
-     */
-    async function handleCommandUpdate(
-        args: IUpdateCommandProps
-    )
-    {
-        let index = args.index;
-        let id = commandList[index].id;
-        if (index === commandList.length - 1 && needEmptyCommand()) {
-            addEmptyCommandToEndOfCommandList();
-        }
-        if (!oldCommands.has(id)) {
-            let original = {
-                ...commandList[index]
-            };
-            await setOldCommands(oldCommands =>
-            {
-                let newOldCommands = new Map(oldCommands);
-                newOldCommands.set(id, original);
-                return newOldCommands;
-            });
-        }
-        setCommandList(commandList =>
-        {
-            let newList = [...commandList];
-            if (args.newCommandString !== undefined) {
-                newList[index].commandString = args.newCommandString;
-            } else if (args.newEntryValue !== undefined) {
-                newList[index].entryValue = args.newEntryValue;
-            }
-            else if (args.newModOnly !== undefined) {
-                newList[index].modOnly = args.newModOnly;
-            }
-
-            if (oldCommands.has(id)) {
-                var oldCommand: ICommand | undefined = oldCommands.get(id);
-                if (oldCommand && areCommandsEqual(oldCommand, newList[index])) {
-                    newList[index].updated = false;
-                }
-                else {
-                    newList[index].updated = true;
-                }
-            }
-
-            return newList;
-        });
-    }
-
     async function handleResponseGroupAccept(groupId: number)
     {
-
         let groupToAccept = responseGroupList.find(grp => grp.id === groupId);
         if (groupToAccept === undefined) {
             return;
         }
+        if (groupToAccept.checkHighestErrorLevel() >= ErrorLevels.Critical ) {
+            toast("Could not accept. Please fix validation errors and try again");
+            return;
+        }
+
         groupToAccept = groupToAccept.copy();
 
         let newResponsesList = [...groupToAccept.responses];
@@ -228,8 +165,8 @@ export const ServerSettings: React.FunctionComponent<IServerSettingsProps> = ({
 
         }
         groupToAccept.responses = newResponsesList;
-
         groupToAccept.setEditMode(false);
+        groupToAccept.originalCommand = groupToAccept.command;
 
 
         setResponseGroupList(rgl =>
@@ -243,40 +180,11 @@ export const ServerSettings: React.FunctionComponent<IServerSettingsProps> = ({
 
     }
 
-    //async function handleCommandUpdateMap(args: IUpdateCommandPropsMap)
-    //{
-    //    let index = args.index;
-    //    let oldCommandString = args.oldCommandString;
-    //    //Check if the old 
-
-
-
-
-    //    if (args.newCommandString !== undefined && args.oldCommandString !== undefined) {
-    //        //changing the command string for everything.
-    //        setCommandMap(oldCommands =>
-    //        {
-    //            let newCommandMap = new Map(oldCommands);
-    //            if (!newCommandMap.has(args.newCommandString!) && newCommandMap.has(args.oldCommandString!)) {
-    //                let oldGroup: ICommandGroup = newCommandMap.get(args.newCommandString!)!;
-    //                //Create a new group
-    //                newCommandMap.set(args.newCommandString!, { command: args.newCommandString!, commands: [], expanded: oldGroup.expanded });
-    //            }
-
-
-
-    //            return newCommandMap;
-    //        })
-    //    }
-    //    if (index !== undefined) {
-    //        //modifying a single command
-    //    }
-    //}
 
     async function handleResponseGroupUpdate(args: IUpdateResponseGroupProps)
     {
         let tempId = nextTempId;
-        setNextTempId(nextTempId - 1);
+        setNextTempId(nextTempId - 3);
         if (args.revert) {
             if (originalGroups.has(args.id)) {
                 let original = originalGroups.get(args.id);
@@ -349,37 +257,6 @@ export const ServerSettings: React.FunctionComponent<IServerSettingsProps> = ({
         });
     }
 
-
-    function areCommandsEqual(cmd1: ICommand, cmd2: ICommand): boolean
-    {
-        if (cmd1.commandString === cmd2.commandString &&
-            cmd1.entryValue === cmd2.entryValue &&
-            cmd1.modOnly === cmd2.modOnly) {
-            return true;
-        }
-        return false
-    }
-
-    /**
-     * Add an empty command to the end of commandList
-     * */
-    function addEmptyCommandToEndOfCommandList(): void
-    {
-        setCommandList(commandList =>
-        {
-            let newList = [...commandList];
-            newList.push({
-                id: nextTempId,
-                commandString: "",
-                entryValue: "",
-                serverId: server.serverId,
-                modOnly: 0
-            });
-            setNextTempId(n => n - 1);
-            return newList;
-        });
-    }
-
     /**
      * Sorts a list of ICommands. Returns the sorted list
      * Sorts new unsaved commands at the bottom, by id.
@@ -387,20 +264,22 @@ export const ServerSettings: React.FunctionComponent<IServerSettingsProps> = ({
      * @param list the list to sort
      * @returns the sorted list.
      */
-    function sortListOfCommands(list: ICommand[]): ICommand[]
+    function sortListOfResponseGroups(list: IResponseGroup[]): IResponseGroup[]
     {
         let newList = [...list];
+
         newList.sort((a, b) =>
         {
+
             if (a.id < 0 && b.id >= 0) {
                 return 1;
             } else if (b.id < 0 && a.id >= 0) {
                 return -1;
             }
-            if (a.commandString === b.commandString) {
+            if (a.command === b.command) {
                 return a.id - b.id;
             } else {
-                return a.commandString > b.commandString ? 1 : -1;
+                return a.originalCommand > b.originalCommand ? 1 : -1;
             }
         });
         return newList;
@@ -442,205 +321,6 @@ export const ServerSettings: React.FunctionComponent<IServerSettingsProps> = ({
         });
     }
 
-    /**
-     * Checks if commandList needs a new empty command at the end of the list
-     * @returns True if a new command is needed
-     */
-    function needEmptyCommand(): boolean
-    {
-        if (commandList.length === 0 || (
-            commandList[commandList.length - 1].commandString === "" &&
-            commandList[commandList.length - 1].entryValue === "")
-        ) {
-            return true;
-        }
-        return false;
-    }
-
-    /**
-     * Checks that commands are valid and saves them
-     * @param index the index of the command being edited
-     * @param editCallback the callback from the component for the command
-     */
-    async function acceptCommand(index: number, editCallback: Function)
-    {
-        if (Commands.checkCommandValidity(commandList[index].commandString).getHighestErrorLevel() < ErrorLevels.Warning
-            && Commands.checkResponseValidity(commandList[index].entryValue).getHighestErrorLevel() < ErrorLevels.Warning
-            && isNotDuplicatedInList(index)) {
-
-            if (commandList[index].id >= 0) {
-                await Commands.saveCommandEdit(token, commandList[index]).then((success: boolean) =>
-                {
-                    if (success) {
-                        acceptCommandEditSuccessCallback(index);
-                        editCallback();
-                    }
-                    else {
-                        toast('An error ocurred while saving the command. Please Try again.');
-                    }
-                });
-
-            } else {
-                let oldId = commandList[index].id;
-                Commands.postCommand(token, commandList[index]).then((newId: number) =>
-                {
-                    if (newId >= 0) {
-                        acceptCommandPostSuccessCallback(index, newId, oldId);
-                        editCallback();
-                    }
-                    else {
-                        toast('An error ocurred while saving the command. Please Try again.');
-                    }
-                })
-            }
-        }
-    }
-
-    /**
-     * Handles the result of a successful POST of a new command by setting its id 
-     * @param index index of the command in commandList
-     * @param newId the new actual database id.
-     * @param oldId the negative temporary id.
-     */
-    function acceptCommandPostSuccessCallback(index: number, newId: number, oldId: number)
-    {
-        if (newId >= 0) {
-            setCommandList(commandList =>
-            {
-                let newList = [...commandList];
-                newList[index].id = newId;
-                sortListOfCommands(newList);
-
-                return newList;
-            });
-            deleteFromOldCommands(oldId);
-        }
-    }
-
-    /**
-     * Sort the command list and deletes the command from the old commands map.
-     * @param index index of the command
-     */
-    function acceptCommandEditSuccessCallback(index: number)
-    {
-        let id = commandList[index].id;
-        setCommandList(commandList =>
-        {
-            let newList = [...commandList];
-            sortListOfCommands(newList);
-            return newList;
-        });
-        deleteFromOldCommands(id);
-    }
-
-    /**
-     * Delete a command from the old commands map
-     * @param id the id of the command
-     */
-    function deleteFromOldCommands(id: number)
-    {
-        if (oldCommands.has(id)) {
-            setOldCommands(oldCommands =>
-            {
-                let newOldCommands = new Map(oldCommands);
-                newOldCommands.delete(id);
-                return newOldCommands;
-            });
-        }
-    }
-
-    /**
-     * Cancel changes being made to the command
-     * @param index index of the command
-     */
-    function cancelCommand(index: number)
-    {
-        let id = commandList[index].id;
-        if (oldCommands.has(id)) {
-            setCommandList(commandList =>
-            {
-                let newList = [...commandList];
-
-                if (id < 0) {
-                    newList.splice(index, 1);
-                } else {
-                    //not undefined because we checked above
-                    let oldCommand = { ...oldCommands.get(id)! };
-                    newList[index] = oldCommand;
-                }
-                return newList;
-            });
-            setOldCommands(oldCommands =>
-            {
-                let newOldCommands = new Map(oldCommands);
-                newOldCommands.delete(id);
-                return newOldCommands;
-            });
-        }
-    }
-
-    /**
-     * Deletes a command from the commandList, oldCommands, and has the web server delete it.
-     * @param index the index of the command in commandList
-     */
-    async function deleteCommand(index: number)
-    {
-        await Commands.deleteFromList(token, commandList[index].id).then(success =>
-        {
-            if (success) {
-                let id = commandList[index].id;
-                if (oldCommands.has(id)) {
-                    setOldCommands(oldCommands =>
-                    {
-                        let newOldCommands = new Map(oldCommands);
-                        newOldCommands.delete(id);
-                        return newOldCommands;
-                    });
-                }
-                setCommandList(commandList =>
-                {
-                    //not undefined because we checked above
-                    let newList = [...commandList];
-                    newList.splice(index, 1);
-                    return newList;
-                });
-            }
-            else {
-                toast("An error ocurred while deleting the command. Please try again");
-            }
-        });
-    }
-
-    /**
-     * Checks to make sure that there is not an identical command in the list.
-     * @param index the index of the command to check
-     * @returns False if the command is duplicated in the list, true otherwise
-     */
-    function isNotDuplicatedInList(index: number): boolean
-    {
-        //TODO: abstract these away
-        let testCommand = commandList[index];
-        for (let i = 0; i < commandList.length; i++) {
-            if (i === index) {
-                continue;
-            }
-            if (
-                testCommand.commandString === commandList[i].commandString &&
-                testCommand.entryValue === commandList[i].entryValue
-            ) {
-                //TODO: more verbose
-                return false;
-            }
-        }
-        return true;
-    }
-
-    function toggleCommandGroup(e: any)
-    {
-        let checked = e.target.checked as boolean;
-        setShowCommandGroups(checked);
-    }
-
     return (
         <LoadingMessage loading={loading}>
 
@@ -657,71 +337,23 @@ export const ServerSettings: React.FunctionComponent<IServerSettingsProps> = ({
                 serverFunctions={serverFunctions}
             />
             <div className="betweenDiv20" />
-            <form>
-                <label className="_inputText _checkboxLabel">
-                    {"Show Command Group"}
-                    <input type="checkbox" className={"_formInput _commandInput "} checked={showCommandGroups} onChange={toggleCommandGroup} />
-                </label>
-            </form>
-            {showCommandGroups ?
-                <ResponseGroupList responseGroupList={responseGroupList}
-                    commandPrefix={server.commandPrefix || "!"}
-                    userCanEdit={server.userCanManage}
-                    callbackFunctions={
-                        {
-                            expandGroup: expandGroup,
-                            expandAllGroups: expandAllGroups,
-                            handleResponseUpdate: handleResponseUpdate,
-                            handleResponseGroupUpdate: handleResponseGroupUpdate,
-                            handleResponseGroupAccept: handleResponseGroupAccept
-                        }
+
+            <ResponseGroupList responseGroupList={responseGroupList}
+                commandPrefix={server.commandPrefix || "!"}
+                userCanEdit={server.userCanManage}
+                callbackFunctions={
+                    {
+                        expandGroup: expandGroup,
+                        expandAllGroups: expandAllGroups,
+                        handleResponseUpdate: handleResponseUpdate,
+                        handleResponseGroupUpdate: handleResponseGroupUpdate,
+                        handleResponseGroupAccept: handleResponseGroupAccept
                     }
-                /> :
-                <CommandList
-                    commands={commandList}
-                    commandRowFunctions={{ updateCommand: handleCommandUpdate, acceptCommand: acceptCommand, cancelCommand: cancelCommand, deleteCommand: deleteCommand }}
-                    userCanEdit={server.userCanManage}
-                    restrictedCommands={restrictedCommands}
-                    commandPrefix={server.commandPrefix || "!"}
-                />}
+                }
+            />
+
 
         </LoadingMessage >
-    );
-};
-
-interface CommandListProps
-{
-    commands: ICommand[];
-    commandRowFunctions: ICommandRowFunctions;
-    userCanEdit: boolean;
-    restrictedCommands: string[];
-    commandPrefix: string;
-}
-
-export const CommandList: React.FunctionComponent<CommandListProps> = ({
-    commands,
-    commandRowFunctions,
-    userCanEdit,
-    restrictedCommands,
-    commandPrefix,
-}) =>
-{
-    return (
-        <div>
-            <ul className="_commandList">
-                {commands.map((cmd, index) => (
-                    <CommandRow
-                        key={cmd.id}
-                        index={index}
-                        command={cmd}
-                        commandRowFunctions={commandRowFunctions}
-                        userCanEdit={userCanEdit}
-                        restrictedCommands={restrictedCommands}
-                        commandPrefix={commandPrefix}
-                    />
-                ))}
-            </ul>
-        </div>
     );
 };
 
