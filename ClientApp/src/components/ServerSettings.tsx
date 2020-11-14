@@ -168,6 +168,12 @@ export const ServerSettings: React.FunctionComponent<IServerSettingsProps> = ({
         groupToAccept.setEditMode(false);
         groupToAccept.originalCommand = groupToAccept.command;
 
+        setOriginalGroups(origGroups =>
+        {
+            let newOrigGroups = new Map(origGroups);
+            newOrigGroups.delete(groupToAccept!.id);
+            return newOrigGroups;
+        })
 
         setResponseGroupList(rgl =>
         {

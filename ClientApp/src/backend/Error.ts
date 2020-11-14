@@ -46,6 +46,8 @@ export class Error implements IError
 export class Errors
 {
     errors: IError[] = [];
+    highestErrorLevel: number;
+    highestErrorLevelStale: boolean;
     constructor(input?: IError | IError[])
     {
         if (input) {
@@ -56,6 +58,8 @@ export class Errors
                 this.errors.push(input as IError);
             }
         }
+        this.highestErrorLevel = 0;
+        this.highestErrorLevelStale = true;
     }
 
     addErrors(input?: IError | IError[] | Errors)
@@ -70,16 +74,23 @@ export class Errors
             else {
                 this.errors.push(input as IError);
             }
+            this.highestErrorLevelStale = true;
         }
+
     }
 
     getHighestErrorLevel(): number
     {
-        let highest = 0;
-        for (let e of this.errors) {
-            highest = highest < e.errorLevel ? e.errorLevel : highest;
+        if (this.highestErrorLevelStale) {
+            let highest = 0;
+            for (let e of this.errors) {
+                highest = highest < e.errorLevel ? e.errorLevel : highest;
+            }
+            this.highestErrorLevel = highest;
+            this.highestErrorLevelStale = false;
         }
-        return highest;
+
+        return this.highestErrorLevel;
     }
 
     toErrorMessage(): string
