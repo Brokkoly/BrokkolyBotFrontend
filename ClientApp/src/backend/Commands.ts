@@ -1,4 +1,5 @@
-﻿import { CommandValidationError, Errors, IError, ValueValidationError } from "./Error";
+﻿import { promises } from "dns";
+import { CommandValidationError, Errors, IError, ValueValidationError } from "./Error";
 import { Servers } from "./Servers";
 
 export class Commands
@@ -179,6 +180,115 @@ export class Commands
         }
     }
 
+    public static async putNewCommands(token: string, listToPut: ICommand[]): Promise<Map<number, number>>
+    {
+        let fetchUrl = `/api/Commands/PutResponses?token=${token}`;
+        let bodyJSON = JSON.stringify(
+            {
+                commands:
+                    listToPut.map(command =>
+                    {
+                        return {
+                            id: command.id,
+                            serverId: command.serverId,
+                            commandString: command.commandString,
+                            entryValue: command.entryValue,
+                            modOnly: command.modOnly
+                        }
+                    })
+            });
+
+        return fetch(
+            fetchUrl,
+            {
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                method: 'PUT',
+                body: bodyJSON
+            }).then(response => response.json())
+            .then(data =>
+            {
+                let retMap = new Map<number, number>();
+                for (let key in data) {
+
+                    retMap.set(Number.parseInt(key), data[key]);
+                }
+                return retMap;
+            });
+    }
+    public static async postCommands(token: string, listToPost: ICommand[]): Promise<boolean>
+    {
+        let fetchUrl = `/api/Commands/PostResponses?token=${token}`;
+        let bodyJSON = JSON.stringify(
+            {
+                commands:
+                    listToPost.map(command =>
+                    {
+                        return {
+                            id: command.id,
+                            serverId: command.serverId,
+                            commandString: command.commandString,
+                            entryValue: command.entryValue,
+                            modOnly: command.modOnly
+                        }
+                    })
+            });
+
+        return fetch(
+            fetchUrl,
+            {
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                method: 'POST',
+                body: bodyJSON
+            }).then(response =>
+            {
+                if (response.status === 200) {
+                    return true;
+                }
+                return false;
+            });
+    }
+
+    public static async deleteCommands(token: string, idsToDelete: number[]): Promise<Map<number, boolean>>
+    {
+        let fetchUrl = `/api/Commands/DeleteResponses?token=${token}`;
+        idsToDelete.forEach(id =>
+        {
+            fetchUrl = fetchUrl + `&ids=${id}`;
+        });
+        return fetch(
+            fetchUrl,
+            {
+                headers: {
+                    //'Content-Type': 'application/json',
+                },
+                method: 'DELETE',
+            }).then(response => response.json())
+            .then(data =>
+            {
+                let retMap = new Map<number, boolean>();
+                for (let key in data) {
+
+                    retMap.set(Number.parseInt(key), data[key]);
+                }
+                return retMap;
+            });
+    }
+
+
+    //body: JSON.stringify({
+    //    command: {
+    //        ServerId: command.serverId,
+    //        CommandString: command.commandString,
+    //        EntryValue: command.entryValue,
+    //        ModOnly: command.modOnly
+    //    },
+    //    token: token
+    //})
+
     /**
      * Checks if the command string is valid
      * @param command the commandValue string to check
@@ -240,14 +350,9 @@ export class Commands
         return groupListToSearch.findIndex(grp => grp.id === id);
     }
 
-    public static deepCopyResponseList(groups: IResponseGroup[]): IResponseGroup[]
+    public static copyResponseGroupList(groups: IResponseGroup[]): IResponseGroup[]
     {
-        let retGrpLst: IResponseGroup[] = [];
-        groups.forEach(group =>
-        {
-            retGrpLst.push(group.copy());
-        });
-        return retGrpLst;
+        return [...groups];
     }
 
 
@@ -256,40 +361,60 @@ export class Commands
         let groupIndex = Commands.findResponseGroupIndex(args.groupId, groupsToUpdate);
         let responseIndex = groupsToUpdate[groupIndex].findResponse({ id: args.id }).index;
         let len = groupsToUpdate[groupIndex].responses.length;
-        let retGrpLst = Commands.deepCopyResponseList(groupsToUpdate);
+        let retGrpLst = [...groupsToUpdate];
+        let groupToUpdate = groupsToUpdate[groupIndex];
+        let responseToUpdate = groupToUpdate.responses[responseIndex];
 
-        if (responseIndex === len - 1 && groupsToUpdate[groupIndex].responses[responseIndex].response !== "") {
-            retGrpLst[responseIndex].insertNewResponseAtEnd(tempId);
-        }
+
         if (args.newModOnlyValue !== undefined) {
-            retGrpLst[groupIndex].responses[responseIndex].modOnly = args.newModOnlyValue;
+            responseToUpdate.modOnly = args.newModOnlyValue;
+            responseToUpdate.edited = true;
         }
         if (args.newResponse !== undefined) {
-            retGrpLst[groupIndex].responses[responseIndex].response = args.newResponse;
+            responseToUpdate.response = args.newResponse;
+            responseToUpdate.edited = true;
         }
         if (args.deleted !== undefined) {
-            retGrpLst[groupIndex].responses[responseIndex].deleted = args.deleted;
+            responseToUpdate.deleted = args.deleted;
+        }
+        if (responseIndex === len - 1 && groupToUpdate.responses[responseIndex].response !== "") {
+            groupToUpdate.insertNewResponseAtEnd(tempId);
         }
 
         return retGrpLst;
     }
 
-    public static handleResponseGroupUpdate(args: IUpdateResponseGroupProps, groupsToUpdate: IResponseGroup[], tempId: number)
+    /**
+     * Updates the entire response group
+     * @param args
+     * @param groupsToUpdate
+     * @param tempId
+     * @param userCanManage
+     */
+    public static handleResponseGroupUpdate(args: IUpdateResponseGroupProps, groupsToUpdate: IResponseGroup[], tempId: number, userCanManage: boolean)
     {
-        let newGroups = Commands.deepCopyResponseList(groupsToUpdate);
+        let newGroups = [...groupsToUpdate];
         let groupToUpdate = newGroups.find(grp => grp.id === args.id);
         if (!groupToUpdate) {
             return groupsToUpdate;
         }
-        if (args.newCommand !== undefined) {
-            groupToUpdate.updateCommand(args.newCommand);
-        }
-        if (args.newEditModeStatus !== undefined) {
-            groupToUpdate.setEditMode(args.newEditModeStatus);
-        }
         if (args.newExpandStatus !== undefined) {
             groupToUpdate.setExpanded(args.newExpandStatus);
         }
+        if (userCanManage) {
+
+            if (args.newCommand !== undefined) {
+                groupToUpdate.updateCommand(args.newCommand);
+            }
+            if (args.newEditModeStatus !== undefined) {
+                groupToUpdate.setEditMode(args.newEditModeStatus);
+            }
+
+            if (groupToUpdate.inEditMode && groupToUpdate.expanded && groupToUpdate.needsEmptyEntry()) {
+                groupToUpdate.insertNewResponseAtEnd(tempId);
+            }
+        }
+
 
         return newGroups;
     }
@@ -341,10 +466,12 @@ export interface IResponse extends IResponseConstructorArgs
     modOnly: number;
     response: string;
     deleted: boolean;
+    edited: boolean;
     errors: Errors;
     copy(): IResponse;
     update(args: IUpdateResponseProps): void
     validate(): Errors;
+
 }
 
 export class Response implements IResponse
@@ -354,6 +481,7 @@ export class Response implements IResponse
     response = "";
     errors: Errors;
     deleted: boolean;
+    edited: boolean;
     constructor(args: IResponseConstructorArgs)
     {
         this.id = args.id;
@@ -361,6 +489,7 @@ export class Response implements IResponse
         this.modOnly = args.modOnly || 0;
         this.errors = new Errors();
         this.deleted = false;
+        this.edited = false;
     }
 
     validate(): Errors
@@ -384,6 +513,7 @@ export class Response implements IResponse
         let retResponse = new Response({ id: this.id, response: this.response, modOnly: this.modOnly });
         retResponse.errors = this.errors;
         retResponse.deleted = this.deleted;
+        retResponse.edited = this.edited;
         return retResponse;
     }
 }
@@ -419,7 +549,7 @@ export interface IResponseGroup
 
     copy(): IResponseGroup;
     findResponse(args: IFindResponseArgs): IResponseReturn;
-    lastEntryIsEmpty(): boolean;
+    needsEmptyEntry(): boolean;
     insertNewResponseAtEnd(tempId: number): void;
     setExpanded(expanded: boolean): void;
     setEditMode(editMode: boolean): void;
@@ -519,7 +649,7 @@ export class ResponseGroup implements IResponseGroup
     /**
      * Checks if the last response is empty or if it is does not have a temporary id
      */
-    lastEntryIsEmpty(): boolean
+    needsEmptyEntry(): boolean
     {
         return (this.responses[this.responses.length - 1].response !== "") || (this.responses[this.responses.length - 1].id >= 0);
     }

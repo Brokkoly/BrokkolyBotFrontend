@@ -172,6 +172,9 @@
     text-align: left;
     outline: none;
     font-size: 15px;
+    display: inline-flex;
+    flex-direction: row;
+    justify-content: space-between;
 }
 
     ._collapsible:hover {
@@ -194,6 +197,11 @@
     text-align: left;
     margin-bottom: 3px;
     align-content: center;
+    padding-right: 6px;
+    padding-left: 6px;
+    display: inline-flex;
+    flex-direction: row;
+    text-align: left;
 }
 
 ._modOnlyButton {

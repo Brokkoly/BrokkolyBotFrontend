@@ -1,6 +1,7 @@
 ﻿import React, { CSSProperties, useEffect, useState } from "react";
 import { Next } from "react-bootstrap/lib/Pagination";
 import { toast } from "react-toastify";
+import { InputGroupText } from "reactstrap";
 import { Commands, ICommand, IResponseGroup, ResponseGroup, IUpdateResponseProps, IUpdateResponseGroupProps } from "../backend/Commands";
 import { ErrorLevels, Errors } from "../backend/Error";
 import { IChannel, IRole, IServer, IServerInfo, Servers } from "../backend/Servers";
@@ -83,14 +84,14 @@ export const ServerSettings: React.FunctionComponent<IServerSettingsProps> = ({
                 }
                 setCommandList(sortListOfCommands(newCommandList));
                 let newResponseGroupList = await newResponseGroupTask;
-                if (server.userCanManage) {
-                    newResponseGroupList.forEach(async (grp) =>
-                    {
-                        let temp = nextTempId;
-                        grp.insertNewResponseAtEnd(temp);
-                        setNextTempId(tmp => tmp++);
-                    });
-                }
+                //if (server.userCanManage) {
+                //    newResponseGroupList.forEach(async (grp) =>
+                //    {
+                //        let temp = nextTempId;
+                //        grp.insertNewResponseAtEnd(temp);
+                //        setNextTempId(tmp => tmp++);
+                //    });
+                //}
                 setResponseGroupList(newResponseGroupList);
                 const serverInfo: IServerInfo = await getGuildInfoTask;
                 setServerRoles(serverInfo.roles);
@@ -156,6 +157,92 @@ export const ServerSettings: React.FunctionComponent<IServerSettingsProps> = ({
         });
     }
 
+    async function handleResponseGroupAccept(groupId: number)
+    {
+
+        let groupToAccept = responseGroupList.find(grp => grp.id === groupId);
+        if (groupToAccept === undefined) {
+            return;
+        }
+        groupToAccept = groupToAccept.copy();
+
+        let newResponsesList = [...groupToAccept.responses];
+        let newResponses: ICommand[] = [];
+        let deletedResponseIds: number[] = [];
+        let editedResponses: ICommand[] = [];
+        groupToAccept.responses.forEach((resp, index) =>
+        {
+            if (resp.id < 0) {
+                //Created
+                if (resp.deleted || resp.response === "") {
+                    //don't keep it around;
+                    newResponsesList = newResponsesList.filter(obj => obj !== resp);
+                }
+                else {
+                    newResponses.push(
+                        {
+                            id: resp.id,
+                            serverId: server.serverId,
+                            commandString: groupToAccept!.command,
+                            entryValue: resp.response,
+                            modOnly: resp.modOnly,
+                            updated: resp.edited,
+                        }
+                    );
+                }
+            }
+            else if (resp.deleted) {
+                deletedResponseIds.push(resp.id);
+            }
+            else if (resp.edited) {
+                editedResponses.push(
+                    {
+                        id: resp.id,
+                        serverId: server.serverId,
+                        commandString: groupToAccept!.command,
+                        entryValue: resp.response,
+                        modOnly: resp.modOnly,
+                        updated: resp.edited,
+                    }
+                );
+            }
+        });
+        let putTask = Commands.putNewCommands(token, newResponses);
+        let deleteTask = Commands.deleteCommands(token, deletedResponseIds);
+        let postTask = Commands.postCommands(token, editedResponses);
+
+        let newIdMap = await putTask;
+        let deletedMap = await deleteTask;
+        newIdMap.forEach((newId, oldId) =>
+        {
+            let respToEdit = newResponsesList.find(resp => resp.id === oldId);
+            if (respToEdit) {
+                respToEdit.id = newId;
+            }
+        });
+        newResponsesList = newResponsesList.filter(resp =>
+        {
+            return !(deletedMap.has(resp.id) && deletedMap.get(resp.id));
+        });
+        if (!(await postTask)) {
+
+        }
+        groupToAccept.responses = newResponsesList;
+
+        groupToAccept.setEditMode(false);
+
+
+        setResponseGroupList(rgl =>
+        {
+            let newRGL = [...rgl];
+            let index = newRGL.findIndex(grp => grp.id === groupToAccept!.id);
+            newRGL[index] = groupToAccept!;
+            return newRGL;
+        });
+
+
+    }
+
     //async function handleCommandUpdateMap(args: IUpdateCommandPropsMap)
     //{
     //    let index = args.index;
@@ -189,6 +276,7 @@ export const ServerSettings: React.FunctionComponent<IServerSettingsProps> = ({
     async function handleResponseGroupUpdate(args: IUpdateResponseGroupProps)
     {
         let tempId = nextTempId;
+        setNextTempId(nextTempId - 1);
         if (args.revert) {
             if (originalGroups.has(args.id)) {
                 let original = originalGroups.get(args.id);
@@ -200,9 +288,8 @@ export const ServerSettings: React.FunctionComponent<IServerSettingsProps> = ({
                 });
                 setResponseGroupList(rgl =>
                 {
-                    let newRGL = Commands.deepCopyResponseList(rgl);
-                    let index = Commands.findResponseGroupIndex(args.id, newRGL
-                    );
+                    let newRGL = [...rgl];
+                    let index = Commands.findResponseGroupIndex(args.id, newRGL);
                     if (index !== -1) {
                         let oldExpandStatus = newRGL[index].expanded;
                         newRGL[index] = original!;
@@ -213,11 +300,6 @@ export const ServerSettings: React.FunctionComponent<IServerSettingsProps> = ({
             }
         }
         else {
-
-            setNextTempId(nti =>
-            {
-                return nti--;
-            });
             await setOriginalGroups(origGrp =>
             {
                 let groupIndex = Commands.findResponseGroupIndex(args.id, responseGroupList);
@@ -234,7 +316,7 @@ export const ServerSettings: React.FunctionComponent<IServerSettingsProps> = ({
             });
             setResponseGroupList(rgl =>
             {
-                return Commands.handleResponseGroupUpdate(args, rgl, tempId);
+                return Commands.handleResponseGroupUpdate(args, rgl, tempId, server.userCanManage);
             });
         }
 
@@ -591,7 +673,7 @@ export const ServerSettings: React.FunctionComponent<IServerSettingsProps> = ({
                             expandAllGroups: expandAllGroups,
                             handleResponseUpdate: handleResponseUpdate,
                             handleResponseGroupUpdate: handleResponseGroupUpdate,
-
+                            handleResponseGroupAccept: handleResponseGroupAccept
                         }
                     }
                 /> :

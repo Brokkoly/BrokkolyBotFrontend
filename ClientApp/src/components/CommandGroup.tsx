@@ -11,6 +11,7 @@ interface IResponseGroupFunctions
     expandAllGroups(expanded: boolean): void;
     handleResponseUpdate(args: IUpdateResponseProps): void;
     handleResponseGroupUpdate(args: IUpdateResponseGroupProps): void;
+    handleResponseGroupAccept(groupId: number): void;
 }
 
 
@@ -72,10 +73,10 @@ export const ResponseRowButtons: React.FunctionComponent<{
         return (
             <>
                 <button className={"_modOnlyButton " + Helpers.stringIf("_notModOnly ", !response.modOnly)} onClick={handleChangeModOnly} disabled={!inEditMode || response.deleted}>
-                    <img className="_modOnlyIcon" src={ModOnly} alt="Mod Only" />
+                    <img className="_modOnlyIcon" src={ModOnly} title="Mod Only" alt="Mod Only" />
                 </button>
                 <button type="button"
-                    className={"_formButton " + response.deleted ? "_cancelButton " : "_deleteButton "}
+                    className={"_formButton " + (response.deleted ? "_cancelButton " : "_deleteButton ")}
                     onClick={response.deleted ? handleUnDeleteClicked : handleDeleteClicked}>
                     {response.deleted ? "Undo" : "Delete"}
                 </button>
@@ -115,11 +116,15 @@ export const ResponseGroup: React.FunctionComponent<{
         function handleAcceptClicked(e: any)
         {
             e.stopPropagation();
+            callbackFunctions.handleResponseGroupAccept(responseGroup.id);
         }
         function handleDeleteClicked(e: any)
         {
             e.stopPropagation();
+            callbackFunctions.handleResponseGroupUpdate({
+                id: responseGroup.id,
 
+            })
         }
         function handleCommandAreaClicked(e: any)
         {
@@ -147,33 +152,46 @@ export const ResponseGroup: React.FunctionComponent<{
         return (
             <form>
                 <div className="_collapsible _commandPrefix" onClick={handleExpandClicked}>
-                    {
-                        (responseGroup.inEditMode ?
-
-                            (<>
-                                <span className="_commandPrefix">{commandPrefix}</span>
-                                <input
-                                    title={responseGroup.commandErrors.toErrorMessage() || undefined}
-                                    type="text"
-                                    className={"_formInput _commandInput " + responseGroup.commandErrors.getCssForError()}
-                                    value={responseGroup.command}
-                                    onChange={handleChangeCommand}
-                                    onClick={handleCommandAreaClicked}
-                                />
-                            </>) : <span className={"_commandPrefix " + Helpers.stringIf("_deletedText ", responseGroup.deleted)}>{(commandPrefix + responseGroup.command)}</span>
-                        )
-                    }
-                    <button type="button" className="_formButton _deleteButton" onClick={handleDeleteClicked}>
-                        Delete
-                    </button>
-                    <button type="button" className={"_formButton _cancelButton " + Helpers.nodispIf(!responseGroup.inEditMode)} onClick={handleRevertClicked}>
-                        Revert
-                    </button>
-                    <button type="button" className="_formButton _acceptButton" onClick={responseGroup.inEditMode ? handleAcceptClicked : handleEditClicked}>
+                    <div>
                         {
-                            responseGroup.inEditMode ? "Accept" : "Edit"
+                            (responseGroup.inEditMode ?
+
+                                (<>
+
+                                    <span className="_commandPrefix">{commandPrefix}</span>
+                                    <input
+                                        title={responseGroup.commandErrors.toErrorMessage() || undefined}
+                                        type="text"
+                                        className={"_formInput _commandInput " + responseGroup.commandErrors.getCssForError()}
+                                        value={responseGroup.command}
+                                        onChange={handleChangeCommand}
+                                        onClick={handleCommandAreaClicked}
+                                    />
+                                </>) : <span className={"_commandPrefix " + Helpers.stringIf("_deletedText ", responseGroup.deleted)}>{(commandPrefix + responseGroup.command)}</span>
+                            )
                         }
+                    </div>
+                    <div>
+                        <button type="button"
+                            className="_formButton _deleteButton"
+                            onClick={handleDeleteClicked}>
+                            Delete
                     </button>
+                        <button type="button"
+                            className={"_formButton _cancelButton " + Helpers.nodispIf(!responseGroup.inEditMode)}
+                            onClick={handleRevertClicked}
+                        >
+                            Revert
+                    </button>
+                        <button type="button"
+                            className="_formButton _acceptButton"
+                            onClick={responseGroup.inEditMode ? handleAcceptClicked : handleEditClicked}
+                        >
+                            {
+                                responseGroup.inEditMode ? "Accept" : "Edit"
+                            }
+                        </button>
+                    </div>
                 </div>
                 <div className={"_flexColumn " + Helpers.stringIf("_collapsed", !Boolean(responseGroup.expanded))}>
                     <ul className="_commandList">
@@ -217,7 +235,7 @@ export const ResponseGroupList: React.FunctionComponent<{
 }> = ({ responseGroupList, callbackFunctions, commandPrefix }) =>
     {
         return (
-            <ul>
+            <ul className="_commandList">
                 {responseGroupList.map(group => (
                     <ResponseGroup
                         key={group.originalCommand}
