@@ -677,7 +677,7 @@ export class ResponseGroup implements IResponseGroup
             }
 
         });
-        let level = this.getCommandValidity().getHighestErrorLevel();
+        let level = this.checkCommandValidity().getHighestErrorLevel();
         if (level > highestErrorLevel) {
             highestErrorLevel = level;
         }
