@@ -67,26 +67,26 @@ export class Servers
         });
         return { roles: rolesTransformed, channels: channelsTransformed };
     }
-    public static async getUserRolesInGuild(token: string, serverId: string): Promise<IRole[]>
-    {
-        //TODO: is this necessary? maybe only to make sure the user doesn't remove their own permissions?
-        const result = await fetch(
-            `/api/Discord/GetRolesForUser?token=${token}&serverId=${serverId}`
-        );
-        const text = await result.text();
-        const roles = await JSON.parse(text.replace(/("[^"]*"\s*:\s*)(\d{16,})/g, '$1"$2"'));
-        //TODO: make this better
-        const rolesTransformed: IRole[] = roles.map((rle: any) => 
-        {
-            return {
-                id: rle.id,
-                name: rle.name,
-                color: rle.color,
-                position: rle.postition,
-            }
-        });
-        return rolesTransformed;
-    }
+
+    //public static async getUserRolesInGuild(token: string, serverId: string): Promise<IRole[]>
+    //{
+    //    //TODO: is this necessary? maybe only to make sure the user doesn't remove their own permissions?
+    //    const result = await fetch(
+    //        `/api/Discord/GetRolesForUser?token=${token}&serverId=${serverId}`
+    //    );
+    //    const text = await result.text();
+    //    const roles = await JSON.parse(text.replace(/("[^"]*"\s*:\s*)(\d{16,})/g, '$1"$2"'));
+    //    const rolesTransformed: IRole[] = roles.map((rle: any) => 
+    //    {
+    //        return {
+    //            id: rle.id,
+    //            name: rle.name,
+    //            color: rle.color,
+    //            position: rle.postition,
+    //        }
+    //    });
+    //    return rolesTransformed;
+    //}
 
     public static async putServerEdit(token: string, server: IServer)
     {

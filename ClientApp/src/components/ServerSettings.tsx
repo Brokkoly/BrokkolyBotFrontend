@@ -75,9 +75,7 @@ export const ServerSettings: React.FunctionComponent<IServerSettingsProps> = ({
                     setNextTempId(nextTempId - 2);
                     let newRespGroup = new ResponseGroup(nextId, "", [], true);
                     newRespGroup.insertNewResponseAtEnd(nextRespId);
-                    newResponseGroupList.responseGroups.push(newRespGroup);//TODO: add a function to add a new group instead of manually pushing
-
-
+                    newResponseGroupList.addGroup(newRespGroup);
                 }
                 setResponseGroupList(newResponseGroupList);
                 const serverInfo: IServerInfo = await getGuildInfoTask;
@@ -89,9 +87,13 @@ export const ServerSettings: React.FunctionComponent<IServerSettingsProps> = ({
             fetchData(server.serverId);
 
         },
-        [server.serverId, server.userCanManage, token]
+        [server.serverId, server.userCanManage, token] //TODO: figure out what this needs
     );
 
+    /**
+     * Handles saving the edits to a response group
+     * @param groupId
+     */
     async function handleResponseGroupAccept(groupId: number)
     {
         let groupToAccept = responseGroupList.findResponseGroup(groupId);
@@ -188,7 +190,10 @@ export const ServerSettings: React.FunctionComponent<IServerSettingsProps> = ({
 
     }
 
-
+    /**
+     * Handles an update to a response group, and adds the group to originalGroups if it is not already there.
+     * @param args
+     */
     async function handleResponseGroupUpdate(args: IUpdateResponseGroupProps)
     {
         let tempId = nextTempId;
@@ -242,6 +247,10 @@ export const ServerSettings: React.FunctionComponent<IServerSettingsProps> = ({
 
     }
 
+    /**
+     * Updates a single response, and adds the group to originalGroups if it has not been edited before.
+     * @param args 
+     */
     async function handleResponseUpdate(args: IUpdateResponseProps)
     {
         let tempId = nextTempId;
@@ -301,7 +310,10 @@ export const ServerSettings: React.FunctionComponent<IServerSettingsProps> = ({
         return newList;
     }
 
-
+    /**
+     * Expand all response groups
+     * @param expanded true for expanded, false otherwise
+     */
     function expandAllGroups(expanded: boolean)
     {
         setResponseGroupList(rgl =>
@@ -312,6 +324,11 @@ export const ServerSettings: React.FunctionComponent<IServerSettingsProps> = ({
         });
     }
 
+    /**
+     * Expand a single response group
+     * @param groupId the id of the group to expand
+     * @param expanded true for expanded, false otherwise
+     */
     function expandGroup(groupId: number, expanded: boolean)
     {
         setResponseGroupList(rgl =>

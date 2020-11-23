@@ -43,6 +43,7 @@ export class Response implements IResponse
     errors: Errors;
     deleted: boolean;
     edited: boolean;
+
     constructor(args: IResponseConstructorArgs)
     {
         this.id = args.id;
@@ -53,6 +54,13 @@ export class Response implements IResponse
         this.edited = false;
     }
 
+    
+
+    /**
+     * Validates the response and checks that it is not a duplicate
+     * @param allResponses
+     * @returns this.errors for convenience
+     */
     validate(allResponses: IResponse[]): Errors
     {
         this.errors = Commands.checkResponseValidity(this.response);
@@ -64,7 +72,10 @@ export class Response implements IResponse
     }
 
 
-
+    /**
+     * Updates the response's editable values
+     * @param args properties to update
+     */
     update(args: IUpdateResponseProps)
     {
         if (args.newResponse !== undefined) {
@@ -75,6 +86,10 @@ export class Response implements IResponse
         }
     }
 
+    /**
+     * Copy function for the response class
+     * @returns a copy of the response
+     */
     copy(): IResponse
     {
         let retResponse = new Response({ id: this.id, response: this.response, modOnly: this.modOnly });
@@ -116,7 +131,10 @@ export interface IResponseGroupList extends IResponseGroupListProps
     handleResponseUpdate(args: IUpdateResponseProps, tempId: number): void
     handleResponseGroupUpdate(args: IUpdateResponseGroupProps, tempId: number, userCanManage: boolean): void;
     validate(idToValidate?: number): void;
+    addGroup(group: IResponseGroup): void;
     expandAllGroups(expanded: boolean): void;
+    sort(): void;
+
 }
 
 /**
@@ -131,7 +149,42 @@ export class ResponseGroupList implements IResponseGroupList
         this.responseGroups = [...oldRGL.responseGroups];
     }
 
+    /*
+     * Sorts the list of response groups alphabetically by command, with temporary/new commands at the bottom of the list
+     */
+    sort(): void
+    {
+        //TODO: add unit tests for this
+        this.responseGroups.sort((a, b) =>
+        {
+            if (a.id < 0 && b.id >= 0) {
+                return 1;
+            }
+            else if (b.id < 0 && a.id > 0) {
+                return -1;
+            }
+            if (a.command === b.command) {
+                return a.id - b.id;
+            }
+            else {
+                return a.originalCommand > b.originalCommand ? 1 : -1;
+            }
+        });
+    }
 
+    /**
+     * Adds a group to responseGroups
+     * @param group
+     */
+    addGroup(group: IResponseGroup): void
+    {
+        this.responseGroups.push(group);
+    }
+
+    /**
+     * Sets the expansion of all groups based on expanded
+     * @param expanded true for expanded, false otherwise
+     */
     expandAllGroups(expanded: boolean): void
     {
         this.responseGroups.forEach(grp =>
@@ -141,11 +194,14 @@ export class ResponseGroupList implements IResponseGroupList
         });
     }
 
-
+    /**
+     * Validate a single group or all groups
+     * @param idToValidate if not undefined, this will be the id of the group to validate
+     */
     validate(idToValidate?: number): void
     {
         if (idToValidate === undefined) {
-            //Do validation on everything?
+            //TODO: Do validation on everything?
         }
         else {
             let groupToValidate = this.responseGroups[this.findResponseGroupIndex(idToValidate)];
@@ -163,9 +219,12 @@ export class ResponseGroupList implements IResponseGroupList
         }
     }
 
+    /**
+     * Get the index of a response.
+     * @param args args.groupId is required, and args.id is also required
+     */
     findResponseIndex(args: IFindResponseIndexArgs): number
     {
-        //TODO: call a method on the individual group.
         let groupIndex = this.findResponseGroupIndex(args.groupId);
 
         if (groupIndex === -1) {
@@ -174,21 +233,37 @@ export class ResponseGroupList implements IResponseGroupList
         return this.responseGroups[groupIndex].findResponse({ id: args.id }).index;
     }
 
+    /**
+     * Get the index of a response group
+     * @param id the id of the group to find
+     */
     findResponseGroupIndex(id: number): number
     {
         return this.responseGroups.findIndex(grp => grp.id === id);
     }
 
+    /**
+     * Get the response group with the specified id
+     * @param id the id of the group to find
+     */
     findResponseGroup(id: number): IResponseGroup | undefined
     {
         return this.responseGroups.find(grp => grp.id === id);
     }
 
+    /*
+     * A shallow copy of the group list. Creates a new object and new array of the groups
+     */
     copy(): IResponseGroupList
     {
         return new ResponseGroupList(this);
     }
 
+    /**
+     * Update the response based on the values provided in args
+     * @param args 
+     * @param tempId a temporary id to assign to things that are created here.
+     */
     handleResponseUpdate(args: IUpdateResponseProps, tempId: number): void
     {
         let groupIndex = this.findResponseGroupIndex(args.groupId);
@@ -215,6 +290,12 @@ export class ResponseGroupList implements IResponseGroupList
         }
     }
 
+    /**
+     * 
+     * @param args
+     * @param tempId a temporary id to assign to things that are created here. May consume three ids
+     * @param userCanManage
+     */
     handleResponseGroupUpdate(args: IUpdateResponseGroupProps, tempId: number, userCanManage: boolean): void
     {
         this.responseGroups = [...this.responseGroups];
@@ -240,7 +321,7 @@ export class ResponseGroupList implements IResponseGroupList
             if (this.responseGroups[this.responseGroups.length - 1].command !== "") {
                 let newRespGroup = new ResponseGroup(tempId - 1, "", [], true);
                 newRespGroup.insertNewResponseAtEnd(tempId - 2);
-                this.responseGroups.push(newRespGroup);
+                this.addGroup(newRespGroup);
             }
         }
     }
@@ -259,7 +340,6 @@ export interface IResponseGroup
     inEditMode: boolean;
     commandErrors: Errors;
     groupErrors: Errors[];
-
 
     copy(): IResponseGroup;
     findResponse(args: IFindResponseArgs): IResponseReturn;
@@ -319,8 +399,13 @@ export class ResponseGroup implements IResponseGroup
 
     }
 
+    /**
+     * Finds the response based on the value of the response or the id of the response
+     * @param args
+     */
     findResponse(args: IFindResponseArgs): IResponseReturn
     {
+        //TODO: make the responseReturn stuff for every find function or just make two functions
         let index = -1;
         let retResponse: IResponse | undefined = undefined;
         if (args.id !== undefined) {
@@ -335,22 +420,38 @@ export class ResponseGroup implements IResponseGroup
         return { index: index, response: retResponse };
     }
 
+    /**
+     * Gets the cached errors associated with the command
+     * @returns this.commandErrors
+     */
     getCommandValidity(): Errors
     {
         return this.commandErrors;
     }
 
+    /**
+     * Runs validation for the command
+     * @returns this.commandErrors
+     */
     checkCommandValidity(): Errors
     {
         this.commandErrors = Commands.checkCommandValidity(this.command);
         return this.commandErrors;
     }
 
+    /**
+     * Gets a list of errors for the responses
+     * @returns this.groupErrors
+     */
     getGroupValidity(): Errors[]
     {
         return this.groupErrors;
     }
 
+    /**
+     * Runs validation for the responses
+     * @returns this.groupErrors
+     */
     checkGroupValidity(markLastEmptyTempInvalid: boolean = false): Errors[]
     {
         if (this.responses === undefined) {
@@ -368,6 +469,10 @@ export class ResponseGroup implements IResponseGroup
         return retErrors;
     }
 
+    /**
+     * Gets the highest error level of the group and command.
+     * @returns a member of ErrorLevels
+     */
     checkHighestErrorLevel(): number
     {
         let highestErrorLevel = 0;
@@ -394,14 +499,22 @@ export class ResponseGroup implements IResponseGroup
         return this.responses.length === 0 || (this.responses[this.responses.length - 1].response !== "") || (this.responses[this.responses.length - 1].id >= 0);
     }
 
+    /**
+     * Sets the expanded property to the value of expanded
+     * @param expanded
+     */
     setExpanded(expanded: boolean)
     {
         this.expanded = expanded;
     }
 
-    setEditMode(editMode: boolean)
+    /**
+     * Sets the inEditMode property to the value of inEditMode
+     * @param inEditMode
+     */
+    setEditMode(inEditMode: boolean)
     {
-        this.inEditMode = editMode;
+        this.inEditMode = inEditMode;
     }
 
     /**
@@ -413,6 +526,10 @@ export class ResponseGroup implements IResponseGroup
         this.responses.push(new Response({ id: tempId, response: "", modOnly: 0 }));
     }
 
+    /**
+     * Updates the value of command
+     * @param newCommand the value to update with
+     */
     updateCommand(newCommand: string): void
     {
         this.command = newCommand;

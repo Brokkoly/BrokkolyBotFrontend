@@ -73,20 +73,12 @@ namespace BrokkolyBotFrontend.Controllers
                 {
                     return !serverIds.Contains(g.id);
                 });
-                //serverIds.RemoveAll(id =>
-                //{
-                //    return !allGuilds.Where(g => g.id == id).Any();
-                //});
                 Dictionary<string, bool> userHasManagerRoleMap = new Dictionary<string, bool>();
                 string userId = TryGetUserIdFromAccessTokenFromCache(token);
                 foreach (Guild g in allGuilds)
                 {
                     userHasManagerRoleMap.Add(g.id, await GetUserHasBotManagerRoleForServer(g.id, userId));
                 }
-                //foreach (string s in serverIds)
-                //{
-                //    userHasManagerRoleMap.Add(s, await GetUserHasBotManagerRoleForServer(s, userId));
-                //}
                 //TODO: optimize the search based on length of guilds vs length of servers.
                 cacheGuilds = allGuilds.Where((g) =>
                 {
@@ -192,15 +184,12 @@ namespace BrokkolyBotFrontend.Controllers
             string token = data["token"].ToObject<string>();
             if (!await UserHasServerPermissions(server.ServerId, token))
             {
-                //TODO: get permissions
                 return Forbid();
             }
             if (!System.Text.RegularExpressions.Regex.IsMatch(server.CommandPrefix, pattern: "^[!-~]{1,2}$"))
             {
                 return BadRequest();
             }
-            //server.TimeoutRoleId = (await _context.ServerList.FindAsync(server.ServerId)).TimeoutRoleId;
-
             _context.Entry(server).State = EntityState.Modified;
 
             try
