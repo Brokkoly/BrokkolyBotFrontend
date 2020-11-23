@@ -2,13 +2,14 @@
 import { Next } from "react-bootstrap/lib/Pagination";
 import { toast } from "react-toastify";
 import { InputGroupText } from "reactstrap";
-import { Commands, ICommand, IResponseGroup, ResponseGroup, IUpdateResponseProps, IUpdateResponseGroupProps } from "../backend/Commands";
+import { Commands, ICommand } from "../backend/Commands";
 import { ErrorLevels, Errors } from "../backend/Error";
+import { IResponseGroup, IResponseGroupList, IUpdateResponseGroupProps, IUpdateResponseProps, ResponseGroup, ResponseGroupList } from "../backend/ResponseGroup";
 import { IChannel, IRole, IServer, IServerInfo, Servers } from "../backend/Servers";
 import '../css/CommandRow.css';
 import '../css/Settings.css';
 import { Helpers } from "../helpers";
-import { ResponseGroupList } from "./CommandGroup";
+import { ResponseGroupListComponent } from "./CommandGroup";
 import { CommandRow } from "./CommandRow";
 import { IServerFunctions, LoadingMessage } from "./ServerList";
 
@@ -51,7 +52,7 @@ export const ServerSettings: React.FunctionComponent<IServerSettingsProps> = ({
     serverIndex
 }) =>
 {
-    const [responseGroupList, setResponseGroupList] = useState<IResponseGroup[]>([]);
+    const [responseGroupList, setResponseGroupList] = useState<IResponseGroupList>(new ResponseGroupList({ responseGroups: new Array<ResponseGroup>() }));
     const [originalGroups, setOriginalGroups] = useState<Map<number, IResponseGroup>>(new Map<number, IResponseGroup>());
 
     const [serverRoles, setServerRoles] = useState<IRole[]>([]);
@@ -66,7 +67,7 @@ export const ServerSettings: React.FunctionComponent<IServerSettingsProps> = ({
             {
                 let newResponseGroupTask = Commands.fetchResponseGroups(serverId);
                 let getGuildInfoTask = Servers.getGuildInfo(token, serverId);
-                
+
                 let newResponseGroupList = await newResponseGroupTask;
                 if (server.userCanManage) {
                     let nextId = nextTempId;
@@ -74,7 +75,8 @@ export const ServerSettings: React.FunctionComponent<IServerSettingsProps> = ({
                     setNextTempId(nextTempId - 2);
                     let newRespGroup = new ResponseGroup(nextId, "", [], true);
                     newRespGroup.insertNewResponseAtEnd(nextRespId);
-                    newResponseGroupList.push(newRespGroup);
+                    newResponseGroupList.responseGroups.push(newRespGroup);//TODO: add a function to add a new group instead of manually pushing
+
 
                 }
                 setResponseGroupList(newResponseGroupList);
@@ -92,11 +94,11 @@ export const ServerSettings: React.FunctionComponent<IServerSettingsProps> = ({
 
     async function handleResponseGroupAccept(groupId: number)
     {
-        let groupToAccept = responseGroupList.find(grp => grp.id === groupId);
+        let groupToAccept = responseGroupList.findResponseGroup(groupId);
         if (groupToAccept === undefined) {
             return;
         }
-        if (groupToAccept.checkHighestErrorLevel() >= ErrorLevels.Critical ) {
+        if (groupToAccept.checkHighestErrorLevel() >= ErrorLevels.Critical) {
             toast("Could not accept. Please fix validation errors and try again");
             return;
         }
@@ -177,9 +179,9 @@ export const ServerSettings: React.FunctionComponent<IServerSettingsProps> = ({
 
         setResponseGroupList(rgl =>
         {
-            let newRGL = [...rgl];
-            let index = newRGL.findIndex(grp => grp.id === groupToAccept!.id);
-            newRGL[index] = groupToAccept!;
+            let newRGL = rgl.copy();
+            let index = newRGL.findResponseGroupIndex(groupToAccept!.id);
+            newRGL.responseGroups[index] = groupToAccept!;
             return newRGL;
         });
 
@@ -202,12 +204,12 @@ export const ServerSettings: React.FunctionComponent<IServerSettingsProps> = ({
                 });
                 setResponseGroupList(rgl =>
                 {
-                    let newRGL = [...rgl];
-                    let index = Commands.findResponseGroupIndex(args.id, newRGL);
-                    if (index !== -1) {
-                        let oldExpandStatus = newRGL[index].expanded;
-                        newRGL[index] = original!;
-                        newRGL[index].setExpanded(oldExpandStatus);
+                    let newRGL = rgl.copy();
+                    let groupToUpdate = newRGL.findResponseGroup(args.id);
+                    if (groupToUpdate) {
+                        let oldExpandStatus = groupToUpdate.expanded;
+                        groupToUpdate = original!;
+                        groupToUpdate.setExpanded(oldExpandStatus);
                     }
                     return newRGL;
                 });
@@ -216,11 +218,13 @@ export const ServerSettings: React.FunctionComponent<IServerSettingsProps> = ({
         else {
             await setOriginalGroups(origGrp =>
             {
-                let groupIndex = Commands.findResponseGroupIndex(args.id, responseGroupList);
                 if (!origGrp.has(args.id)) {
                     //update original groups state
                     let newOrigGroups = new Map(origGrp);
-                    let original = responseGroupList[groupIndex].copy();
+                    let original = responseGroupList.findResponseGroup(args.id)?.copy();
+                    if (!original) {
+                        return origGrp;
+                    }
                     newOrigGroups.set(args.id, original);
                     return newOrigGroups;
                 }
@@ -230,7 +234,9 @@ export const ServerSettings: React.FunctionComponent<IServerSettingsProps> = ({
             });
             setResponseGroupList(rgl =>
             {
-                return Commands.handleResponseGroupUpdate(args, rgl, tempId, server.userCanManage);
+                let newRGL = rgl.copy();
+                newRGL.handleResponseGroupUpdate(args, tempId, server.userCanManage);
+                return newRGL;
             });
         }
 
@@ -245,11 +251,13 @@ export const ServerSettings: React.FunctionComponent<IServerSettingsProps> = ({
         });
         await setOriginalGroups(origGrp =>
         {
-            let groupIndex = Commands.findResponseGroupIndex(args.groupId, responseGroupList);
             if (!origGrp.has(args.groupId)) {
                 //update original groups state
                 let newOrigGroups = new Map(origGrp);
-                let original = responseGroupList[groupIndex].copy();
+                let original = responseGroupList.findResponseGroup(args.groupId)?.copy();
+                if (!original) {
+                    return origGrp;
+                }
                 newOrigGroups.set(args.groupId, original);
                 return newOrigGroups;
             }
@@ -259,7 +267,9 @@ export const ServerSettings: React.FunctionComponent<IServerSettingsProps> = ({
         });
         setResponseGroupList(rgl =>
         {
-            return Commands.handleResponseUpdate(args, rgl, tempId);
+            let newRGL = rgl.copy();
+            newRGL.handleResponseUpdate(args, tempId);
+            return newRGL;
         });
     }
 
@@ -296,15 +306,8 @@ export const ServerSettings: React.FunctionComponent<IServerSettingsProps> = ({
     {
         setResponseGroupList(rgl =>
         {
-            let newRGL: IResponseGroup[] = [];
-            rgl.forEach(rg =>
-            {
-                let newRG = rg.copy();
-                newRG.setExpanded(expanded);
-                newRGL.push(newRG);
-
-            }
-            );
+            let newRGL = rgl.copy();
+            newRGL.expandAllGroups(expanded);
             return newRGL;
         });
     }
@@ -313,15 +316,14 @@ export const ServerSettings: React.FunctionComponent<IServerSettingsProps> = ({
     {
         setResponseGroupList(rgl =>
         {
-            let newRGL: IResponseGroup[] = [];
-            rgl.forEach((rg) =>
+            let newRGL = rgl.copy();
+            newRGL.responseGroups.forEach((grp) =>
             {
-                let newRG = rg.copy();
+                let newRG = grp.copy();
                 if (newRG.id === groupId) {
                     newRG.setExpanded(expanded);
 
                 }
-                newRGL.push(newRG);
             });
             return newRGL;
         });
@@ -344,7 +346,7 @@ export const ServerSettings: React.FunctionComponent<IServerSettingsProps> = ({
             />
             <div className="betweenDiv20" />
 
-            <ResponseGroupList responseGroupList={responseGroupList}
+            <ResponseGroupListComponent responseGroupList={responseGroupList}
                 commandPrefix={server.commandPrefix || "!"}
                 userCanEdit={server.userCanManage}
                 callbackFunctions={

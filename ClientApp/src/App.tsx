@@ -62,17 +62,15 @@ class App extends Component<{ cookies: Cookies }>
     render()
     {
         return (
-            <>
-                < Layout >
-                    <Switch>
-                        <Route exact path='/' component={Home} />
-                        <Route path='/about' component={AboutSection} />
-                        <Route path='/help' component={HelpSection} />
-                        <Route path='/utilities' component={UtilitySection} />
-                    </Switch>
+            < Layout >
+                <Switch>
+                    <Route exact path='/' component={Home} />
+                    <Route path='/about' component={AboutSection} />
+                    <Route path='/help' component={HelpSection} />
+                    <Route path='/utilities' component={UtilitySection} />
+                </Switch>
 
-                </Layout >
-            </>
+            </Layout >
         );
     }
 }

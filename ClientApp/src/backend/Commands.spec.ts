@@ -1,5 +1,7 @@
-﻿import { Commands, ResponseGroup, Response } from "./Commands";
+﻿import { Commands } from "./Commands";
+
 import { ErrorLevels } from "./Error";
+import { ResponseGroup, Response } from "./ResponseGroup";
 
 const reallyLongCommand = '0123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789' +
     '0123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789' +
@@ -177,85 +179,7 @@ it('should have a two errors because the command has non-letters and is too long
     expect(Commands.checkCommandValidity('thisc0mmandiswaytoolong').errors.length).toEqual(2);
 })
 
-describe('Find Response Group Index Tests', () =>
-{
 
-    const testCasesCommand = [
-        {
-            id: 1,
-            expectedIndex: 1
-        },
-        {
-            id: 34,
-            expectedIndex: -1
-        },
-        {
-            id: 4,
-            expectedIndex: 4
-        },
-        {
-            id: 5,
-            expectedIndex: 5
-        },
-        {
-            id: 0,
-            expectedIndex: 0
-        },
-    ];
-
-    testCasesCommand.forEach(test =>
-    {
-        it(`Should find the index of the group whose original command is ${test.id}`, () =>
-        {
-            const groupIndex = Commands.findResponseGroupIndex(test.id, responseGroups);
-            expect(groupIndex).toEqual(test.expectedIndex);
-        })
-    })
-})
-
-
-describe('Find Response Index Tests', () =>
-{
-
-    const testCasesResponses = [
-        {
-            groupId: 1,
-            id: 271,
-            expectedIndex: 0
-        },
-        {
-            groupId: 34,
-            id: 271,
-            expectedIndex: -1
-        },
-        {
-            groupId: 5,
-            id: 267,
-            expectedIndex: 0
-        },
-        {
-            groupId: 4,
-            id: 279,
-            expectedIndex: 1
-        },
-        {
-            groupId: 4,
-            id: 1,
-            expectedIndex: -1
-        },
-    ];
-
-    testCasesResponses.forEach(test =>
-    {
-        it(`Should find the index of the response with id ${test.id} in the group with id ${test.groupId}. Expected ${test.expectedIndex}`, () =>
-        {
-            let rgi: number = Commands.findResponseGroupIndex(test.groupId, responseGroups);
-            const responseIndexInGroup = responseGroups[rgi]?.findResponse({ id: test.id }).index ?? -1;
-            expect(responseIndexInGroup).toEqual(test.expectedIndex);
-
-        });
-    });
-})
 
 describe('Response Group Functions', () =>
 {

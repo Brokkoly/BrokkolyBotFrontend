@@ -72,6 +72,8 @@
 
 	<ItemGroup>
 		<TypeScriptCompile Remove="ClientApp\src\App.tsx" />
+		<TypeScriptCompile Remove="ClientApp\src\backend\ResponseGroup.spec.ts" />
+		<TypeScriptCompile Remove="ClientApp\src\backend\ResponseGroup.ts" />
 		<TypeScriptCompile Remove="ClientApp\src\components\Home.tsx" />
 		<TypeScriptCompile Remove="ClientApp\src\components\Layout.tsx" />
 		<TypeScriptCompile Remove="ClientApp\src\components\NavMenu.tsx" />

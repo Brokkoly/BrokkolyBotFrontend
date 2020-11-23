@@ -1,9 +1,11 @@
 ﻿import * as React from 'react';
 import { useState } from 'react';
-import { Commands, ICommand, IResponse, IResponseGroup, IUpdateResponseActionProps, IUpdateResponseGroupProps, IUpdateResponseProps } from '../backend/Commands';
+import { Commands, ICommand } from '../backend/Commands';
+
 import { Helpers } from '../helpers';
 import { ICommandRowFunctions, IExpandGroupArgs } from './ServerSettings';
 import ModOnly from "../Images/modOnly.png";
+import { IResponse, IResponseGroup, IResponseGroupList, IUpdateResponseActionProps, IUpdateResponseGroupProps, IUpdateResponseProps } from '../backend/ResponseGroup';
 
 interface IResponseGroupFunctions
 {
@@ -227,8 +229,8 @@ export const ResponseLine: React.FunctionComponent<{
     }
 
 
-export const ResponseGroupList: React.FunctionComponent<{
-    responseGroupList: IResponseGroup[],
+export const ResponseGroupListComponent: React.FunctionComponent<{
+    responseGroupList: IResponseGroupList,
     callbackFunctions: IResponseGroupFunctions,
     commandPrefix: string,
     userCanEdit: boolean,
@@ -236,7 +238,7 @@ export const ResponseGroupList: React.FunctionComponent<{
     {
         return (
             <ul className="_commandList">
-                {responseGroupList.map(group => (
+                {responseGroupList.responseGroups.map(group => (
                     <ResponseGroup
                         key={group.originalCommand}
                         responseGroup={group}
