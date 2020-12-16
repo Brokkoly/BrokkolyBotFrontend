@@ -6,7 +6,7 @@
   "type": "module",
   "dependencies": {
     "@azure/app-configuration": "^1.1.0",
-    "@babel/core": "^7.12.3",
+    "@babel/core": "^7.12.10",
     "@types/bootstrap": "^4.5.0",
     "@types/chai": "^4.2.14",
     "@types/jest": "^26.0.15",
