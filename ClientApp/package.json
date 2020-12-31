@@ -38,7 +38,7 @@
   },
   "devDependencies": {
     "@types/node": "^14.14.17",
-    "@types/react-router-dom": "^5.1.6",
+    "@types/react-router-dom": "^5.1.7",
     "@types/reactstrap": "^8.5.1",
     "ajv": "^6.12.5",
     "cross-env": "^7.0.3",
