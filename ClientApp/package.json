@@ -37,7 +37,7 @@
     "ts-node": "^9.1.1"
   },
   "devDependencies": {
-    "@types/node": "^14.14.31",
+    "@types/node": "^14.14.33",
     "@types/react-router-dom": "^5.1.7",
     "@types/reactstrap": "^8.5.1",
     "ajv": "^6.12.5",
