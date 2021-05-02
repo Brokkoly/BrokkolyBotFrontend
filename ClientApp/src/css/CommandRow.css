@@ -215,6 +215,7 @@
     text-align: left;
     flex-grow: 1;
     max-width: none;
+    margin-left: 10px;
 }
 
 ._responseRowButtons{
@@ -248,6 +249,7 @@
 ._modOnlyIcon {
     width: 32px;
     height: 32px;
+    vertical-align: unset;
 }
 
 

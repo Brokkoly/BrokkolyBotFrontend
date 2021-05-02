@@ -10,6 +10,7 @@
 		<DefaultItemExcludes>$(DefaultItemExcludes);$(SpaRoot)node_modules\**</DefaultItemExcludes>
 		<UserSecretsId>70bdb3e4-9290-4430-be7b-2f76f9638a76</UserSecretsId>
 		<Platforms>AnyCPU;x64</Platforms>
+		<TypescriptJSXEmit>react</TypescriptJSXEmit>
 	</PropertyGroup>
 
 	<ItemGroup>
