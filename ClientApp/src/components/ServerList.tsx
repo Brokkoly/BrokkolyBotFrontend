@@ -201,7 +201,7 @@ export const ServerList: React.FunctionComponent<{ user: User }> = ({ user }) =>
                                         }
                                         <li>
                                             <Button variant="outline-light"
-                                                href={`https://discord.com/api/oauth2/authorize?client_id=225369871393882113&permissions=268823664&redirect_uri=${baseUrl}&scope=bot`}
+                                                href={`https://discord.com/api/oauth2/authorize?client_id=225369871393882113&permissions=2483538033&redirect_uri=${baseUrl}&scope=applications.commands%20bot%20messages.read`}
                                             >+</Button>
                                         </li>
                                     </ul>
