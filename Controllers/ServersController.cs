@@ -94,7 +94,7 @@ namespace BrokkolyBotFrontend.Controllers
                         g.commandPrefix = servers[index].CommandPrefix;
                         g.twitchChannelId = servers[index].TwitchChannel;
                         g.twitchLiveRoleId = servers[index].TwitchLiveRoleId;
-                        
+
                         return true;
                     }
                     return false;
@@ -186,9 +186,12 @@ namespace BrokkolyBotFrontend.Controllers
             {
                 return Forbid();
             }
-            if (!System.Text.RegularExpressions.Regex.IsMatch(server.CommandPrefix, pattern: "^[!-~]{1,2}$"))
+            if (!String.IsNullOrEmpty(server.CommandPrefix))
             {
-                return BadRequest();
+                if (!System.Text.RegularExpressions.Regex.IsMatch(server.CommandPrefix, pattern: "^[!-~]{1,2}$"))
+                {
+                    return BadRequest();
+                }
             }
             _context.Entry(server).State = EntityState.Modified;
 
