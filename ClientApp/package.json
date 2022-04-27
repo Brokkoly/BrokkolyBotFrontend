@@ -9,7 +9,7 @@
     "@types/bootstrap": "^5.0.13",
     "@babel/core": "^7.14.2",
     "@types/bootstrap": "^5.0.12",
-    "@types/react": "^17.0.5",
+    "@types/react": "^18.0.8",
     "@types/jest": "^26.0.23",
     "@types/chai": "^4.2.18",
     "@types/react-bootstrap": "^0.32.25",
